@@ -42,4 +42,18 @@ export const newsletterAPI = {
   unsubscribe: (email) => API.post('/newsletter/unsubscribe', { email }),
 }
 
+export const courseAPI = {
+  getAll: (params) => API.get('/courses', { params }),
+  getOne: (id) => API.get(`/courses/${id}`),
+  enroll: (id) => API.post(`/courses/${id}/enroll`),
+  updateProgress: (id, data) => API.post(`/courses/${id}/progress`, data),
+}
+
+export const resourceAPI = {
+  getAll: (params) => API.get('/resources', { params }),
+  getOne: (id) => API.get(`/resources/${id}`),
+  download: (id) => API.post(`/resources/${id}/download`),
+  bookmark: (id) => API.post(`/resources/${id}/bookmark`),
+}
+
 export default API

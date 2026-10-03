@@ -7,6 +7,7 @@ const stories = [
     text: 'Learning, building and discovering new opportunities with the Upskillyfy AI ecosystem.',
     tag: 'Community member',
     gradient: 'linear-gradient(135deg, #1a73e8 0%, #4285f4 100%)',
+    image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=600&q=80',
   },
   {
     name: 'Alok Raj',
@@ -14,6 +15,7 @@ const stories = [
     text: 'Exploring practical learning paths, projects and opportunities designed for the next generation of builders.',
     tag: 'Community member',
     gradient: 'linear-gradient(135deg, #174ea6 0%, #1a73e8 100%)',
+    image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80',
   },
   {
     name: 'Abhijeet Gupta',
@@ -21,6 +23,7 @@ const stories = [
     text: 'Turning technical learning into practical projects and experiences through Upskillyfy.',
     tag: 'Community member',
     gradient: 'linear-gradient(135deg, #0b57d0 0%, #4285f4 100%)',
+    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80',
   },
   {
     name: 'Shrestha Saran',
@@ -28,6 +31,7 @@ const stories = [
     text: 'Finding resources, challenges and opportunities that make the journey from learning to building easier.',
     tag: 'Community member',
     gradient: 'linear-gradient(135deg, #1557b0 0%, #34a853 100%)',
+    image: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=600&q=80',
   },
   {
     name: 'Tanya Gupta',
@@ -35,10 +39,19 @@ const stories = [
     text: 'Growing skills and staying connected with a community focused on learning, building and career growth.',
     tag: 'Community member',
     gradient: 'linear-gradient(135deg, #1a3fa0 0%, #7b61ff 100%)',
+    image: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=600&q=80',
+  },
+  {
+    name: 'Shivam Kumar',
+    role: 'Full Stack & AI Systems',
+    text: 'Building scalable modern applications, mastering production tools, and growing with the community.',
+    tag: 'Community member',
+    gradient: 'linear-gradient(135deg, #0b8043 0%, #1a73e8 100%)',
+    image: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=600&q=80',
   },
 ]
 
-function StoriesCarousel({ names = ['Kajal Kumari', 'Alok Raj', 'Abhijeet Gupta', 'Shrestha Saran', 'Tanya Gupta'] }) {
+export default function StoriesCarousel({ names = ['Kajal Kumari', 'Alok Raj', 'Abhijeet Gupta', 'Shrestha Saran', 'Tanya Gupta', 'Shivam Kumar'] }) {
   const trackRef = useRef(null)
 
   const [progress, setProgress] = useState(0)
@@ -130,6 +143,14 @@ function StoriesCarousel({ names = ['Kajal Kumari', 'Alok Raj', 'Abhijeet Gupta'
                 background: story.gradient,
               }}
             >
+              {story.image && (
+                <img
+                  src={story.image}
+                  alt={story.name}
+                  className="story-img"
+                  loading="lazy"
+                />
+              )}
 
               <div className="story-pattern">
                 <span />
@@ -138,7 +159,11 @@ function StoriesCarousel({ names = ['Kajal Kumari', 'Alok Raj', 'Abhijeet Gupta'
               </div>
 
               <div className="story-avatar">
-                {story.name.charAt(0)}
+                {story.image ? (
+                  <img src={story.image} alt={story.name} className="story-avatar-img" />
+                ) : (
+                  story.name.charAt(0)
+                )}
               </div>
 
               <div className="story-label">
@@ -220,7 +245,7 @@ function StoriesCarousel({ names = ['Kajal Kumari', 'Alok Raj', 'Abhijeet Gupta'
   )
 }
 
-export default function StoriesSection() {
+export function StoriesSection() {
   return (
     <section className="stories-section">
 
@@ -228,7 +253,7 @@ export default function StoriesSection() {
 
         <div className="stories-heading">
 
-          <span className="stories-overline">UPSKILLFY AI COMMUNITY</span>
+          <span className="stories-overline">UPSKILLYFY AI COMMUNITY</span>
 
           <h2>
             People are building
