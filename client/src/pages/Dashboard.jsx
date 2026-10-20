@@ -19,7 +19,7 @@ export default function Dashboard() {
         <div className="container">
           <div className="eyebrow" style={{ justifyContent: 'center', display: 'inline-flex' }}>Welcome Back</div>
           <h1 className="h1" style={{ marginBottom: 12 }}>Hey, <span className="grad">{user.name?.split(' ')[0]} 👋</span></h1>
-          <p className="lead">Your Upskillyfy Dashboard — track your progress, saved internships and more.</p>
+          <p className="lead">Your Upskillyfy-ai Dashboard — track your progress, saved internships and more.</p>
         </div>
       </section>
       <section className="section" style={{ paddingTop: 0 }}>

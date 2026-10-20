@@ -3,9 +3,9 @@ import { Link } from 'react-router-dom'
 const PERKS = ['Certificate of Recognition', 'LinkedIn Recommendation', 'Priority Internship Access', 'Free Premium Resources', 'Network with Industry Experts', 'Goodies & Swag Kit', 'Revenue Sharing (future)', 'Leadership Portfolio']
 
 const ROLES = [
-  { icon: '🎓', title: 'Campus Ambassador', desc: 'Represent Upskillyfy at your college. Host events, drive sign-ups and build community.' },
-  { icon: '✍️', title: 'Content Creator', desc: 'Create tech content for Upskillyfy social media. Writers, designers and video creators welcome.' },
-  { icon: '👨‍💻', title: 'Community Lead', desc: 'Lead the Upskillyfy student community in your city. Organize meetups and study groups.' },
+  { icon: '🎓', title: 'Campus Ambassador', desc: 'Represent Upskillyfy-ai at your college. Host events, drive sign-ups and build community.' },
+  { icon: '✍️', title: 'Content Creator', desc: 'Create tech content for Upskillyfy-ai social media. Writers, designers and video creators welcome.' },
+  { icon: '👨‍💻', title: 'Community Lead', desc: 'Lead the Upskillyfy-ai student community in your city. Organize meetups and study groups.' },
 ]
 
 export default function Ambassador() {
@@ -14,8 +14,8 @@ export default function Ambassador() {
       <section className="ph">
         <div className="container">
           <div className="eyebrow" style={{ justifyContent: 'center', display: 'inline-flex' }}>Campus Ambassador</div>
-          <h1 className="h1" style={{ marginBottom: 12 }}>Become an <span className="grad">Upskillyfy Ambassador</span></h1>
-          <p className="lead">Represent Upskillyfy at your campus, build your leadership portfolio and earn exclusive perks.</p>
+          <h1 className="h1" style={{ marginBottom: 12 }}>Become an <span className="grad">Upskillyfy-ai Ambassador</span></h1>
+          <p className="lead">Represent Upskillyfy-ai at your campus, build your leadership portfolio and earn exclusive perks.</p>
           <div className="flex-r" style={{ justifyContent: 'center', marginTop: 28 }}>
             <Link to="/contact" className="btn-primary">Apply Now →</Link>
           </div>

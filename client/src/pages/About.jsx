@@ -8,7 +8,7 @@ const PILLARS = [
 ]
 
 const TEAM = [
-  { e: '👨‍💻', title: 'Founder & Tech Lead', desc: 'Engineering student driving the vision of Upskillyfy.' },
+  { e: '👨‍💻', title: 'Founder & Tech Lead', desc: 'Engineering student driving the vision of Upskillyfy-ai.' },
   { e: '📚', title: 'Resource Team', desc: 'Curates DSA sheets, notes and placement material.' },
   { e: '💻', title: 'Development Team', desc: 'Builds the platform, client projects and IT solutions.' },
   { e: '📢', title: 'Community Team', desc: 'Manages events, ambassador program and community.' },
@@ -20,7 +20,7 @@ export default function About() {
       <section className="ph">
         <div className="container">
           <div className="eyebrow" style={{ justifyContent: 'center', display: 'inline-flex' }}>About Us</div>
-          <h1 className="h1" style={{ marginBottom: 12 }}>About <span className="grad">Upskillyfy</span></h1>
+          <h1 className="h1" style={{ marginBottom: 12 }}>About <span className="grad">Upskillyfy-ai</span></h1>
           <p className="lead">A Career Development, IT Services & Technology Consulting Platform for Students, Professionals, Startups, and Businesses.</p>
         </div>
       </section>
@@ -31,10 +31,10 @@ export default function About() {
               <div className="eyebrow">Our Story</div>
               <h2 className="h2">From Campus to <span className="grad">Company</span></h2>
               <p style={{ marginTop: 16, lineHeight: 1.85 }}>
-                Upskillyfy started as a small student community in Patna, Bihar — sharing internship links and DSA resources. We realized that thousands of students across all branches struggle to find verified opportunities in one place.
+                Upskillyfy-ai started as a small student community in Patna, Bihar — sharing internship links and DSA resources. We realized that thousands of students across all branches struggle to find verified opportunities in one place.
               </p>
               <p style={{ marginTop: 14, lineHeight: 1.85 }}>
-                Today, Upskillyfy is growing into a full-fledged EdTech + IT Services + IT Consulting platform — serving students, startups and businesses.
+                Today, Upskillyfy-ai is growing into a full-fledged EdTech + IT Services + IT Consulting platform — serving students, startups and businesses.
               </p>
               <div className="hbox" style={{ marginTop: 28 }}>
                 <p style={{ color: 'var(--text)', fontStyle: 'italic', fontSize: '1.02rem', lineHeight: 1.75 }}>

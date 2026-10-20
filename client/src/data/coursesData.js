@@ -83,7 +83,7 @@ gcloud compute instances create web-prod-01 \\
     --image-project=debian-cloud \\
     --metadata=startup-script='#! /bin/bash
     apt-get update && apt-get install -y nginx
-    echo "<h1>Upskillyfy Cloud Node Online</h1>" > /var/www/html/index.html'`,
+    echo "<h1>Upskillyfy-ai Cloud Node Online</h1>" > /var/www/html/index.html'`,
             resources: [
               { name: 'Compute Engine Sizing Matrix.pdf', size: '2.1 MB', type: 'doc' }
             ],

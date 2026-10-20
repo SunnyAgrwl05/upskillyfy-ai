@@ -72,7 +72,7 @@ export default function Contact() {
               {[
                 { ic: '📧', lbl: 'Email', val: 'upskillyfy@gmail.com', href: 'mailto:upskillyfy@gmail.com' },
                 { ic: '📷', lbl: 'Instagram', val: '@upskillyfy', href: 'https://www.instagram.com/upskillyfy/' },
-                { ic: '💼', lbl: 'LinkedIn', val: 'Upskillyfy AI', href: 'https://www.linkedin.com/company/upskillyfy-ai/' },
+                { ic: '💼', lbl: 'LinkedIn', val: 'Upskillyfy-ai', href: 'https://www.linkedin.com/company/upskillyfy-ai/' },
                 { ic: '📍', lbl: 'Location', val: 'Patna, Bihar, India 🇮🇳', href: null },
               ].map((c, i) => c.href ? (
                 <a key={i} href={c.href} target={c.href.startsWith('http') ? '_blank' : '_self'} rel="noopener" className="c-item">

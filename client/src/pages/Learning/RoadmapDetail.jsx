@@ -107,7 +107,7 @@ export default function RoadmapDetail() {
 
   // Download Blueprint as Markdown
   const handleDownloadPlan = () => {
-    let content = `# Upskillyfy Career Roadmap: ${roadmap.title}\n`
+    let content = `# Upskillyfy-ai Career Roadmap: ${roadmap.title}\n`
     content += `Track: ${roadmap.category} | Duration: ${roadmap.duration} | Level: ${roadmap.level}\n\n`
     content += `Overview:\n${roadmap.overview}\n\n`
     content += `## Learning Stages & Skills\n`

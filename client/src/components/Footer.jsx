@@ -12,6 +12,7 @@ const NAV = [
       { label: 'Services', to: '/services/it-services' },
       { label: 'Career Hub', to: '/career/internships' },
       { label: 'Learning', to: '/learning/courses' },
+      { label: 'Assessments', to: '/assessments' },
       { label: 'Community', to: '/community/events' },
       { label: 'Contact', to: '/contact' },
     ],
@@ -32,7 +33,7 @@ const NAV = [
     items: [
       { label: 'Internships', to: '/career/internships' },
       { label: 'Placements', to: '/career/placements' },
-      { label: 'DSA Hub', to: '/career/dsa' },
+      { label: 'Assessment', to: '/assessment' },
       { label: 'Resume Builder', to: '/career/resume' },
       { label: 'Courses', to: '/learning/courses' },
       { label: 'Roadmaps', to: '/learning/roadmaps' },
@@ -51,7 +52,7 @@ const NAV = [
   },
 ]
 
-const FOOTER_DESC = 'Upskillyfy is a learning and technology platform helping people build skills, create meaningful projects, and grow their careers through practical, project-based learning.'
+const FOOTER_DESC = 'Upskillyfy-ai is a learning and technology platform helping people build skills, create meaningful projects, and grow their careers through practical, project-based learning.'
 
 export default function Footer() {
   const [message, setMessage] = useState('')
@@ -78,7 +79,7 @@ export default function Footer() {
           <div>
             <Link to="/" className="nav-logo" style={{ marginBottom: 16 }}>
               <span className="nav-logo-mark">U</span>
-              <span>Upskillyfy</span>
+              <span>Upskillyfy-ai</span>
             </Link>
             <p className="footer-desc">{FOOTER_DESC}</p>
             <div className="f-social" style={{ marginTop: 24 }}>
@@ -129,7 +130,7 @@ export default function Footer() {
         </div>
 
         <div className="f-bottom">
-          <span>© 2026 Upskillyfy. All rights reserved.</span>
+          <span>© 2026 Upskillyfy-ai. All rights reserved.</span>
           <div style={{ display: 'flex', gap: 16 }}>
             <Link to="/about">Privacy Policy</Link>
             <Link to="/about">Terms of Service</Link>

@@ -43,7 +43,7 @@ const NAV_GROUPS = [
   {
     heading: 'Company & Community',
     items: [
-      { label: 'About Upskillyfy', to: '/about' },
+      { label: 'About Upskillyfy-ai', to: '/about' },
       { label: 'Tech Events', to: '/community/events' },
       { label: 'Hackathons', to: '/community/hackathons' },
       { label: 'Open Source', to: '/community/opensource' },
@@ -67,7 +67,7 @@ export default function Footer() {
     setMessage('')
     try {
       await newsletterAPI.subscribe({ email: email.trim() })
-      setMessage('Thank you for subscribing to Upskillyfy engineering updates!')
+      setMessage('Thank you for subscribing to Upskillyfy-ai engineering updates!')
       setIsSuccess(true)
       setEmail('')
     } catch {
@@ -136,7 +136,7 @@ export default function Footer() {
           <div className="gcp-footer-brand">
             <Link to="/" className="nav-logo" style={{ textDecoration: 'none', marginBottom: 0 }}>
               <span className="nav-logo-mark">U</span>
-              <span className="gcp-footer-brand-name">Upskillyfy</span>
+              <span className="gcp-footer-brand-name">Upskillyfy-ai</span>
             </Link>
 
             <p className="gcp-footer-desc">
@@ -243,7 +243,7 @@ export default function Footer() {
         {/* Bottom Bar: Copyright, Legal Links & Back to Top */}
         <div className="gcp-footer-bottom">
           <div className="gcp-footer-bottom-left">
-            <span>© 2026 Upskillyfy Technologies Inc. All rights reserved.</span>
+            <span>© 2026 Upskillyfy-ai Technologies Inc. All rights reserved.</span>
             <span className="gcp-footer-divider">•</span>
             <Link to="/about">Privacy Policy</Link>
             <span className="gcp-footer-divider">•</span>

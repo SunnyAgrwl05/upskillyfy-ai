@@ -353,7 +353,7 @@ export default function Home() {
         <div className="container">
           <div className="gcp-sec-header">
             <div className="gcp-sec-eyebrow">COMMUNITY</div>
-            <h2 className="gcp-sec-title">Engineers building with Upskillyfy.</h2>
+            <h2 className="gcp-sec-title">Engineers building with Upskillyfy-ai.</h2>
             <p className="gcp-sec-desc">Real stories and projects from learners and builders in our community.</p>
           </div>
           <StoriesCarousel names={STORY_NAMES} />
@@ -368,7 +368,7 @@ export default function Home() {
           <div className="gcp-home-cta-box">
             <h2 className="gcp-home-cta-title">Ready to build what's next?</h2>
             <p className="gcp-home-cta-sub">
-              Whether you are mastering new tech stacks, building client software, or hiring top engineering talent, Upskillyfy is built for you.
+              Whether you are mastering new tech stacks, building client software, or hiring top engineering talent, Upskillyfy-ai is built for you.
             </p>
             <div style={{ display: 'flex', justifyContent: 'center', gap: 12, flexWrap: 'wrap' }}>
               <Link to="/register" className="gcp-btn-primary">

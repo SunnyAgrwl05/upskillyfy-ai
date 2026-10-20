@@ -28,9 +28,9 @@ export default function Register() {
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <Link to="/" className="nav-logo" style={{ justifyContent: 'center', display: 'inline-flex', marginBottom: 20 }}>
             <span className="nav-logo-mark">U</span>
-            <span>Upskillyfy</span>
+            <span>Upskillyfy-ai</span>
           </Link>
-          <h1 className="h1" style={{ fontSize: '1.8rem', marginBottom: 8 }}>Join Upskillyfy 🚀</h1>
+          <h1 className="h1" style={{ fontSize: '1.8rem', marginBottom: 8 }}>Join Upskillyfy-ai 🚀</h1>
           <p className="muted">Create your free account and start growing</p>
         </div>
         <div className="card">

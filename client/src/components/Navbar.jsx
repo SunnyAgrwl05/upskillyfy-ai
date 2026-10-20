@@ -63,7 +63,7 @@ const NAV = [
       {
         heading: 'Prep Tools',
         items: [
-          { label: 'DSA Practice Hub', desc: 'Structured algorithms & coding track.', to: '/career/dsa' },
+          { label: 'Assessment', desc: 'Branch-wise timed MCQ practice tests.', to: '/assessment' },
           { label: 'Resume Builder', desc: 'ATS-optimized resume generator.', to: '/career/resume' },
         ],
       },
@@ -90,6 +90,35 @@ const NAV = [
         items: [
           { label: 'Docs & Resources', desc: 'Cheatsheets, tools & repositories.', to: '/learning/resources' },
           { label: 'Certifications', desc: 'Industry certification paths.', to: '/learning/certifications' },
+        ],
+      },
+    ],
+  },
+  {
+    label: 'Assessments',
+    intro: {
+      title: 'Test Your Skills With Real Practice',
+      desc: 'Branch-wise question banks across engineering, computer science and aptitude — timed, graded and explained.',
+      cta: 'Explore Assessments',
+      to: '/assessment',
+    },
+    columns: [
+      {
+        heading: 'Engineering Branches',
+        items: [
+          { label: 'Computer Science', desc: 'DSA, OS, DBMS & networks.', to: '/assessment/branch/cse' },
+          { label: 'Information Technology', desc: 'Web dev, databases & infrastructure.', to: '/assessment/branch/it' },
+          { label: 'Electronics & Communication', desc: 'Signals, embedded & comms.', to: '/assessment/branch/ece' },
+          { label: 'Electrical Engineering', desc: 'Circuits, machines & power systems.', to: '/assessment/branch/ee' },
+        ],
+      },
+      {
+        heading: 'More Streams',
+        items: [
+          { label: 'Mechanical Engineering', desc: 'Thermodynamics, mechanics & design.', to: '/assessment/branch/me' },
+          { label: 'Civil Engineering', desc: 'Structures, concrete & surveying.', to: '/assessment/branch/ce' },
+          { label: 'AI & Data Science', desc: 'ML, statistics & deep learning.', to: '/assessment/branch/ai-ds' },
+          { label: 'General Aptitude', desc: 'Reasoning, quant & verbal ability.', to: '/assessment/branch/general-aptitude' },
         ],
       },
     ],
@@ -171,9 +200,9 @@ export default function Navbar() {
         <div className="container">
           <div className="gcp-navbar-inner">
             {/* BRAND LOGO */}
-            <Link to="/" className="gcp-nav-logo" aria-label="Upskillyfy Home">
+            <Link to="/" className="gcp-nav-logo" aria-label="Upskillyfy-ai Home">
               <span className="gcp-nav-logo-mark">U</span>
-              <span className="gcp-nav-logo-text">Upskillyfy</span>
+              <span className="gcp-nav-logo-text">Upskillyfy-ai</span>
             </Link>
 
             {/* DESKTOP NAVIGATION ITEMS */}

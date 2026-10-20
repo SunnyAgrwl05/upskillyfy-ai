@@ -56,4 +56,15 @@ export const resourceAPI = {
   bookmark: (id) => API.post(`/resources/${id}/bookmark`),
 }
 
+export const assessmentAPI = {
+  getBranches: () => API.get('/assessments/branches'),
+  getBranch: (branchId) => API.get(`/assessments/branches/${branchId}`),
+  getBranchTests: (branchId) => API.get(`/assessments/branches/${branchId}/tests`),
+  getTest: (testId) => API.get(`/assessments/tests/${testId}`),
+  getTestQuestions: (testId) => API.get(`/assessments/tests/${testId}/questions`),
+  startAttempt: (testId) => API.post('/assessments/attempts/start', { testId }),
+  submitAttempt: (payload) => API.post('/assessments/attempts/submit', payload),
+  getTestResult: (testId) => API.get(`/assessments/tests/${testId}/result`),
+}
+
 export default API

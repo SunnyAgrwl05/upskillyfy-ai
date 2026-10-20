@@ -1,0 +1,486 @@
+/* =========================================================
+   ASSESSMENT BRANCH TESTS — Page Styles
+   ========================================================= */
+
+.asm-branch-page {
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+.asm-branch-head {
+  padding: 48px 0 32px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.asm-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-decoration: none;
+  margin-bottom: 16px;
+  transition: color 0.15s;
+}
+
+.asm-back:hover {
+  color: var(--accent);
+}
+
+.asm-branch-eyebrow {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.asm-branch-title {
+  margin: 0 0 12px;
+  font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+  font-weight: 700;
+  color: var(--text-h);
+  line-height: 1.2;
+}
+
+.asm-branch-desc {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--muted);
+  max-width: 700px;
+}
+
+.asm-branch-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.asm-branch-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.asm-branch-stat strong {
+  color: var(--text-h);
+  font-size: 0.9rem;
+}
+
+.asm-branch-section {
+  padding: 48px 0 64px;
+}
+
+.asm-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding: 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.asm-search {
+  position: relative;
+  flex: 1;
+  min-width: 280px;
+}
+
+.asm-search svg {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--faint);
+  pointer-events: none;
+}
+
+.asm-search input {
+  width: 100%;
+  padding: 10px 14px 10px 42px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-input);
+  color: var(--text);
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.asm-search input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
+
+.asm-search-clear {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: var(--faint);
+  cursor: pointer;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.asm-search-clear:hover {
+  background: var(--bg-alt);
+  color: var(--text);
+}
+
+.asm-toolbar-count {
+  font-size: 0.85rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.asm-test-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+.asm-test-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 24px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.asm-test-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(60, 64, 67, 0.1);
+}
+
+[data-theme="dark"] .asm-test-card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.asm-test-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.asm-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.asm-tag.green {
+  background: rgba(52, 168, 83, 0.12);
+  color: #188038;
+  border: 1px solid rgba(52, 168, 83, 0.2);
+}
+
+.asm-tag.amber {
+  background: rgba(251, 188, 5, 0.14);
+  color: #a86200;
+  border: 1px solid rgba(251, 188, 5, 0.2);
+}
+
+.asm-tag.red {
+  background: rgba(234, 67, 53, 0.12);
+  color: #c5221f;
+  border: 1px solid rgba(234, 67, 53, 0.2);
+}
+
+[data-theme="dark"] .asm-tag.green {
+  color: #81c995;
+}
+[data-theme="dark"] .asm-tag.amber {
+  color: #fdd663;
+}
+[data-theme="dark"] .asm-tag.red {
+  color: #f88078;
+}
+
+.asm-test-questions {
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.asm-test-title {
+  margin: 0 0 8px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-h);
+  line-height: 1.35;
+}
+
+.asm-test-desc {
+  margin: 0 0 16px;
+  font-size: 0.87rem;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.asm-test-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.asm-test-meta li {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.asm-test-footer {
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.asm-test-marks {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.asm-attempt-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.15s;
+  white-space: nowrap;
+}
+
+.asm-attempt-btn:hover {
+  background: #1557b0;
+  transform: translateY(-1px);
+}
+
+[data-theme="dark"] .asm-attempt-btn:hover {
+  background: #1a73e8;
+}
+
+/* Empty state */
+.asm-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 64px 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  color: var(--muted);
+}
+
+.asm-empty svg {
+  margin-bottom: 16px;
+  color: var(--faint);
+}
+
+.asm-empty h2 {
+  margin: 0 0 8px;
+  font-size: 1.2rem;
+  color: var(--text-h);
+}
+
+.asm-empty p {
+  margin: 0 0 20px;
+  max-width: 400px;
+  font-size: 0.9rem;
+}
+
+/* Sample data notice */
+.asm-sample-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 32px;
+  padding: 16px;
+  background: rgba(26, 115, 232, 0.08);
+  border: 1px solid rgba(26, 115, 232, 0.2);
+  border-radius: 12px;
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.asm-sample-note svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--accent);
+}
+
+.asm-sample-note strong {
+  color: var(--text-h);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .asm-branch-head {
+    padding: 40px 0 24px;
+  }
+
+  .asm-branch-title {
+    font-size: 1.6rem;
+  }
+
+  .asm-test-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .asm-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .asm-search {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .asm-branch-head {
+    padding: 32px 0 20px;
+  }
+
+  .asm-branch-title {
+    font-size: 1.4rem;
+  }
+
+  .asm-test-card {
+    padding: 20px;
+  }
+
+  .asm-test-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .asm-attempt-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+/* =========================================================
+   SHARED PILL BUTTON
+   Used by the empty / error states on this page.
+   ========================================================= */
+
+.asm-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 42px;
+  padding: 10px 22px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: var(--accent, #1a73e8);
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+  white-space: nowrap;
+}
+
+.asm-btn:hover {
+  background: #1557b0;
+  transform: translateY(-1px);
+}
+
+/* =========================================================
+   LOADING SKELETONS
+   ========================================================= */
+
+.asm-skeleton-bar {
+  height: 34px;
+  width: 220px;
+  border-radius: 8px;
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+
+.asm-skeleton-line {
+  height: 22px;
+  width: 100%;
+  max-width: 460px;
+  border-radius: 6px;
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  margin-bottom: 10px;
+}
+
+.asm-skeleton-line.short {
+  max-width: 300px;
+}
+
+.asm-test-skeleton {
+  min-height: 210px;
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  animation: asmSkeletonPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes asmSkeletonPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}

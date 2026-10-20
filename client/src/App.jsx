@@ -12,6 +12,9 @@ import Contact from "./pages/Contact";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
+import AssessmentBranches from "./pages/AssessmentBranches";
+import AssessmentBranchTests from "./pages/AssessmentBranchTests";
+import AssessmentTest from "./pages/AssessmentTest";
 
 import ITServices from "./pages/Services/ITServices";
 import ITSupport from "./pages/Services/ITSupport";
@@ -48,6 +51,17 @@ export default function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/assessments" element={<AssessmentBranches />} />
+
+            <Route path="/assessment" element={<AssessmentBranches />} />
+            <Route
+              path="/assessment/branch/:branchId"
+              element={<AssessmentBranchTests />}
+            />
+            <Route
+              path="/assessment/test/:testId"
+              element={<AssessmentTest />}
+            />
 
             <Route
               path="/services/it-services"

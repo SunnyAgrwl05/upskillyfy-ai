@@ -28,10 +28,10 @@ export default function Login() {
         <div style={{ textAlign: 'center', marginBottom: 36 }}>
           <Link to="/" className="nav-logo" style={{ justifyContent: 'center', display: 'inline-flex', marginBottom: 24 }}>
             <span className="nav-logo-mark">U</span>
-            <span>Upskillyfy</span>
+            <span>Upskillyfy-ai</span>
           </Link>
           <h1 className="h1" style={{ fontSize: '1.8rem', marginBottom: 8 }}>Welcome Back 👋</h1>
-          <p className="muted">Login to your Upskillyfy account</p>
+          <p className="muted">Login to your Upskillyfy-ai account</p>
         </div>
         <div className="card">
           {error && (

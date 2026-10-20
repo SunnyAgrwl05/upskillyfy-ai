@@ -4,7 +4,7 @@ import { communityAPI } from '../../api'
 
 const FALLBACK = [
   { _id: '1', title: 'DSA Bootcamp', type: 'Workshop', description: 'Intensive 2-week DSA training with live sessions and problem-solving practice.', date: 'July 2026', mode: 'Online' },
-  { _id: '2', title: 'HackUpskillyfy 2026', type: 'Hackathon', description: '48-hour hackathon. Cash prizes + internship offers.', date: 'August 2026', mode: 'Hybrid' },
+  { _id: '2', title: 'HackUpskillyfy-ai 2026', type: 'Hackathon', description: '48-hour hackathon. Cash prizes + internship offers.', date: 'August 2026', mode: 'Hybrid' },
   { _id: '3', title: 'Placement Prep Webinar', type: 'Webinar', description: 'Weekly sessions on aptitude, coding and HR rounds.', date: 'Every Saturday', mode: 'Online' },
   { _id: '4', title: 'Web Dev Workshop', type: 'Workshop', description: 'Hands-on React.js workshop. Build 3 projects in 3 days.', date: 'July 2026', mode: 'Online' },
   { _id: '5', title: 'AI for Students Summit', type: 'Summit', description: 'Industry leaders on AI careers and opportunities.', date: 'September 2026', mode: 'Hybrid' },
