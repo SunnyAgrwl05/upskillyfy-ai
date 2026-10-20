@@ -84,8 +84,8 @@ export default function Footer() {
             <div className="f-social" style={{ marginTop: 24 }}>
               <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="f-soc-btn" aria-label="Twitter">𝕏</a>
               <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="f-soc-btn" aria-label="Facebook">f</a>
-              <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="f-soc-btn" aria-label="Instagram">◎</a>
-              <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="f-soc-btn" aria-label="LinkedIn">in</a>
+              <a href="https://www.instagram.com/upskillyfy/" target="_blank" rel="noopener noreferrer" className="f-soc-btn" aria-label="Instagram">◎</a>
+              <a href="https://www.linkedin.com/company/upskillyfy-ai/" target="_blank" rel="noopener noreferrer" className="f-soc-btn" aria-label="LinkedIn">in</a>
               <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="f-soc-btn" aria-label="YouTube">▶</a>
             </div>
           </div>
