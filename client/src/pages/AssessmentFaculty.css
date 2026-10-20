@@ -1,0 +1,557 @@
+/* =========================================================
+   UPSKILLYFY AI — FACULTY EXCELLENCE HUB STYLES
+   Google Cloud Theme & 100% Fluid Responsive Architecture
+   ========================================================= */
+
+.asm-faculty-page {
+  background: var(--bg);
+  color: var(--text);
+  overflow-x: hidden;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* =========================================================
+   HERO
+   ========================================================= */
+
+.asm-faculty-hero {
+  position: relative;
+  padding: 44px 0 48px;
+  text-align: center;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 12% 20%, rgba(0, 137, 123, 0.08), transparent 36%),
+    radial-gradient(circle at 88% 24%, rgba(66, 133, 244, 0.08), transparent 34%),
+    var(--bg);
+  border-bottom: 1px solid var(--border);
+  box-sizing: border-box;
+}
+
+[data-theme="dark"] .asm-faculty-hero {
+  background:
+    radial-gradient(circle at 12% 20%, rgba(0, 137, 123, 0.12), transparent 36%),
+    radial-gradient(circle at 88% 24%, rgba(66, 133, 244, 0.12), transparent 34%),
+    var(--bg);
+}
+
+.asm-fac-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.asm-fac-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.asm-fac-back:hover {
+  color: #00897b;
+  transform: translateX(-2px);
+}
+
+.asm-fac-switch-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-h);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.asm-fac-switch-btn:hover {
+  border-color: #1a73e8;
+  color: #1a73e8;
+  background: var(--accent-bg, #e8f0fe);
+}
+
+.asm-faculty-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border: 1px solid rgba(0, 137, 123, 0.25);
+  border-radius: 999px;
+  background: rgba(0, 137, 123, 0.08);
+  color: #00796b;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 18px;
+}
+
+[data-theme="dark"] .asm-faculty-eyebrow {
+  background: rgba(0, 137, 123, 0.16);
+  color: #80cbc4;
+  border-color: rgba(0, 137, 123, 0.35);
+}
+
+.asm-faculty-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #00897b;
+  box-shadow: 0 0 0 3px rgba(0, 137, 123, 0.25);
+  flex-shrink: 0;
+}
+
+.asm-faculty-title {
+  margin: 0 0 16px;
+  color: var(--text-h);
+  font-size: clamp(2rem, 4.2vw, 3.2rem);
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  font-weight: 700;
+  overflow-wrap: break-word;
+}
+
+.asm-faculty-title .grad.faculty {
+  background: linear-gradient(90deg, #00897b 0%, #00bfa5 60%, #1a73e8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.asm-faculty-sub {
+  color: var(--muted);
+  font-size: clamp(0.95rem, 1.2vw, 1.08rem);
+  line-height: 1.65;
+  margin: 0 auto 28px;
+  max-width: 720px;
+  overflow-wrap: break-word;
+}
+
+.asm-faculty-pills {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+}
+
+.fac-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 6px 14px;
+  border-radius: 999px;
+  box-shadow: 0 1px 3px rgba(60, 64, 67, 0.05);
+}
+
+/* =========================================================
+   SECTIONS
+   ========================================================= */
+
+.asm-faculty-section {
+  padding: 64px 0;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  box-sizing: border-box;
+}
+
+.asm-faculty-section.alt {
+  background: var(--bg-alt);
+}
+
+.asm-fac-sec-head {
+  max-width: 720px;
+  margin: 0 auto 40px;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.asm-fac-sec-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #00897b;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+[data-theme="dark"] .asm-fac-sec-eyebrow {
+  color: #80cbc4;
+}
+
+.asm-fac-sec-title {
+  margin: 0 0 12px;
+  font-size: clamp(1.6rem, 3vw, 2.25rem);
+  font-weight: 700;
+  color: var(--text-h);
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  overflow-wrap: break-word;
+}
+
+.asm-fac-sec-desc {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.65;
+  color: var(--muted);
+  overflow-wrap: break-word;
+}
+
+/* =========================================================
+   3 PILLARS GRID
+   ========================================================= */
+
+.asm-pillars-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: 24px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.asm-pillar-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px 24px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  box-sizing: border-box;
+}
+
+.asm-pillar-card:hover {
+  transform: translateY(-3px);
+  border-color: #00897b;
+  box-shadow: 0 10px 28px rgba(0, 137, 123, 0.1);
+}
+
+.pillar-num-badge {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--border);
+}
+
+.pillar-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.pillar-icon-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pillar-icon-circle.green {
+  background: rgba(0, 137, 123, 0.1);
+  color: #00897b;
+  border: 1px solid rgba(0, 137, 123, 0.25);
+}
+
+.pillar-icon-circle.blue {
+  background: var(--accent-bg, #e8f0fe);
+  color: var(--accent, #1a73e8);
+  border: 1px solid rgba(26, 115, 232, 0.25);
+}
+
+.pillar-icon-circle.amber {
+  background: rgba(251, 188, 5, 0.12);
+  color: #e37400;
+  border: 1px solid rgba(251, 188, 5, 0.25);
+}
+
+.pillar-header h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-h);
+  line-height: 1.3;
+}
+
+.pillar-summary {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--muted);
+  margin: 0 0 20px;
+}
+
+.pillar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pillar-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.86rem;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.pillar-list strong {
+  color: var(--text-h);
+}
+
+/* =========================================================
+   FACULTY TEST CARDS GRID
+   ========================================================= */
+
+.asm-faculty-tests-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+  gap: 22px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.asm-fac-test-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  box-shadow: 0 1px 3px rgba(60, 64, 67, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.asm-fac-test-card:hover {
+  transform: translateY(-2px);
+  border-color: #00897b;
+  box-shadow: 0 8px 24px rgba(0, 137, 123, 0.12);
+}
+
+.fac-test-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.fac-test-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  background: rgba(0, 137, 123, 0.1);
+  color: #00796b;
+  border: 1px solid rgba(0, 137, 123, 0.25);
+}
+
+[data-theme="dark"] .fac-test-badge {
+  color: #80cbc4;
+}
+
+.fac-test-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.fac-test-title {
+  margin: 0 0 10px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-h);
+  line-height: 1.35;
+  overflow-wrap: break-word;
+}
+
+.fac-test-desc {
+  margin: 0 0 18px;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--muted);
+  flex: 1;
+  overflow-wrap: break-word;
+}
+
+.fac-test-specs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 18px;
+}
+
+.spec-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.spec-item strong {
+  color: var(--text-h);
+}
+
+.fac-test-footer {
+  margin-top: auto;
+}
+
+.fac-attempt-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 42px;
+  border-radius: 8px;
+  background: #00897b;
+  color: #ffffff;
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.fac-attempt-btn:hover {
+  background: #00695c;
+  transform: translateY(-1px);
+}
+
+/* =========================================================
+   PROMPTS GRID
+   ========================================================= */
+
+.asm-prompts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: 20px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.asm-prompt-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.prompt-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.prompt-level-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  color: var(--text-h);
+}
+
+.prompt-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: 1px solid var(--border);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.prompt-copy-btn:hover {
+  border-color: #00897b;
+  color: #00897b;
+}
+
+.prompt-title {
+  margin: 0 0 10px;
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: var(--text-h);
+}
+
+.prompt-body {
+  background: var(--bg-alt);
+  border-radius: 8px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  flex: 1;
+}
+
+.prompt-body code {
+  font-family: inherit;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: var(--text);
+  white-space: pre-wrap;
+  display: block;
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 600px) {
+  .asm-faculty-hero {
+    padding: 32px 0 24px;
+  }
+  .asm-fac-top-bar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .asm-faculty-section {
+    padding: 40px 0;
+  }
+}

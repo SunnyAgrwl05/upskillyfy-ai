@@ -1,0 +1,485 @@
+/* =========================================================
+   UPSKILLYFY AI — ASSESSMENT HUB GATEWAY STYLES
+   Google Cloud Theme & 100% Fluid Responsive Architecture
+   ========================================================= */
+
+.asm-hub-page {
+  background: var(--bg);
+  color: var(--text);
+  overflow-x: hidden;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* =========================================================
+   HERO
+   ========================================================= */
+
+.asm-hub-hero {
+  position: relative;
+  padding: 56px 0 48px;
+  text-align: center;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 15% 20%, rgba(66, 133, 244, 0.08), transparent 36%),
+    radial-gradient(circle at 85% 24%, rgba(0, 137, 123, 0.08), transparent 34%),
+    var(--bg);
+  border-bottom: 1px solid var(--border);
+  box-sizing: border-box;
+}
+
+[data-theme="dark"] .asm-hub-hero {
+  background:
+    radial-gradient(circle at 15% 20%, rgba(66, 133, 244, 0.12), transparent 36%),
+    radial-gradient(circle at 85% 24%, rgba(0, 137, 123, 0.12), transparent 34%),
+    var(--bg);
+}
+
+.asm-hub-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border: 1px solid rgba(26, 115, 232, 0.25);
+  border-radius: 999px;
+  background: var(--accent-bg, #e8f0fe);
+  color: var(--accent, #1a73e8);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 18px;
+}
+
+[data-theme="dark"] .asm-hub-eyebrow {
+  background: rgba(26, 115, 232, 0.15);
+  border-color: rgba(26, 115, 232, 0.35);
+  color: #8ab4f8;
+}
+
+.asm-hub-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #34a853;
+  box-shadow: 0 0 0 3px rgba(52, 168, 83, 0.25);
+  flex-shrink: 0;
+}
+
+.asm-hub-title {
+  margin: 0 0 16px;
+  color: var(--text-h);
+  font-size: clamp(2.1rem, 4.2vw, 3.4rem);
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  font-weight: 700;
+  overflow-wrap: break-word;
+}
+
+.asm-hub-title .grad {
+  background: linear-gradient(90deg, #1a73e8 0%, #4285f4 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.asm-hub-title .grad.faculty {
+  background: linear-gradient(90deg, #00897b 0%, #00bfa5 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.asm-hub-sub {
+  color: var(--muted);
+  font-size: clamp(0.95rem, 1.2vw, 1.08rem);
+  line-height: 1.65;
+  margin: 0 auto 28px;
+  max-width: 720px;
+  overflow-wrap: break-word;
+}
+
+.asm-hub-badges-strip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  margin: 0;
+  padding: 0;
+}
+
+.hub-badge-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 6px 14px;
+  border-radius: 999px;
+  box-shadow: 0 1px 3px rgba(60, 64, 67, 0.05);
+}
+
+[data-theme="dark"] .hub-badge-item {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* =========================================================
+   SECTIONS
+   ========================================================= */
+
+.asm-hub-section {
+  padding: 64px 0;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  box-sizing: border-box;
+}
+
+.asm-hub-section.alt {
+  background: var(--bg-alt);
+}
+
+.asm-hub-sec-head {
+  max-width: 720px;
+  margin: 0 auto 40px;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.asm-hub-sec-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--accent, #1a73e8);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.asm-hub-sec-title {
+  margin: 0 0 12px;
+  font-size: clamp(1.6rem, 3vw, 2.25rem);
+  font-weight: 700;
+  color: var(--text-h);
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  overflow-wrap: break-word;
+}
+
+.asm-hub-sec-desc {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.65;
+  color: var(--muted);
+  overflow-wrap: break-word;
+}
+
+/* =========================================================
+   ROLE SELECTION CARDS
+   ========================================================= */
+
+.asm-hub-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 28px;
+  max-width: 1060px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.asm-role-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(60, 64, 67, 0.06);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+  position: relative;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.asm-role-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(60, 64, 67, 0.12);
+}
+
+.asm-role-card.student:hover {
+  border-color: #1a73e8;
+}
+
+.asm-role-card.faculty:hover {
+  border-color: #00897b;
+}
+
+[data-theme="dark"] .asm-role-card:hover {
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+
+.role-card-banner {
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.role-card-banner.student-banner {
+  background: rgba(26, 115, 232, 0.06);
+}
+
+.role-card-banner.faculty-banner {
+  background: rgba(0, 137, 123, 0.06);
+}
+
+.role-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+}
+
+.role-chip.student-chip { color: #1a73e8; }
+.role-chip.faculty-chip { color: #00897b; }
+
+.role-avail {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.role-card-body {
+  padding: 28px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  box-sizing: border-box;
+}
+
+.role-icon-box {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.role-icon-box.student-icon {
+  background: var(--accent-bg, #e8f0fe);
+  border: 1px solid rgba(26, 115, 232, 0.2);
+  color: #1a73e8;
+}
+
+.role-icon-box.faculty-icon {
+  background: rgba(0, 137, 123, 0.1);
+  border: 1px solid rgba(0, 137, 123, 0.25);
+  color: #00897b;
+}
+
+.role-card-title {
+  margin: 0 0 10px;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--text-h);
+  line-height: 1.3;
+}
+
+.role-card-desc {
+  margin: 0 0 22px;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.role-highlights {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+}
+
+.role-highlight-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.role-highlight-item strong {
+  color: var(--text-h);
+}
+
+.role-audiences {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.aud-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.aud-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.aud-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: rgba(26, 115, 232, 0.08);
+  color: #1967d2;
+  border: 1px solid rgba(26, 115, 232, 0.18);
+}
+
+.aud-tag.faculty {
+  background: rgba(0, 137, 123, 0.08);
+  color: #00796b;
+  border-color: rgba(0, 137, 123, 0.2);
+}
+
+[data-theme="dark"] .aud-tag {
+  color: #8ab4f8;
+}
+
+[data-theme="dark"] .aud-tag.faculty {
+  color: #80cbc4;
+}
+
+.role-card-footer {
+  margin-top: auto;
+  padding-top: 14px;
+}
+
+.role-enter-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 46px;
+  border-radius: 8px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  font-family: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.role-enter-btn.student-btn {
+  background: #1a73e8;
+  color: #ffffff;
+}
+
+.role-enter-btn.student-btn:hover {
+  background: #1557b0;
+  transform: translateY(-1px);
+}
+
+.role-enter-btn.faculty-btn {
+  background: #00897b;
+  color: #ffffff;
+}
+
+.role-enter-btn.faculty-btn:hover {
+  background: #00695c;
+  transform: translateY(-1px);
+}
+
+/* =========================================================
+   PILLARS GRID
+   ========================================================= */
+
+.asm-hub-pillars-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: 20px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.hub-pillar-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.pillar-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.hub-pillar-card h4 {
+  margin: 0 0 8px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-h);
+}
+
+.hub-pillar-card p {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+/* =========================================================
+   RESPONSIVE DESIGN
+   ========================================================= */
+
+@media (max-width: 860px) {
+  .asm-hub-cards-grid {
+    grid-template-columns: 1fr;
+    max-width: 560px;
+  }
+}
+
+@media (max-width: 600px) {
+  .asm-hub-hero {
+    padding: 38px 0 28px;
+  }
+  .asm-hub-section {
+    padding: 44px 0;
+  }
+  .role-card-body {
+    padding: 20px 16px 18px;
+  }
+}

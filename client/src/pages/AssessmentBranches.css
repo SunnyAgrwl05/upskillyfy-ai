@@ -1,0 +1,613 @@
+/* =========================================================
+   UPSKILLYFY AI — ASSESSMENT CENTRE
+   Google Cloud Design System & 100% Responsive Architecture
+   ========================================================= */
+
+.asm-page {
+  position: relative;
+  background: var(--bg);
+  color: var(--text);
+  overflow-x: hidden;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* =========================================================
+   HERO
+   ========================================================= */
+
+.asm-hero {
+  position: relative;
+  padding: 56px 0 48px;
+  text-align: center;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 14% 20%, rgba(66, 133, 244, 0.08), transparent 36%),
+    radial-gradient(circle at 86% 24%, rgba(123, 97, 255, 0.07), transparent 34%),
+    var(--bg);
+  border-bottom: 1px solid var(--border);
+  box-sizing: border-box;
+}
+
+[data-theme="dark"] .asm-hero {
+  background:
+    radial-gradient(circle at 14% 20%, rgba(66, 133, 244, 0.12), transparent 36%),
+    radial-gradient(circle at 86% 24%, rgba(123, 97, 255, 0.1), transparent 34%),
+    var(--bg);
+}
+
+.asm-top-portal-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.asm-portal-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.asm-portal-back:hover {
+  color: var(--accent, #1a73e8);
+  transform: translateX(-2px);
+}
+
+.asm-portal-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-h);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.asm-portal-switch:hover {
+  border-color: #00897b;
+  color: #00897b;
+  background: rgba(0, 137, 123, 0.08);
+}
+
+.asm-hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border: 1px solid rgba(26, 115, 232, 0.25);
+  border-radius: 999px;
+  background: var(--accent-bg, #e8f0fe);
+  color: var(--accent, #1a73e8);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 18px;
+}
+
+[data-theme="dark"] .asm-hero-eyebrow {
+  background: rgba(26, 115, 232, 0.15);
+  border-color: rgba(26, 115, 232, 0.35);
+  color: #8ab4f8;
+}
+
+.asm-live-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #34a853;
+  box-shadow: 0 0 0 3px rgba(52, 168, 83, 0.25);
+  flex-shrink: 0;
+}
+
+.asm-hero-title {
+  margin: 0 0 16px;
+  color: var(--text-h);
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  font-weight: 700;
+  overflow-wrap: break-word;
+}
+
+.asm-hero-title .grad {
+  background: linear-gradient(90deg, #1a73e8 0%, #4285f4 50%, #7b61ff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.asm-hero-sub {
+  color: var(--muted);
+  font-size: clamp(0.95rem, 1.2vw, 1.08rem);
+  line-height: 1.65;
+  margin: 0 auto 28px;
+  max-width: 680px;
+  overflow-wrap: break-word;
+}
+
+.asm-hero-points {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.asm-hero-points li {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 6px 14px;
+  border-radius: 999px;
+  box-shadow: 0 1px 3px rgba(60, 64, 67, 0.05);
+}
+
+[data-theme="dark"] .asm-hero-points li {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* =========================================================
+   SECTIONS
+   ========================================================= */
+
+.asm-section {
+  padding: 64px 0;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  box-sizing: border-box;
+}
+
+.asm-section.alt {
+  background: var(--bg-alt);
+}
+
+.asm-sec-head {
+  max-width: 720px;
+  margin: 0 auto 40px;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.asm-sec-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--accent, #1a73e8);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+[data-theme="dark"] .asm-sec-eyebrow {
+  color: #8ab4f8;
+}
+
+.asm-sec-title {
+  margin: 0 0 12px;
+  font-size: clamp(1.6rem, 3vw, 2.25rem);
+  font-weight: 700;
+  color: var(--text-h);
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  overflow-wrap: break-word;
+}
+
+.asm-sec-desc {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.65;
+  color: var(--muted);
+  overflow-wrap: break-word;
+}
+
+/* =========================================================
+   BRANCH GRID & CARDS
+   ========================================================= */
+
+.asm-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+  gap: 22px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.asm-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 24px;
+  min-width: 0;
+  box-sizing: border-box;
+  box-shadow: 0 1px 3px rgba(60, 64, 67, 0.06);
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.asm-card:hover {
+  border-color: var(--accent, #1a73e8);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(60, 64, 67, 0.12);
+}
+
+[data-theme="dark"] .asm-card:hover {
+  border-color: #8ab4f8;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.asm-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.asm-card-icon {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: var(--accent-bg, #e8f0fe);
+  border: 1px solid rgba(26, 115, 232, 0.18);
+  color: var(--accent, #1a73e8);
+}
+
+[data-theme="dark"] .asm-card-icon {
+  background: rgba(26, 115, 232, 0.15);
+  border-color: rgba(26, 115, 232, 0.3);
+  color: #8ab4f8;
+}
+
+.asm-branch-count {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+  background: rgba(26, 115, 232, 0.09);
+  color: #1967d2;
+  border: 1px solid rgba(26, 115, 232, 0.18);
+}
+
+[data-theme="dark"] .asm-branch-count {
+  background: rgba(26, 115, 232, 0.18);
+  color: #8ab4f8;
+}
+
+.asm-branch-count-meta {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.asm-card-title {
+  margin: 0 0 8px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-h);
+  line-height: 1.35;
+  overflow-wrap: break-word;
+}
+
+.asm-card-desc {
+  margin: 0 0 20px;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--muted);
+  overflow-wrap: break-word;
+  flex: 1;
+}
+
+.asm-card-footer {
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-sizing: border-box;
+}
+
+.asm-difficulty {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.asm-difficulty strong {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  color: var(--text-h);
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+
+.asm-explore {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--accent, #1a73e8);
+  transition: transform 0.15s ease;
+}
+
+.asm-card:hover .asm-explore {
+  transform: translateX(3px);
+}
+
+/* =========================================================
+   HOW IT WORKS — STEPS
+   ========================================================= */
+
+.asm-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
+  gap: 20px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.asm-step {
+  position: relative;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 24px;
+  min-width: 0;
+  box-sizing: border-box;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.asm-step:hover {
+  border-color: var(--accent, #1a73e8);
+  transform: translateY(-2px);
+}
+
+.asm-step-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--accent-bg, #e8f0fe);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+[data-theme="dark"] .asm-step-icon {
+  background: rgba(26, 115, 232, 0.15);
+}
+
+.asm-step-num {
+  position: absolute;
+  top: 22px;
+  right: 22px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--muted);
+  opacity: 0.5;
+}
+
+.asm-step h3 {
+  margin: 0 0 8px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-h);
+  line-height: 1.35;
+  overflow-wrap: break-word;
+}
+
+.asm-step p {
+  margin: 0;
+  font-size: 0.86rem;
+  line-height: 1.6;
+  color: var(--muted);
+  overflow-wrap: break-word;
+}
+
+/* =========================================================
+   CTA SECTION
+   ========================================================= */
+
+.asm-cta {
+  background: var(--cta-bg, #e8f0fe);
+  border: 1px solid rgba(26, 115, 232, 0.25);
+  border-radius: 20px;
+  padding: 48px 32px;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+[data-theme="dark"] .asm-cta {
+  background: rgba(26, 115, 232, 0.12);
+  border-color: rgba(26, 115, 232, 0.3);
+}
+
+.asm-cta-title {
+  margin: 0 0 12px;
+  font-size: clamp(1.5rem, 3vw, 2.1rem);
+  font-weight: 700;
+  color: var(--text-h);
+  letter-spacing: -0.02em;
+  overflow-wrap: break-word;
+}
+
+.asm-cta-sub {
+  max-width: 620px;
+  margin: 0 auto 26px;
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.65;
+  overflow-wrap: break-word;
+}
+
+.asm-cta-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.asm-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 10px 24px;
+  border-radius: 999px;
+  background: #1a73e8;
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  border: none;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.asm-btn:hover {
+  background: #1557b0;
+  transform: translateY(-1px);
+}
+
+.asm-btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 10px 24px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-h);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.asm-btn-outline:hover {
+  border-color: var(--accent, #1a73e8);
+  color: var(--accent, #1a73e8);
+  background: var(--accent-bg, #e8f0fe);
+}
+
+[data-theme="dark"] .asm-btn-outline:hover {
+  background: rgba(26, 115, 232, 0.15);
+  color: #8ab4f8;
+}
+
+/* =========================================================
+   LOADING SKELETON & EMPTY STATES
+   ========================================================= */
+
+.asm-card-skeleton {
+  min-height: 220px;
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  animation: asmPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes asmPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+.asm-empty {
+  text-align: center;
+  padding: 56px 20px;
+  color: var(--muted);
+}
+
+.asm-empty h2 {
+  margin: 16px 0 8px;
+  font-size: 1.25rem;
+  color: var(--text-h);
+}
+
+.asm-empty p {
+  margin: 0 auto 20px;
+  max-width: 480px;
+  line-height: 1.65;
+}
+
+/* =========================================================
+   RESPONSIVE DESIGN (Zero Horizontal Scroll)
+   ========================================================= */
+
+@media (max-width: 768px) {
+  .asm-hero {
+    padding: 40px 0 32px;
+  }
+  .asm-section {
+    padding: 44px 0;
+  }
+  .asm-cta {
+    padding: 36px 20px;
+  }
+  .asm-hero-points {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .asm-hero-points li {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .asm-cta-actions {
+    flex-direction: column;
+  }
+  .asm-btn, .asm-btn-outline {
+    width: 100%;
+  }
+  .asm-card-footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

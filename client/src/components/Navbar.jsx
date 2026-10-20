@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom'
-import { 
-  Menu, 
-  X, 
-  ChevronDown, 
-  Sun, 
-  Moon, 
-  ArrowRight, 
+import {
+  Menu,
+  X,
+  ChevronDown,
+  Sun,
+  Moon,
+  ArrowRight,
   Sparkles,
   LayoutDashboard,
   LogOut,
@@ -63,7 +63,7 @@ const NAV = [
       {
         heading: 'Prep Tools',
         items: [
-          { label: 'DSA Practice Hub', desc: 'Structured algorithms & coding track.', to: '/career/dsa' },
+          { label: 'Skill Assessments', desc: 'Portals for students & faculty upskilling.', to: '/assessment', badge: 'New' },
           { label: 'Resume Builder', desc: 'ATS-optimized resume generator.', to: '/career/resume' },
         ],
       },
@@ -189,9 +189,9 @@ export default function Navbar() {
                       aria-haspopup="menu"
                     >
                       <span>{item.label}</span>
-                      <ChevronDown 
-                        size={14} 
-                        className={`gcp-nav-chevron ${openMenu === i ? 'rotated' : ''}`} 
+                      <ChevronDown
+                        size={14}
+                        className={`gcp-nav-chevron ${openMenu === i ? 'rotated' : ''}`}
                       />
                     </button>
                   </li>
@@ -284,9 +284,9 @@ export default function Navbar() {
                 <div className="gcp-mega-intro">
                   <h3 className="gcp-mega-intro-title">{NAV[openMenu].intro.title}</h3>
                   <p className="gcp-mega-intro-desc">{NAV[openMenu].intro.desc}</p>
-                  <Link 
-                    to={NAV[openMenu].intro.to} 
-                    className="gcp-mega-intro-cta" 
+                  <Link
+                    to={NAV[openMenu].intro.to}
+                    className="gcp-mega-intro-cta"
                     onClick={() => setOpenMenu(null)}
                   >
                     <span>{NAV[openMenu].intro.cta}</span>
@@ -300,10 +300,10 @@ export default function Navbar() {
                     <div className="gcp-mega-col-heading">{col.heading}</div>
                     <div className="gcp-mega-list">
                       {col.items.map((it) => (
-                        <Link 
-                          key={it.label} 
-                          to={it.to} 
-                          className="gcp-mega-item" 
+                        <Link
+                          key={it.label}
+                          to={it.to}
+                          className="gcp-mega-item"
                           onClick={() => setOpenMenu(null)}
                         >
                           <div className="gcp-mega-item-top">
@@ -337,9 +337,8 @@ export default function Navbar() {
                   <span>{item.label}</span>
                   <ChevronDown
                     size={16}
-                    className={`gcp-mob-accordion-chevron ${
-                      mobExpandedSection === item.label ? 'rotated' : ''
-                    }`}
+                    className={`gcp-mob-accordion-chevron ${mobExpandedSection === item.label ? 'rotated' : ''
+                      }`}
                   />
                 </button>
 
@@ -378,17 +377,17 @@ export default function Navbar() {
             <div className="gcp-mob-auth-btns">
               {user ? (
                 <>
-                  <Link 
-                    to="/dashboard" 
-                    className="gcp-mob-btn-outline" 
+                  <Link
+                    to="/dashboard"
+                    className="gcp-mob-btn-outline"
                     onClick={() => setMobOpen(false)}
                   >
                     <LayoutDashboard size={16} style={{ marginRight: 6 }} />
                     <span>Dashboard</span>
                   </Link>
-                  <button 
-                    type="button" 
-                    onClick={handleLogout} 
+                  <button
+                    type="button"
+                    onClick={handleLogout}
                     className="gcp-mob-btn-primary"
                   >
                     <LogOut size={16} style={{ marginRight: 6 }} />
@@ -397,16 +396,16 @@ export default function Navbar() {
                 </>
               ) : (
                 <>
-                  <Link 
-                    to="/login" 
-                    className="gcp-mob-btn-outline" 
+                  <Link
+                    to="/login"
+                    className="gcp-mob-btn-outline"
                     onClick={() => setMobOpen(false)}
                   >
                     <span>Sign In</span>
                   </Link>
-                  <Link 
-                    to="/register" 
-                    className="gcp-mob-btn-primary" 
+                  <Link
+                    to="/register"
+                    className="gcp-mob-btn-primary"
                     onClick={() => setMobOpen(false)}
                   >
                     <span>Create Free Account</span>

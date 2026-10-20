@@ -1,7 +1,15 @@
 import axios from 'axios'
 
+const getBaseURL = () => {
+  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL
+  // In development, default to local express server
+  if (import.meta.env.DEV) return 'http://localhost:5000/api'
+  // In production (e.g. Vercel), avoid pinging localhost:5000 to prevent PNA browser popup
+  return '/api'
+}
+
 const API = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+  baseURL: getBaseURL(),
 })
 
 API.interceptors.request.use((config) => {
@@ -54,6 +62,17 @@ export const resourceAPI = {
   getOne: (id) => API.get(`/resources/${id}`),
   download: (id) => API.post(`/resources/${id}/download`),
   bookmark: (id) => API.post(`/resources/${id}/bookmark`),
+}
+
+export const assessmentAPI = {
+  getBranches: () => API.get('/assessments/branches'),
+  getBranch: (branchId) => API.get(`/assessments/branches/${branchId}`),
+  getBranchTests: (branchId) => API.get(`/assessments/branches/${branchId}/tests`),
+  getTest: (testId) => API.get(`/assessments/tests/${testId}`),
+  getTestQuestions: (testId) => API.get(`/assessments/tests/${testId}/questions`),
+  startAttempt: (testId) => API.post('/assessments/attempts/start', { testId }),
+  submitAttempt: (payload) => API.post('/assessments/attempts/submit', payload),
+  getTestResult: (testId) => API.get(`/assessments/tests/${testId}/result`),
 }
 
 export default API

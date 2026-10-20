@@ -1,0 +1,411 @@
+/* =========================================================
+   UPSKILLYFY AI — ASSESSMENT BRANCH TESTS
+   Google Cloud Theme & 100% Fluid Responsive Architecture
+   ========================================================= */
+
+.asm-branch-page {
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  width: 100%;
+}
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.asm-branch-head {
+  padding: 44px 0 32px;
+  background:
+    radial-gradient(circle at 10% 20%, rgba(66, 133, 244, 0.08), transparent 35%),
+    radial-gradient(circle at 90% 20%, rgba(52, 168, 83, 0.06), transparent 35%),
+    var(--bg);
+  border-bottom: 1px solid var(--border);
+  box-sizing: border-box;
+}
+
+[data-theme="dark"] .asm-branch-head {
+  background:
+    radial-gradient(circle at 10% 20%, rgba(66, 133, 244, 0.12), transparent 35%),
+    radial-gradient(circle at 90% 20%, rgba(52, 168, 83, 0.08), transparent 35%),
+    var(--bg);
+}
+
+.asm-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-decoration: none;
+  margin-bottom: 16px;
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.asm-back:hover {
+  color: var(--accent, #1a73e8);
+  transform: translateX(-2px);
+}
+
+.asm-branch-eyebrow {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--accent, #1a73e8);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  padding: 3px 10px;
+  background: var(--accent-bg, #e8f0fe);
+  border-radius: 999px;
+  border: 1px solid rgba(26, 115, 232, 0.2);
+}
+
+[data-theme="dark"] .asm-branch-eyebrow {
+  background: rgba(26, 115, 232, 0.15);
+  color: #8ab4f8;
+}
+
+.asm-branch-title {
+  margin: 0 0 12px;
+  font-size: clamp(1.8rem, 3.5vw, 2.7rem);
+  font-weight: 700;
+  color: var(--text-h);
+  line-height: 1.2;
+  overflow-wrap: break-word;
+}
+
+.asm-branch-desc {
+  margin: 0;
+  font-size: 0.98rem;
+  line-height: 1.6;
+  color: var(--muted);
+  max-width: 720px;
+  overflow-wrap: break-word;
+}
+
+.asm-branch-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+
+.asm-branch-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.86rem;
+  color: var(--muted);
+  background: var(--bg-card);
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.asm-branch-stat strong {
+  color: var(--text-h);
+  font-weight: 700;
+}
+
+/* =========================================================
+   SEARCH TOOLBAR
+   ========================================================= */
+
+.asm-branch-section {
+  padding: 40px 0 64px;
+  box-sizing: border-box;
+}
+
+.asm-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 24px;
+  padding: 14px 18px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-sizing: border-box;
+}
+
+.asm-search {
+  position: relative;
+  flex: 1 1 240px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.asm-search svg {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.asm-search input {
+  width: 100%;
+  padding: 10px 38px 10px 40px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--text-h);
+  font-size: 0.9rem;
+  font-family: inherit;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.asm-search input:focus {
+  border-color: var(--accent, #1a73e8);
+  box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.15);
+}
+
+.asm-search-clear {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 22px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.asm-toolbar-count {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* =========================================================
+   TEST CARDS GRID
+   ========================================================= */
+
+.asm-test-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  gap: 20px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.asm-test-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 22px;
+  min-width: 0;
+  box-sizing: border-box;
+  box-shadow: 0 1px 3px rgba(60, 64, 67, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.asm-test-card:hover {
+  border-color: var(--accent, #1a73e8);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(60, 64, 67, 0.1);
+}
+
+[data-theme="dark"] .asm-test-card:hover {
+  border-color: #8ab4f8;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.asm-test-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.asm-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.asm-tag.green {
+  background: rgba(52, 168, 83, 0.12);
+  color: #188038;
+  border: 1px solid rgba(52, 168, 83, 0.25);
+}
+
+.asm-tag.amber {
+  background: rgba(251, 188, 5, 0.15);
+  color: #a86200;
+  border: 1px solid rgba(251, 188, 5, 0.3);
+}
+
+.asm-tag.red {
+  background: rgba(234, 67, 53, 0.12);
+  color: #c5221f;
+  border: 1px solid rgba(234, 67, 53, 0.25);
+}
+
+[data-theme="dark"] .asm-tag.green { color: #81c995; }
+[data-theme="dark"] .asm-tag.amber { color: #fdd663; }
+[data-theme="dark"] .asm-tag.red { color: #f88078; }
+
+.asm-test-questions {
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.asm-test-title {
+  margin: 0 0 8px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-h);
+  line-height: 1.35;
+  overflow-wrap: break-word;
+}
+
+.asm-test-desc {
+  margin: 0 0 16px;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--muted);
+  overflow-wrap: break-word;
+  flex: 1;
+}
+
+.asm-test-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.asm-test-meta li {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.asm-test-footer {
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.asm-test-marks {
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.asm-attempt-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: #1a73e8;
+  color: #ffffff;
+  font-size: 0.84rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  border: none;
+  transition: background 0.15s ease, transform 0.15s ease;
+  white-space: nowrap;
+}
+
+.asm-attempt-btn:hover {
+  background: #1557b0;
+  transform: translateY(-1px);
+}
+
+/* =========================================================
+   SAMPLE NOTE & EMPTY
+   ========================================================= */
+
+.asm-sample-note {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 32px;
+  padding: 12px 18px;
+  border-radius: 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.84rem;
+  box-sizing: border-box;
+}
+
+.asm-sample-note svg {
+  color: #34a853;
+  flex-shrink: 0;
+}
+
+.asm-sample-note p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.asm-test-skeleton {
+  min-height: 220px;
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  animation: asmPulse 1.4s ease-in-out infinite;
+}
+
+@media (max-width: 600px) {
+  .asm-branch-head {
+    padding: 32px 0 24px;
+  }
+  .asm-branch-stats {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .asm-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .asm-test-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .asm-attempt-btn {
+    justify-content: center;
+  }
+}

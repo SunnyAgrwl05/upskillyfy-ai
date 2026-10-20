@@ -12,6 +12,11 @@ import Contact from "./pages/Contact";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
+import AssessmentHub from "./pages/AssessmentHub";
+import AssessmentFaculty from "./pages/AssessmentFaculty";
+import AssessmentBranches from "./pages/AssessmentBranches";
+import AssessmentBranchTests from "./pages/AssessmentBranchTests";
+import AssessmentTest from "./pages/AssessmentTest";
 
 import ITServices from "./pages/Services/ITServices";
 import ITSupport from "./pages/Services/ITSupport";
@@ -40,6 +45,12 @@ export default function App() {
     <ThemeProvider>
       <AuthProvider>
         <Routes>
+          {/* Dedicated full-screen examination portal without Navbar or Footer */}
+          <Route
+            path="/assessment/test/:testId"
+            element={<AssessmentTest />}
+          />
+
           <Route element={<MainLayout />}>
             <Route path="/" element={<Home />} />
             <Route path="/about" element={<About />} />
@@ -48,7 +59,14 @@ export default function App() {
 
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/assessments" element={<AssessmentHub />} />
+            <Route path="/assessment" element={<AssessmentHub />} />
+            <Route path="/assessment/student" element={<AssessmentBranches />} />
+            <Route path="/assessment/faculty" element={<AssessmentFaculty />} />
+            <Route
+              path="/assessment/branch/:branchId"
+              element={<AssessmentBranchTests />}
+            />
 
             <Route
               path="/services/it-services"

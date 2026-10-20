@@ -8,6 +8,7 @@ import contactRoutes from './routes/contact.js'
 import userRoutes from './routes/users.js'
 import communityRoutes from './routes/community.js'
 import newsletterRoutes from './routes/newsletter.js'
+import assessmentRoutes from './routes/assessments.js'
 
 dotenv.config()
 
@@ -27,6 +28,7 @@ app.use('/api/contact', contactRoutes)
 app.use('/api/users', userRoutes)
 app.use('/api/community', communityRoutes)
 app.use('/api/newsletter', newsletterRoutes)
+app.use('/api/assessments', assessmentRoutes)
 
 // Health check
 app.get('/api/health', (req, res) => {
