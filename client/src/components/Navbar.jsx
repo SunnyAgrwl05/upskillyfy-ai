@@ -171,9 +171,9 @@ export default function Navbar() {
         <div className="container">
           <div className="gcp-navbar-inner">
             {/* BRAND LOGO */}
-            <Link to="/" className="gcp-nav-logo" aria-label="Upskillyfy Home">
+            <Link to="/" className="gcp-nav-logo" aria-label="Upskillyfy AI Home">
               <span className="gcp-nav-logo-mark">U</span>
-              <span className="gcp-nav-logo-text">Upskillyfy</span>
+              <span className="gcp-nav-logo-text">Upskillyfy AI</span>
             </Link>
 
             {/* DESKTOP NAVIGATION ITEMS */}

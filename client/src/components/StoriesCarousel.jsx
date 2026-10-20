@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 const stories = [
   {
     name: 'Kajal Kumari',
-    role: 'Upskillyfy learning journey',
+    role: 'Upskillyfy AI learning journey',
     text: 'Learning, building and discovering new opportunities with the Upskillyfy AI ecosystem.',
     tag: 'Community member',
     gradient: 'linear-gradient(135deg, #1a73e8 0%, #4285f4 100%)',
@@ -11,7 +11,7 @@ const stories = [
   },
   {
     name: 'Alok Raj',
-    role: 'Building with Upskillyfy',
+    role: 'Building with Upskillyfy AI',
     text: 'Exploring practical learning paths, projects and opportunities designed for the next generation of builders.',
     tag: 'Community member',
     gradient: 'linear-gradient(135deg, #174ea6 0%, #1a73e8 100%)',
@@ -20,14 +20,14 @@ const stories = [
   {
     name: 'Abhijeet Gupta',
     role: 'Growing through practical technology',
-    text: 'Turning technical learning into practical projects and experiences through Upskillyfy.',
+    text: 'Turning technical learning into practical projects and experiences through Upskillyfy AI.',
     tag: 'Community member',
     gradient: 'linear-gradient(135deg, #0b57d0 0%, #4285f4 100%)',
     image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80',
   },
   {
     name: 'Shrestha Saran',
-    role: 'Learning and building with Upskillyfy',
+    role: 'Learning and building with Upskillyfy AI',
     text: 'Finding resources, challenges and opportunities that make the journey from learning to building easier.',
     tag: 'Community member',
     gradient: 'linear-gradient(135deg, #1557b0 0%, #34a853 100%)',
@@ -35,7 +35,7 @@ const stories = [
   },
   {
     name: 'Tanya Gupta',
-    role: 'Developing skills with Upskillyfy',
+    role: 'Developing skills with Upskillyfy AI',
     text: 'Growing skills and staying connected with a community focused on learning, building and career growth.',
     tag: 'Community member',
     gradient: 'linear-gradient(135deg, #1a3fa0 0%, #7b61ff 100%)',
@@ -262,7 +262,7 @@ export function StoriesSection() {
           </h2>
 
           <p>
-            Discover how learners and builders are using Upskillyfy
+            Discover how learners and builders are using Upskillyfy AI
             to learn new skills, build projects and find their next
             opportunity.
           </p>

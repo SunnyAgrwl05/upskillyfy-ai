@@ -21,6 +21,7 @@ import UIUX from "./pages/Services/UIUX";
 import Cloud from "./pages/Services/Cloud";
 
 import Internships from "./pages/Career/Internships";
+import InternshipDetail from "./pages/Career/InternshipDetail";
 import Placements from "./pages/Career/Placements";
 import DSAHub from "./pages/Career/DSAHub";
 import ResumeBuilder from "./pages/Career/ResumeBuilder";
@@ -71,6 +72,18 @@ export default function App() {
             <Route
               path="/career/internships"
               element={<Internships />}
+            />
+            <Route
+              path="/career/internships/:id"
+              element={<InternshipDetail />}
+            />
+            <Route
+              path="/internships"
+              element={<Internships />}
+            />
+            <Route
+              path="/internships/:id"
+              element={<InternshipDetail />}
             />
             <Route
               path="/career/placements"

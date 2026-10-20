@@ -1003,7 +1003,7 @@ export default function CoursePlayer() {
             </div>
 
             <div style={{ fontSize: '0.74rem', textTransform: 'uppercase', letterSpacing: '.08em', color: 'var(--gcp-blue)', fontWeight: 700 }}>
-              Upskillyfy Academy • Google Cloud Track
+              Upskillyfy AI Academy • Google Cloud Track
             </div>
 
             <h2 style={{ fontSize: '1.45rem', margin: '6px 0 10px', color: 'var(--text-h)' }}>

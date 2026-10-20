@@ -18,7 +18,7 @@ export default function AIAutomation() {
               <div className="eyebrow">Intelligent Automation</div>
               <h2 style={{ marginBottom: 20, color: 'var(--text-h)' }}>Let AI handle the repetitive work.</h2>
               <p style={{ color: 'var(--muted)', lineHeight: 1.7 }}>
-                Upskillyfy builds AI-powered solutions that automate repetitive tasks, enhance customer interactions, and turn data into actionable insights. From chatbots to predictive analytics, we help you work smarter.
+                Upskillyfy AI builds AI-powered solutions that automate repetitive tasks, enhance customer interactions, and turn data into actionable insights. From chatbots to predictive analytics, we help you work smarter.
               </p>
               <div style={{ marginTop: 28 }}>
                 <Link to="/contact" className="btn-primary">Explore AI Solutions →</Link>

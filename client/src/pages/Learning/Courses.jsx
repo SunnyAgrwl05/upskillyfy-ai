@@ -398,7 +398,7 @@ export default function Courses() {
 
                       {/* Instructor / Track Meta */}
                       <div className="gcp-card-instructor-meta">
-                        <span>By {c.instructor?.name?.split('&')[0] || 'Upskillyfy Mentors'}</span>
+                        <span>By {c.instructor?.name?.split('&')[0] || 'Upskillyfy AI Mentors'}</span>
                       </div>
 
                       {/* Footer: Rating, Lessons, and Actions */}
@@ -616,7 +616,7 @@ export default function Courses() {
           </h2>
           <p className="muted" style={{ marginBottom: 20, fontSize: '0.9rem', lineHeight: 1.6 }}>
             Pick a track, follow the hands-on video modules, complete knowledge checkpoints,
-            and earn an industry-verifiable Upskillyfy completion certificate.
+            and earn an industry-verifiable Upskillyfy AI completion certificate.
           </p>
           <div style={{ display: 'flex', justifyContent: 'center', gap: 12, flexWrap: 'wrap' }}>
             <Link to="/career/internships" className="btn-primary">

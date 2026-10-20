@@ -1,0 +1,264 @@
+/* =========================================================
+   UPSKILLYFY — CAMPUS AMBASSADOR (Google Cloud Theme)
+   ========================================================= */
+
+.ambassador-page {
+  position: relative;
+  background: var(--bg);
+  color: var(--text);
+  overflow-x: hidden;
+  width: 100%;
+}
+
+/* Page Hero */
+.ambassador-hero {
+  position: relative;
+  padding: 48px 0 44px;
+  background:
+    radial-gradient(circle at 12% 20%, rgba(66, 133, 244, 0.08), transparent 35%),
+    radial-gradient(circle at 88% 20%, rgba(123, 97, 255, 0.07), transparent 35%),
+    var(--bg);
+  border-bottom: 1px solid var(--border);
+  box-sizing: border-box;
+}
+
+[data-theme="dark"] .ambassador-hero {
+  background:
+    radial-gradient(circle at 12% 20%, rgba(66, 133, 244, 0.12), transparent 35%),
+    radial-gradient(circle at 88% 20%, rgba(123, 97, 255, 0.09), transparent 35%),
+    var(--bg);
+}
+
+.ambassador-hero-header {
+  max-width: 860px;
+}
+
+.ambassador-hero-title {
+  font-size: clamp(2.1rem, 4.2vw, 3.4rem);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  color: var(--text-h);
+  margin: 16px 0;
+  word-break: break-word;
+}
+
+.ambassador-hero-title .grad {
+  background: linear-gradient(90deg, #1a73e8 0%, #4285f4 45%, #7b61ff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.ambassador-hero-sub {
+  font-size: 1.05rem;
+  line-height: 1.65;
+  color: var(--muted);
+  max-width: 760px;
+  margin: 0 0 28px;
+}
+
+/* Metrics Row */
+.ambassador-metrics-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 36px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+
+.ambassador-metric-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px 20px;
+  box-sizing: border-box;
+}
+
+.ambassador-metric-num {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #1a73e8;
+  line-height: 1.2;
+}
+
+[data-theme="dark"] .ambassador-metric-num {
+  color: #8ab4f8;
+}
+
+.ambassador-metric-lbl {
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-weight: 500;
+  margin-top: 4px;
+}
+
+/* Application Form Card */
+.ambassador-form-container {
+  max-width: 760px;
+  margin: 0 auto;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 36px 32px;
+  box-shadow: 0 4px 20px rgba(60, 64, 67, 0.08);
+  box-sizing: border-box;
+}
+
+[data-theme="dark"] .ambassador-form-container {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+}
+
+.ambassador-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.ambassador-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ambassador-form-field.full {
+  grid-column: span 2;
+}
+
+.ambassador-form-field label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.ambassador-form-field input,
+.ambassador-form-field select,
+.ambassador-form-field textarea {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 0.88rem;
+  color: var(--text);
+  outline: none;
+  font-family: inherit;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease;
+}
+
+.ambassador-form-field input:focus,
+.ambassador-form-field select:focus,
+.ambassador-form-field textarea:focus {
+  border-color: #1a73e8;
+}
+
+/* Perks Card */
+.ambassador-perk-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  box-sizing: border-box;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.ambassador-perk-card:hover {
+  transform: translateY(-2px);
+  border-color: #1a73e8;
+}
+
+.ambassador-perk-icon-box {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: rgba(26, 115, 232, 0.1);
+  color: #1a73e8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+[data-theme="dark"] .ambassador-perk-icon-box {
+  background: rgba(138, 180, 248, 0.15);
+  color: #8ab4f8;
+}
+
+.ambassador-perk-title {
+  font-size: 0.94rem;
+  font-weight: 700;
+  color: var(--text-h);
+  margin: 0 0 4px;
+}
+
+.ambassador-perk-desc {
+  font-size: 0.82rem;
+  color: var(--muted);
+  line-height: 1.45;
+  margin: 0;
+}
+
+/* FAQs */
+.ambassador-faq-list {
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ambassador-faq-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px 24px;
+  box-sizing: border-box;
+}
+
+.ambassador-faq-q {
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: var(--text-h);
+  margin: 0 0 6px;
+}
+
+.ambassador-faq-a {
+  font-size: 0.88rem;
+  color: var(--muted);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .ambassador-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ambassador-form-field.full {
+    grid-column: span 1;
+  }
+
+  .ambassador-form-container {
+    padding: 24px 18px;
+  }
+
+  .ambassador-metrics-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .ambassador-hero {
+    padding: 32px 0 36px;
+  }
+
+  .ambassador-metrics-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}

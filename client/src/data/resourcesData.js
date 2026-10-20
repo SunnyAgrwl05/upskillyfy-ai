@@ -13,7 +13,7 @@ export const RESOURCES_DATA = [
     pages: '42 Pages',
     downloadsCount: '28,400+',
     rating: 4.96,
-    author: 'Upskillyfy Cloud Engineering Guild',
+    author: 'Upskillyfy AI Cloud Engineering Guild',
     updatedAt: 'October 2025',
     tags: ['Google Cloud', 'ACE Exam', 'GKE', 'IAM', 'VPC Networking'],
     previewSummary: 'Engineered for candidates preparing for the Google Cloud Associate Cloud Engineer credential and junior SREs. This visual handbook condenses hundreds of pages of official documentation into high-yield architecture decision trees, gcloud CLI syntax tables, and service comparison matrices.',
@@ -48,7 +48,7 @@ gcloud container clusters get-credentials prod-cluster --region us-central1`,
       'Section 6: Cloud IAM Roles (Primitive vs Predefined vs Custom)',
       'Section 7: Cloud Monitoring, Cloud Logging, and Alert Policies'
     ],
-    downloadFileName: 'Upskillyfy_GCP_ACE_CheatSheet_v2025.pdf'
+    downloadFileName: 'Upskillyfy_AI_GCP_ACE_CheatSheet_v2025.pdf'
   },
   {
     id: 'dsa-450-interview-roadmap',
@@ -98,7 +98,7 @@ int minSubArrayLen(int target, vector<int>& nums) {
       'Pattern 6: Graph Traversals (Dijkstra, Bellman-Ford, Prim)',
       'Pattern 7: Dynamic Programming (1D, 2D, Grid Paths, Subsequences)'
     ],
-    downloadFileName: 'Upskillyfy_DSA_450_Master_Handbook.pdf'
+    downloadFileName: 'Upskillyfy_AI_DSA_450_Master_Handbook.pdf'
   },
   {
     id: 'system-design-primer-faang',
@@ -146,7 +146,7 @@ Send packet CA -> Netherlands: 150,000,000  ns`,
       'Chapter 6: Case Study: Global Distributed Rate Limiter',
       'Chapter 7: Case Study: Real-Time Collaborative Document Editor'
     ],
-    downloadFileName: 'Upskillyfy_System_Design_Blueprint_2025.pdf'
+    downloadFileName: 'Upskillyfy_AI_System_Design_Blueprint_2025.pdf'
   },
   {
     id: 'fullstack-react-node-handbook',
@@ -162,7 +162,7 @@ Send packet CA -> Netherlands: 150,000,000  ns`,
     pages: '58 Pages',
     downloadsCount: '22,700+',
     rating: 4.89,
-    author: 'Upskillyfy Full-Stack Mentorship Guild',
+    author: 'Upskillyfy AI Full-Stack Mentorship Guild',
     updatedAt: 'August 2025',
     tags: ['React 19', 'Node.js', 'PostgreSQL', 'REST & GraphQL', 'Docker'],
     previewSummary: 'Build web applications that stand up to real production workloads. Covers server-side and client-side best practices, database indexing, connection pooling, automated API documentation with Swagger/OpenAPI, and automated CI/CD pipeline configs.',
@@ -188,7 +188,7 @@ res.cookie('refreshToken', token, {
       'Module 5: Real-Time Communication with WebSockets (Socket.io & ws)',
       'Module 6: Containerization with Multi-Stage Dockerfiles'
     ],
-    downloadFileName: 'Upskillyfy_FullStack_React_Node_Handbook.pdf'
+    downloadFileName: 'Upskillyfy_AI_FullStack_React_Node_Handbook.pdf'
   },
   {
     id: 'genai-prompt-engineering-guide',
@@ -240,7 +240,7 @@ model = genai.GenerativeModel('gemini-1.5-pro', tools=[db_tool])`,
       'Chapter 5: Guardrails, Toxicity Filtering & Output Validation with Pydantic',
       'Chapter 6: Evaluating LLM Outputs with RAGAS metrics'
     ],
-    downloadFileName: 'Upskillyfy_GenAI_Gemini_Reference_Manual.pdf'
+    downloadFileName: 'Upskillyfy_AI_GenAI_Gemini_Reference_Manual.pdf'
   },
   {
     id: 'core-engg-iot-embedded-guide',
@@ -289,7 +289,7 @@ void vSensorTask(void *pvParameters) {
       'Section 5: Wireless Connectivity: Wi-Fi, BLE 5.0, LoRaWAN, and Zigbee',
       'Section 6: Cloud Ingestion with MQTT, TLS 1.3, and Cloud Functions'
     ],
-    downloadFileName: 'Upskillyfy_IoT_Embedded_Systems_Blueprint.pdf'
+    downloadFileName: 'Upskillyfy_AI_IoT_Embedded_Systems_Blueprint.pdf'
   },
   {
     id: 'faang-placement-interview-kit',
@@ -328,7 +328,7 @@ R (Result): We delivered on time with 0 double-entry billing inconsistencies dur
       'Part 5: Behavioral & HR Rounds: Mastering the STAR Framework',
       'Part 6: Cold Outreach & LinkedIn Networking Scripts that Get Referrals'
     ],
-    downloadFileName: 'Upskillyfy_Placement_Interview_Master_Kit.pdf'
+    downloadFileName: 'Upskillyfy_AI_Placement_Interview_Master_Kit.pdf'
   },
   {
     id: 'kubernetes-production-poster',
@@ -368,6 +368,6 @@ R (Result): We delivered on time with 0 double-entry billing inconsistencies dur
       'Component 4: Pod Lifecycle & Hook Execution Order',
       'Component 5: ConfigMaps, Secrets & RBAC ServiceAccounts'
     ],
-    downloadFileName: 'Upskillyfy_Kubernetes_Architecture_Infographic.pdf'
+    downloadFileName: 'Upskillyfy_AI_Kubernetes_Architecture_Infographic.pdf'
   }
 ]
