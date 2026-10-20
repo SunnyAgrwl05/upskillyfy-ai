@@ -26,7 +26,9 @@ import DSAHub from "./pages/Career/DSAHub";
 import ResumeBuilder from "./pages/Career/ResumeBuilder";
 
 import Courses from "./pages/Learning/Courses";
+import CoursePlayer from "./pages/Learning/CoursePlayer";
 import Roadmaps from "./pages/Learning/Roadmaps";
+import RoadmapDetail from "./pages/Learning/RoadmapDetail";
 import Resources from "./pages/Learning/Resources";
 
 import Events from "./pages/Community/Events";
@@ -89,11 +91,35 @@ export default function App() {
               element={<Courses />}
             />
             <Route
+              path="/learning/courses/:courseId"
+              element={<CoursePlayer />}
+            />
+            <Route
+              path="/courses"
+              element={<Courses />}
+            />
+            <Route
+              path="/courses/:courseId"
+              element={<CoursePlayer />}
+            />
+            <Route
               path="/learning/roadmaps"
               element={<Roadmaps />}
             />
             <Route
+              path="/learning/roadmaps/:roadmapId"
+              element={<RoadmapDetail />}
+            />
+            <Route
+              path="/roadmaps/:roadmapId"
+              element={<RoadmapDetail />}
+            />
+            <Route
               path="/learning/resources"
+              element={<Resources />}
+            />
+            <Route
+              path="/resources"
               element={<Resources />}
             />
             <Route

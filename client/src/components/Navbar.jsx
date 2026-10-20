@@ -1,32 +1,45 @@
 import { useState, useEffect, useRef } from 'react'
-import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom'
+import { 
+  Menu, 
+  X, 
+  ChevronDown, 
+  Sun, 
+  Moon, 
+  ArrowRight, 
+  Sparkles,
+  LayoutDashboard,
+  LogOut,
+  UserCheck
+} from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
+import './Navbar.css'
 
 const NAV = [
   {
     label: 'Services',
     intro: {
-      title: 'Technology services built for what comes next',
-      desc: 'From software development to AI automation and cloud, we help teams and businesses move forward.',
-      cta: 'Explore all services',
+      title: 'Enterprise Technology Services',
+      desc: 'Full-cycle engineering from AI automation and cloud systems to custom web and mobile development.',
+      cta: 'Explore All Services',
       to: '/services/it-services',
     },
     columns: [
       {
-        heading: 'Core services',
+        heading: 'Core Engineering',
         items: [
-          { label: 'IT Services', desc: 'Custom software, web and application development.', to: '/services/it-services' },
-          { label: 'IT Support', desc: 'Reliable technical support for teams and organizations.', to: '/services/it-support' },
-          { label: 'IT Consulting', desc: 'Technology strategy and digital transformation.', to: '/services/it-consulting' },
+          { label: 'IT Services', desc: 'Custom software & web applications.', to: '/services/it-services' },
+          { label: 'IT Consulting', desc: 'Modernization, architecture & audit.', to: '/services/it-consulting' },
+          { label: 'IT Support', desc: '24/7 technical infrastructure support.', to: '/services/it-support' },
         ],
       },
       {
-        heading: 'Emerging technology',
+        heading: 'Emerging Tech',
         items: [
-          { label: 'AI Automation', desc: 'AI-powered workflows and intelligent automation.', to: '/services/ai-automation' },
-          { label: 'UI/UX', desc: 'User-centered digital product design.', to: '/services/uiux' },
-          { label: 'Cloud', desc: 'Cloud adoption, deployment and modernization.', to: '/services/cloud' },
+          { label: 'AI Automation', desc: 'Autonomous workflows, LLMs & agents.', to: '/services/ai-automation', badge: 'AI' },
+          { label: 'Cloud Architecture', desc: 'GCP, AWS & multi-cloud DevOps.', to: '/services/cloud' },
+          { label: 'UI/UX Design', desc: 'Design systems & user experience.', to: '/services/uiux' },
         ],
       },
     ],
@@ -34,24 +47,24 @@ const NAV = [
   {
     label: 'Career Hub',
     intro: {
-      title: 'Your next opportunity starts here',
-      desc: 'Internships, placement preparation, DSA practice and career resources for every stage of your journey.',
+      title: 'Accelerate Your Tech Career',
+      desc: 'Verified internships, placement drives, live DSA practice and modern ATS resume tools.',
       cta: 'Explore Career Hub',
       to: '/career/internships',
     },
     columns: [
       {
-        heading: 'Career',
+        heading: 'Opportunities',
         items: [
-          { label: 'Internships', desc: 'Find opportunities across technology and core engineering.', to: '/career/internships' },
-          { label: 'Placements', desc: 'Prepare for company drives and interview rounds.', to: '/career/placements' },
+          { label: 'Internships', desc: 'Live industry internship programs.', to: '/career/internships', badge: 'Hiring' },
+          { label: 'Placements', desc: 'Campus & off-campus hiring drives.', to: '/career/placements' },
         ],
       },
       {
-        heading: 'Preparation',
+        heading: 'Prep Tools',
         items: [
-          { label: 'DSA Hub', desc: 'Structured problem sets and learning tracks.', to: '/career/dsa' },
-          { label: 'Resume Builder', desc: 'Build an ATS-friendly resume.', to: '/career/resume' },
+          { label: 'DSA Practice Hub', desc: 'Structured algorithms & coding track.', to: '/career/dsa' },
+          { label: 'Resume Builder', desc: 'ATS-optimized resume generator.', to: '/career/resume' },
         ],
       },
     ],
@@ -59,24 +72,24 @@ const NAV = [
   {
     label: 'Learning',
     intro: {
-      title: 'Learn skills that move with the industry',
-      desc: 'Courses, roadmaps and practical resources mapped to real roles and real projects.',
-      cta: 'Explore learning',
-      to: '/learning/courses',
+      title: 'Skill-First Engineering Curriculum',
+      desc: 'Step-by-step role roadmaps, hands-on cloud labs, and practical developer resources.',
+      cta: 'Explore All Roadmaps',
+      to: '/learning/roadmaps',
     },
     columns: [
       {
-        heading: 'Learn',
+        heading: 'Curriculum',
         items: [
-          { label: 'Courses', desc: 'Self-paced, project-based learning.', to: '/learning/courses' },
-          { label: 'Roadmaps', desc: 'Step-by-step paths by role.', to: '/learning/roadmaps' },
+          { label: 'Career Roadmaps', desc: 'Interactive step-by-step tracks.', to: '/learning/roadmaps', badge: 'New' },
+          { label: 'Course Catalog', desc: 'Project-driven code workspaces.', to: '/learning/courses' },
         ],
       },
       {
-        heading: 'Resources',
+        heading: 'Knowledge',
         items: [
-          { label: 'Resources', desc: 'Notes, sheets and reading lists.', to: '/learning/resources' },
-          { label: 'DSA Hub', desc: 'Practice problems and tracks.', to: '/career/dsa' },
+          { label: 'Docs & Resources', desc: 'Cheatsheets, tools & repositories.', to: '/learning/resources' },
+          { label: 'Certifications', desc: 'Industry certification paths.', to: '/learning/certifications' },
         ],
       },
     ],
@@ -87,214 +100,320 @@ const NAV = [
 ]
 
 export default function Navbar() {
-  const [mob, setMob] = useState(false)
+  const [mobOpen, setMobOpen] = useState(false)
   const [openMenu, setOpenMenu] = useState(null)
+  const [mobExpandedSection, setMobExpandedSection] = useState(null)
 
   const { user, logout } = useAuth()
   const { theme, toggle } = useTheme()
   const navigate = useNavigate()
-
+  const location = useLocation()
   const navRef = useRef(null)
 
   const handleLogout = () => {
     logout()
     navigate('/')
+    setMobOpen(false)
   }
 
+  // Close menus on page route changes
   useEffect(() => {
-    const onClick = (e) => {
+    setOpenMenu(null)
+    setMobOpen(false)
+  }, [location.pathname])
+
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (mobOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'unset'
+    }
+    return () => {
+      document.body.style.overflow = 'unset'
+    }
+  }, [mobOpen])
+
+  // Click outside to close desktop mega menu
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
       if (navRef.current && !navRef.current.contains(e.target)) {
         setOpenMenu(null)
       }
     }
 
-    const onKey = (e) => {
+    const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
         setOpenMenu(null)
-        setMob(false)
+        setMobOpen(false)
       }
     }
 
-    document.addEventListener('mousedown', onClick)
-    document.addEventListener('keydown', onKey)
+    document.addEventListener('mousedown', handleOutsideClick)
+    document.addEventListener('keydown', handleKeyDown)
 
     return () => {
-      document.removeEventListener('mousedown', onClick)
-      document.removeEventListener('keydown', onKey)
+      document.removeEventListener('mousedown', handleOutsideClick)
+      document.removeEventListener('keydown', handleKeyDown)
     }
   }, [])
 
-  useEffect(() => {
-    setOpenMenu(null)
-    setMob(false)
-  }, [navigate])
+  const toggleMobileAccordion = (label) => {
+    setMobExpandedSection((prev) => (prev === label ? null : label))
+  }
 
   return (
     <>
-      <nav className="navbar" ref={navRef}>
-        <div className="nav-inner">
+      <header className="gcp-navbar-wrap" ref={navRef}>
+        {/* Signature 4-Color Accent Line */}
+        <div className="gcp-navbar-accent" />
 
-          {/* LOGO */}
-          <Link to="/" className="nav-logo">
-            <span className="nav-logo-mark">U</span>
-            <span>Upskillyfy</span>
-          </Link>
+        <div className="container">
+          <div className="gcp-navbar-inner">
+            {/* BRAND LOGO */}
+            <Link to="/" className="gcp-nav-logo" aria-label="Upskillyfy Home">
+              <span className="gcp-nav-logo-mark">U</span>
+              <span className="gcp-nav-logo-text">Upskillyfy</span>
+            </Link>
 
-          {/* DESKTOP NAVIGATION */}
-          <ul className="nav-menu">
-            {NAV.map((item, i) =>
-              item.columns ? (
-                <li className="nav-item" key={i}>
-                  <button
-                    className={`nav-link${openMenu === i ? ' on' : ''}`}
-                    onClick={() => setOpenMenu(openMenu === i ? null : i)}
-                    aria-expanded={openMenu === i}
-                    aria-haspopup="menu"
-                  >
-                    {item.label}
-                    <span className={`nav-caret${openMenu === i ? ' up' : ''}`}>▾</span>
-                  </button>
-                </li>
-              ) : (
-                <li className="nav-item" key={i}>
-                  <NavLink
-                    to={item.to}
-                    className={({ isActive }) => `nav-link${isActive ? ' on' : ''}`}
-                  >
-                    {item.label}
-                  </NavLink>
-                </li>
-              )
-            )}
-          </ul>
-
-          {/* RIGHT ACTIONS */}
-          <div className="nav-acts">
-            <button
-              onClick={toggle}
-              className="theme-toggle"
-              title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-              aria-label="Toggle theme"
-            >
-              {theme === 'dark' ? (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="5" />
-                  <line x1="12" y1="1" x2="12" y2="3" />
-                  <line x1="12" y1="21" x2="12" y2="23" />
-                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                  <line x1="1" y1="12" x2="3" y2="12" />
-                  <line x1="21" y1="12" x2="23" y2="12" />
-                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-                  <line x1="5.64" y1="18.36" x2="4.22" y2="19.78" />
-                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-                </svg>
-              ) : (
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-                </svg>
+            {/* DESKTOP NAVIGATION ITEMS */}
+            <ul className="gcp-nav-menu">
+              {NAV.map((item, i) =>
+                item.columns ? (
+                  <li className="gcp-nav-item" key={item.label}>
+                    <button
+                      type="button"
+                      className={`gcp-nav-link-btn ${openMenu === i ? 'active' : ''}`}
+                      onClick={() => setOpenMenu(openMenu === i ? null : i)}
+                      aria-expanded={openMenu === i}
+                      aria-haspopup="menu"
+                    >
+                      <span>{item.label}</span>
+                      <ChevronDown 
+                        size={14} 
+                        className={`gcp-nav-chevron ${openMenu === i ? 'rotated' : ''}`} 
+                      />
+                    </button>
+                  </li>
+                ) : (
+                  <li className="gcp-nav-item" key={item.label}>
+                    <NavLink
+                      to={item.to}
+                      className={({ isActive }) => `gcp-nav-link ${isActive ? 'active' : ''}`}
+                    >
+                      {item.label}
+                    </NavLink>
+                  </li>
+                )
               )}
-              <span className="theme-label">{theme === 'dark' ? 'Light' : 'Dark'}</span>
-            </button>
+            </ul>
 
-            {user ? (
-              <>
-                <Link to="/dashboard" className="btn-g btn-sm">Dashboard</Link>
-                <button onClick={handleLogout} className="btn-primary btn-sm">Logout</button>
-              </>
-            ) : (
-              <>
-                <Link to="/login" className="btn-g btn-sm">Login</Link>
-                <Link to="/register" className="btn-primary btn-sm">Join Free</Link>
-              </>
-            )}
+            {/* RIGHT ACTIONS */}
+            <div className="gcp-nav-actions">
+              {/* Theme Switcher Toggle */}
+              <button
+                type="button"
+                onClick={toggle}
+                className="gcp-nav-theme-btn"
+                title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                aria-label="Toggle visual theme"
+              >
+                {theme === 'dark' ? (
+                  <Sun size={15} color="#FBBC04" />
+                ) : (
+                  <Moon size={15} color="#5f6368" />
+                )}
+                <span className="gcp-nav-theme-label">
+                  {theme === 'dark' ? 'Light' : 'Dark'}
+                </span>
+              </button>
 
-            <button
-              className="mob-btn"
-              onClick={() => setMob(!mob)}
-              aria-label={mob ? 'Close navigation' : 'Open navigation'}
-              aria-expanded={mob}
-            >
-              {mob ? '✕' : '☰'}
-            </button>
+              {/* Desktop Auth Buttons */}
+              {user ? (
+                <>
+                  <Link to="/dashboard" className="gcp-nav-btn-outline">
+                    <LayoutDashboard size={14} />
+                    <span>Dashboard</span>
+                  </Link>
+                  <button type="button" onClick={handleLogout} className="gcp-nav-btn-primary">
+                    <LogOut size={14} />
+                    <span>Logout</span>
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link to="/login" className="gcp-nav-btn-outline">
+                    <span>Login</span>
+                  </Link>
+                  <Link to="/register" className="gcp-nav-btn-primary">
+                    <span>Join Free</span>
+                  </Link>
+                </>
+              )}
+
+              {/* Mobile Hamburger Toggle Button */}
+              <button
+                type="button"
+                className="gcp-nav-mob-toggle"
+                onClick={() => setMobOpen((prev) => !prev)}
+                aria-label={mobOpen ? 'Close navigation drawer' : 'Open navigation drawer'}
+                aria-expanded={mobOpen}
+              >
+                {mobOpen ? <X size={20} /> : <Menu size={20} />}
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* MEGA MENU */}
-        {openMenu !== null && NAV[openMenu].columns && (
-          <div className="mega">
-            <button
-              className="mega-close"
-              onClick={() => setOpenMenu(null)}
-              aria-label="Close menu"
-            >
-              ✕
-            </button>
-            <div className="mega-inner">
-              <div className="mega-intro">
-                <h3>{NAV[openMenu].intro.title}</h3>
-                <p>{NAV[openMenu].intro.desc}</p>
-                <Link to={NAV[openMenu].intro.to} className="mega-intro-link" onClick={() => setOpenMenu(null)}>
-                  {NAV[openMenu].intro.cta} →
-                </Link>
-              </div>
-              {NAV[openMenu].columns.map((col, ci) => (
-                <div className="mega-col" key={ci}>
-                  <div className="mega-col-h">{col.heading}</div>
-                  {col.items.map((it, ii) => (
-                    <Link key={ii} to={it.to} className="mega-item" onClick={() => setOpenMenu(null)}>
-                      <span className="mega-item-t">{it.label}</span>
-                      <span className="mega-item-d">{it.desc}</span>
-                    </Link>
-                  ))}
+        {/* DESKTOP MEGA MENU DROPDOWN */}
+        {openMenu !== null && NAV[openMenu]?.columns && (
+          <div className="gcp-mega-dropdown" role="menu">
+            <div className="container">
+              <div className="gcp-mega-inner">
+                {/* Close Button */}
+                <button
+                  type="button"
+                  className="gcp-mega-close-btn"
+                  onClick={() => setOpenMenu(null)}
+                  aria-label="Close menu"
+                >
+                  <X size={15} />
+                </button>
+
+                {/* Left Promo Intro */}
+                <div className="gcp-mega-intro">
+                  <h3 className="gcp-mega-intro-title">{NAV[openMenu].intro.title}</h3>
+                  <p className="gcp-mega-intro-desc">{NAV[openMenu].intro.desc}</p>
+                  <Link 
+                    to={NAV[openMenu].intro.to} 
+                    className="gcp-mega-intro-cta" 
+                    onClick={() => setOpenMenu(null)}
+                  >
+                    <span>{NAV[openMenu].intro.cta}</span>
+                    <ArrowRight size={14} />
+                  </Link>
                 </div>
-              ))}
+
+                {/* Columns */}
+                {NAV[openMenu].columns.map((col) => (
+                  <div className="gcp-mega-col" key={col.heading}>
+                    <div className="gcp-mega-col-heading">{col.heading}</div>
+                    <div className="gcp-mega-list">
+                      {col.items.map((it) => (
+                        <Link 
+                          key={it.label} 
+                          to={it.to} 
+                          className="gcp-mega-item" 
+                          onClick={() => setOpenMenu(null)}
+                        >
+                          <div className="gcp-mega-item-top">
+                            <span className="gcp-mega-item-title">{it.label}</span>
+                            {it.badge && <span className="gcp-mega-badge">{it.badge}</span>}
+                          </div>
+                          <p className="gcp-mega-item-desc">{it.desc}</p>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}
-      </nav>
+      </header>
 
-      {/* BACKDROP */}
-      {openMenu !== null && (
-        <div className="mega-backdrop" onClick={() => setOpenMenu(null)} />
-      )}
-
-      {/* MOBILE MENU */}
-      {mob && (
-        <div className="mobile-menu open">
-          {NAV.map((item, i) =>
+      {/* MOBILE ACCORDION DRAWER (Full Viewport Safe with Scroll) */}
+      {mobOpen && (
+        <div className="gcp-mobile-drawer" role="dialog" aria-modal="true" aria-label="Mobile Navigation">
+          {NAV.map((item) =>
             item.columns ? (
-              <div key={i}>
-                <div className="mob-sec" style={{ fontSize: '.7rem', fontWeight: 700, color: 'var(--faint2)', textTransform: 'uppercase', letterSpacing: '.06em', padding: '14px 12px 4px' }}>
-                  {item.label}
-                </div>
-                {item.columns.map((col) =>
-                  col.items.map((d, j) => (
-                    <Link key={`${i}-${j}`} to={d.to} onClick={() => setMob(false)}>
-                      {d.label}
-                    </Link>
-                  ))
+              <div className="gcp-mob-section" key={item.label}>
+                <button
+                  type="button"
+                  className="gcp-mob-accordion-btn"
+                  onClick={() => toggleMobileAccordion(item.label)}
+                  aria-expanded={mobExpandedSection === item.label}
+                >
+                  <span>{item.label}</span>
+                  <ChevronDown
+                    size={16}
+                    className={`gcp-mob-accordion-chevron ${
+                      mobExpandedSection === item.label ? 'rotated' : ''
+                    }`}
+                  />
+                </button>
+
+                {mobExpandedSection === item.label && (
+                  <div className="gcp-mob-accordion-body">
+                    {item.columns.map((col) =>
+                      col.items.map((sub) => (
+                        <Link
+                          key={sub.label}
+                          to={sub.to}
+                          className="gcp-mob-sub-link"
+                          onClick={() => setMobOpen(false)}
+                        >
+                          <span>{sub.label}</span>
+                          {sub.badge && <span className="gcp-mega-badge">{sub.badge}</span>}
+                        </Link>
+                      ))
+                    )}
+                  </div>
                 )}
               </div>
             ) : (
-              <Link key={i} to={item.to} onClick={() => setMob(false)}>
+              <Link
+                key={item.label}
+                to={item.to}
+                className="gcp-mob-direct-link"
+                onClick={() => setMobOpen(false)}
+              >
                 {item.label}
               </Link>
             )
           )}
-          <div style={{ borderTop: '1px solid var(--border)', marginTop: 16, paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {user ? (
-              <>
-                <Link to="/dashboard" onClick={() => setMob(false)}>Dashboard</Link>
-                <button onClick={() => { handleLogout(); setMob(false) }}>Logout</button>
-              </>
-            ) : (
-              <>
-                <Link to="/login" onClick={() => setMob(false)}>Login</Link>
-                <Link to="/register" onClick={() => setMob(false)}>Join Free</Link>
-              </>
-            )}
+
+          {/* Mobile Bottom Actions: Login / Register / Dashboard */}
+          <div className="gcp-mob-bottom-actions">
+            <div className="gcp-mob-auth-btns">
+              {user ? (
+                <>
+                  <Link 
+                    to="/dashboard" 
+                    className="gcp-mob-btn-outline" 
+                    onClick={() => setMobOpen(false)}
+                  >
+                    <LayoutDashboard size={16} style={{ marginRight: 6 }} />
+                    <span>Dashboard</span>
+                  </Link>
+                  <button 
+                    type="button" 
+                    onClick={handleLogout} 
+                    className="gcp-mob-btn-primary"
+                  >
+                    <LogOut size={16} style={{ marginRight: 6 }} />
+                    <span>Logout</span>
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link 
+                    to="/login" 
+                    className="gcp-mob-btn-outline" 
+                    onClick={() => setMobOpen(false)}
+                  >
+                    <span>Sign In</span>
+                  </Link>
+                  <Link 
+                    to="/register" 
+                    className="gcp-mob-btn-primary" 
+                    onClick={() => setMobOpen(false)}
+                  >
+                    <span>Create Free Account</span>
+                  </Link>
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}

@@ -1,0 +1,786 @@
+/* =========================================================
+   UPSKILLYFY - ENGINEERING RESOURCES (CLEAN, MINIMAL & HUMAN)
+   Strictly Bounded Inside .container with 100% Mobile Reliability
+   ========================================================= */
+
+.gcp-docs-hub {
+  background: var(--bg);
+  min-height: calc(100vh - 64px);
+  padding-bottom: 72px;
+}
+
+/* =========================================================
+   CLEAN HERO SECTION (Matching Courses Page Vibe)
+   ========================================================= */
+
+.gcp-clean-hero {
+  position: relative;
+  text-align: center;
+  padding: 48px 0 28px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+}
+
+.gcp-clean-hero-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #4285F4 0%, #34A853 35%, #FBBC04 70%, #EA4335 100%);
+}
+
+.gcp-clean-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--gcp-blue);
+  background: var(--gcp-blue-light);
+  padding: 4px 14px;
+  border-radius: 20px;
+  margin-bottom: 14px;
+  letter-spacing: 0.02em;
+}
+
+.gcp-clean-title {
+  font-size: clamp(2rem, 4.5vw, 2.85rem);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--text-h);
+  margin-bottom: 10px;
+  letter-spacing: -0.02em;
+}
+
+.gcp-clean-sub {
+  font-size: 1.05rem;
+  color: var(--muted);
+  max-width: 580px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* =========================================================
+   CONTROLS TOOLBAR
+   ========================================================= */
+
+.gcp-docs-toolbar {
+  position: sticky;
+  top: 64px;
+  z-index: 85;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--gcp-shadow-xs);
+  padding: 10px 0;
+}
+
+.gcp-docs-toolbar-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.gcp-docs-search-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 220px;
+  max-width: 440px;
+}
+
+.gcp-docs-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.gcp-docs-search-input {
+  width: 100%;
+  padding: 8px 32px 8px 34px;
+  font-size: 0.84rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.18s;
+}
+
+.gcp-docs-search-input:focus {
+  border-color: var(--gcp-blue);
+  background: var(--bg-card);
+}
+
+.gcp-docs-search-clear {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+}
+
+.gcp-docs-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.gcp-docs-select {
+  padding: 7px 10px;
+  font-size: 0.8rem;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  outline: none;
+}
+
+.gcp-docs-select:focus {
+  border-color: var(--gcp-blue);
+}
+
+.gcp-docs-save-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 11px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.18s;
+  white-space: nowrap;
+}
+
+.gcp-docs-save-toggle.active {
+  background: var(--gcp-blue-light);
+  color: var(--gcp-blue);
+  border-color: var(--gcp-blue);
+}
+
+/* =========================================================
+   CATEGORY TABS (Horizontal Scrollable)
+   ========================================================= */
+
+.gcp-docs-track-bar {
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  padding: 5px 0;
+}
+
+.gcp-docs-track-scroll {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  padding: 2px 0;
+}
+
+.gcp-docs-track-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.gcp-docs-track-btn {
+  padding: 5px 12px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.gcp-docs-track-btn:hover {
+  color: var(--text-h);
+  border-color: var(--gcp-blue);
+}
+
+.gcp-docs-track-btn.active {
+  background: var(--gcp-blue);
+  color: #ffffff;
+  border-color: var(--gcp-blue);
+}
+
+/* Status / Results Row */
+.gcp-docs-results-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.gcp-docs-reset-btn {
+  background: none;
+  border: none;
+  color: var(--gcp-blue);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* =========================================================
+   CLEAN DOCUMENT CARDS (Strictly Bounded in Container)
+   ========================================================= */
+
+.gcp-docs-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+}
+
+.gcp-doc-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--gcp-shadow-xs);
+  transition: border-color 0.18s, box-shadow 0.18s;
+  box-sizing: border-box;
+}
+
+.gcp-doc-card:hover {
+  border-color: rgba(66, 133, 244, 0.4);
+  box-shadow: var(--gcp-shadow-md);
+}
+
+/* Card Top: Format Badge & Bookmark */
+.gcp-doc-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.gcp-doc-type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--gcp-blue);
+  background: var(--gcp-blue-light);
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.gcp-doc-bookmark-btn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: color 0.15s;
+}
+
+.gcp-doc-bookmark-btn:hover {
+  color: var(--text-h);
+}
+
+.gcp-doc-bookmark-btn.active {
+  color: #FBBC04;
+}
+
+/* Title & Description */
+.gcp-doc-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-h);
+  line-height: 1.35;
+  margin: 0 0 8px;
+}
+
+.gcp-doc-description {
+  font-size: 0.84rem;
+  color: var(--muted);
+  line-height: 1.5;
+  margin: 0 0 16px;
+  flex: 1;
+}
+
+/* =========================================================
+   ACTIONS: ALWAYS INLINE SIDE-BY-SIDE (NEVER STACK UP/DOWN)
+   ========================================================= */
+
+.gcp-doc-actions-inline {
+  display: flex;
+  flex-direction: row; /* Enforce horizontal row */
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-subtle);
+  box-sizing: border-box;
+}
+
+.gcp-doc-btn-preview {
+  flex: 1;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 10px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  box-sizing: border-box;
+  transition: all 0.15s ease;
+}
+
+.gcp-doc-btn-preview:hover {
+  background: var(--gcp-surface-variant);
+  border-color: var(--gcp-blue);
+  color: var(--gcp-blue);
+}
+
+.gcp-doc-btn-download {
+  flex: 1;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 10px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: var(--gcp-blue);
+  border: 1px solid var(--gcp-blue);
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  box-sizing: border-box;
+  transition: background 0.15s ease;
+}
+
+.gcp-doc-btn-download:hover {
+  background: var(--gcp-blue-hover);
+}
+
+.gcp-doc-btn-download.downloaded {
+  background: var(--gcp-green-dark);
+  border-color: var(--gcp-green-dark);
+}
+
+/* =========================================================
+   DOCUMENT READER MODAL (Fluid & Zero Background Scroll)
+   ========================================================= */
+
+.gcp-reader-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(6px);
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  overscroll-behavior: contain;
+  touch-action: none; /* Prevents touch from leaking to background */
+  box-sizing: border-box;
+}
+
+.gcp-reader-modal {
+  background: var(--bg-card);
+  width: 100%;
+  max-width: 720px;
+  max-height: 85vh;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  overscroll-behavior: contain;
+  box-sizing: border-box;
+}
+
+/* Modal Top Bar */
+.gcp-reader-top-bar {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--bg-card);
+  flex-shrink: 0;
+}
+
+.gcp-reader-title-area {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.gcp-reader-doc-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: var(--gcp-blue-light);
+  color: var(--gcp-blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.gcp-reader-heading {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-h);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0;
+}
+
+.gcp-reader-subheading {
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-top: 1px;
+}
+
+.gcp-reader-close-btn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.gcp-reader-close-btn:hover {
+  background: var(--gcp-surface-variant);
+  color: var(--text-h);
+}
+
+/* Modal Tabs */
+.gcp-reader-tabs {
+  display: flex;
+  background: var(--gcp-surface-variant);
+  border-bottom: 1px solid var(--border);
+  padding: 0 16px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  flex-shrink: 0;
+}
+
+.gcp-reader-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.gcp-reader-tab-btn {
+  padding: 10px 14px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: none;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.gcp-reader-tab-btn.active {
+  color: var(--gcp-blue);
+  border-bottom-color: var(--gcp-blue);
+  background: var(--bg-card);
+}
+
+/* Modal Body */
+.gcp-reader-scrollable {
+  padding: 18px 20px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  flex: 1;
+  box-sizing: border-box;
+}
+
+/* Code Snippet Box (Window Bar + Code View) */
+.gcp-code-block-container {
+  background: #18191c;
+  border: 1px solid #2a2b30;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-top: 10px;
+  box-shadow: var(--gcp-shadow-xs);
+}
+
+.gcp-code-block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.gcp-code-window-dots {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dot-red { background: #ff5f56; }
+.dot-yellow { background: #ffbd2e; }
+.dot-green { background: #27c93f; }
+
+.gcp-code-lang-label {
+  font-size: 0.72rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--muted);
+  margin-left: 6px;
+}
+
+.gcp-code-copy-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #e2e8f0;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+}
+
+.gcp-code-copy-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+.gcp-code-pre {
+  margin: 0;
+  padding: 14px 16px;
+  color: #d4d4d4;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* Modal Footer Actions: PREVENT ANY OVERFLOW */
+.gcp-reader-footer {
+  padding: 12px 18px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-card);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.gcp-reader-save-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 14px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  cursor: pointer;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.gcp-reader-download-btn {
+  flex: 1;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 14px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  background: var(--gcp-blue);
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-sizing: border-box;
+}
+
+/* Toast */
+.gcp-docs-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: #202124;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 12px 18px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 1100;
+  font-size: 0.84rem;
+}
+
+.gcp-docs-empty-state {
+  text-align: center;
+  padding: 50px 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+/* =========================================================
+   RESPONSIVENESS (Small Screens, Tablets, & Mobile)
+   ========================================================= */
+
+@media (max-width: 860px) {
+  .gcp-docs-cards-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+}
+
+@media (max-width: 768px) {
+  .gcp-docs-header {
+    padding: 22px 0 16px;
+  }
+  .gcp-docs-title {
+    font-size: 1.55rem;
+  }
+  .gcp-docs-subtitle {
+    font-size: 0.86rem;
+  }
+  .gcp-docs-toolbar-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .gcp-docs-search-wrap {
+    max-width: 100%;
+  }
+  .gcp-docs-filter-group {
+    justify-content: space-between;
+  }
+  .gcp-docs-filter-group select {
+    flex: 1;
+  }
+
+  /* MODAL BECOMES FULL-SCREEN ON MOBILE TO PREVENT ANY OVERFLOW */
+  .gcp-reader-backdrop {
+    padding: 0;
+  }
+  .gcp-reader-modal {
+    max-width: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+    border: none;
+  }
+  .gcp-reader-top-bar {
+    padding: 12px 14px;
+  }
+  .gcp-reader-heading {
+    max-width: 200px;
+    font-size: 0.88rem;
+  }
+  .gcp-reader-scrollable {
+    padding: 14px;
+  }
+  .gcp-reader-footer {
+    padding: 12px 14px;
+    padding-bottom: max(14px, env(safe-area-inset-bottom));
+  }
+}
+
+@media (max-width: 480px) {
+  .gcp-doc-card {
+    padding: 14px;
+  }
+  .gcp-doc-title {
+    font-size: 0.98rem;
+  }
+  .gcp-doc-description {
+    font-size: 0.8rem;
+  }
+  /* Save label hidden on narrow phones so Download gets full space without overflow */
+  .gcp-reader-save-label {
+    display: none;
+  }
+  .gcp-reader-save-btn {
+    padding: 9px 12px;
+  }
+  .gcp-reader-heading {
+    max-width: 150px;
+  }
+  .gcp-reader-tab-btn {
+    padding: 9px 10px;
+    font-size: 0.76rem;
+  }
+}
+
+/* NOTE: On small screens, .gcp-doc-actions-inline ALWAYS stays row inline side-by-side! */
