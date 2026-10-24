@@ -55,6 +55,8 @@ export const courseAPI = {
   getOne: (id) => API.get(`/courses/${id}`),
   enroll: (id) => API.post(`/courses/${id}/enroll`),
   updateProgress: (id, data) => API.post(`/courses/${id}/progress`, data),
+  getPlayback: (slug, lectureId) => API.get(`/courses/${slug}/lectures/${lectureId}/playback`),
+  playLecture: (slug, lectureId) => API.post(`/courses/${slug}/lectures/${lectureId}/play`),
 }
 
 export const resourceAPI = {

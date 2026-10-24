@@ -9,6 +9,7 @@ import userRoutes from './routes/users.js'
 import communityRoutes from './routes/community.js'
 import newsletterRoutes from './routes/newsletter.js'
 import assessmentRoutes from './routes/assessments.js'
+import courseRoutes from './routes/courses.js'
 
 dotenv.config()
 
@@ -29,6 +30,7 @@ app.use('/api/users', userRoutes)
 app.use('/api/community', communityRoutes)
 app.use('/api/newsletter', newsletterRoutes)
 app.use('/api/assessments', assessmentRoutes)
+app.use('/api/courses', courseRoutes)
 
 // Health check
 app.get('/api/health', (req, res) => {

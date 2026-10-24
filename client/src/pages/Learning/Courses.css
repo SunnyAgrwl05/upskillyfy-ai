@@ -885,11 +885,17 @@
 
 .gcp-scrubber::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 11px;
-  height: 11px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   background: #4285F4;
   cursor: pointer;
+  transition: transform 0.15s ease;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+.gcp-scrubber:hover::-webkit-slider-thumb {
+  transform: scale(1.25);
 }
 
 .gcp-controls-row {

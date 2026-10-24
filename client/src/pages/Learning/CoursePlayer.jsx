@@ -68,6 +68,8 @@ export default function CoursePlayer() {
 
   // Video Controls State
   const videoRef = useRef(null)
+  const dashPlayerRef = useRef(null)
+  const [videoQuality, setVideoQuality] = useState('auto')
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
@@ -129,8 +131,8 @@ export default function CoursePlayer() {
       })
 
     function fallbackLocalCourse() {
-      const found = COURSES_DATA.find(c => c.id === courseId) || COURSES_DATA[0]
-      setCourse(found)
+      const found = COURSES_DATA.find(c => c.id === courseId)
+      if (found) setCourse(found)
     }
 
     return () => { isMounted = false }
@@ -153,6 +155,109 @@ export default function CoursePlayer() {
       setNotes(savedNote)
       setSelectedQuizAnswer(null)
       setQuizSubmitted(false)
+    }
+  }, [courseId, currentLesson?.id])
+
+  // Quality Switch Handler for Dash.js
+  const applyQuality = (player, val) => {
+    if (!player) return
+    try {
+      if (val === 'auto') {
+        player.updateSettings({ streaming: { abr: { autoSwitchBitrate: { video: true } } } })
+      } else {
+        player.updateSettings({ streaming: { abr: { autoSwitchBitrate: { video: false } } } })
+        const qualityMap = { '480p': 0, '720p': 1, '1080p': 2 }
+        const qualityIndex = qualityMap[val] ?? 1
+
+        if (typeof player.setQualityFor === 'function') {
+          player.setQualityFor('video', qualityIndex)
+        } else if (typeof player.setPlaybackQuality === 'function') {
+          player.setPlaybackQuality('video', null, qualityIndex)
+        }
+      }
+    } catch (e) {
+      console.warn('Quality change error:', e)
+    }
+  }
+
+  const handleQualityChange = (val) => {
+    setVideoQuality(val)
+    applyQuality(dashPlayerRef.current, val)
+  }
+
+  // Load Dash.js Player on Lesson Change
+  useEffect(() => {
+    let isMounted = true
+
+    if (!courseId || !currentLesson?.id) return
+
+    // Teardown previous dash player if active
+    if (dashPlayerRef.current) {
+      try {
+        dashPlayerRef.current.destroy()
+      } catch {
+        // ignore
+      }
+      dashPlayerRef.current = null
+    }
+
+    setIsPlaying(false)
+    setCurrentTime(0)
+
+    const initStream = async () => {
+      try {
+        const res = await courseAPI.getPlayback(courseId, currentLesson.id)
+        if (!isMounted) return
+        const pb = res?.data?.playback
+        const manifestUrl = pb?.manifestUrl
+        const dashLib = window.dashjs
+
+        if (manifestUrl && dashLib && videoRef.current) {
+          try {
+            const player = dashLib.MediaPlayer().create()
+            player.initialize(videoRef.current, manifestUrl, false)
+            dashPlayerRef.current = player
+
+            player.on(dashLib.MediaPlayer.events.STREAM_INITIALIZED, () => {
+              applyQuality(player, videoQuality)
+            })
+            player.on(dashLib.MediaPlayer.events.PLAYBACK_PLAYING, () => {
+              if (isMounted) setIsPlaying(true)
+            })
+            player.on(dashLib.MediaPlayer.events.PLAYBACK_PAUSED, () => {
+              if (isMounted) setIsPlaying(false)
+            })
+            return
+          } catch (dashErr) {
+            console.warn('Dash player init error, falling back:', dashErr)
+          }
+        }
+
+        // Direct Fallback if DASH not available
+        if (videoRef.current && isMounted) {
+          videoRef.current.src = currentLesson.videoUrl || pb?.videoFallbackUrl || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
+        }
+      } catch (err) {
+        if (!isMounted) return
+        console.warn('Playback API error, using fallback:', err)
+        if (videoRef.current) {
+          videoRef.current.src = currentLesson.videoUrl || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
+        }
+      }
+    }
+
+    initStream()
+
+    return () => {
+      isMounted = false
+      if (dashPlayerRef.current) {
+        try {
+          dashPlayerRef.current.destroy()
+        } catch {
+          // ignore
+        }
+        dashPlayerRef.current = null
+      }
     }
   }, [courseId, currentLesson?.id])
 
@@ -435,25 +540,34 @@ export default function CoursePlayer() {
             <video
               ref={videoRef}
               className="gcp-video-element"
-              src={currentLesson?.videoUrl || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'}
               onTimeUpdate={handleTimeUpdate}
               onLoadedMetadata={handleLoadedMetadata}
+              onPlay={() => setIsPlaying(true)}
+              onPause={() => setIsPlaying(false)}
               onClick={togglePlay}
               playsInline
             />
 
             {/* Custom Google Cloud Video Control Bar */}
             <div className="gcp-video-overlay-bar">
-              <input
-                type="range"
-                className="gcp-scrubber"
-                min="0"
-                max={duration || 100}
-                step="0.1"
-                value={currentTime}
-                onChange={handleSeek}
-                aria-label="Video scrubber"
-              />
+              {(() => {
+                const playedPercent = duration > 0 ? Math.min(100, Math.max(0, (currentTime / duration) * 100)) : 0
+                return (
+                  <input
+                    type="range"
+                    className="gcp-scrubber"
+                    min="0"
+                    max={duration || 100}
+                    step="0.1"
+                    value={currentTime}
+                    onChange={handleSeek}
+                    style={{
+                      background: `linear-gradient(to right, #4285F4 ${playedPercent}%, rgba(255, 255, 255, 0.3) ${playedPercent}%)`
+                    }}
+                    aria-label="Video scrubber"
+                  />
+                )
+              })()}
 
               <div className="gcp-controls-row">
                 <div className="gcp-controls-left">
@@ -491,18 +605,33 @@ export default function CoursePlayer() {
                     />
                   </div>
 
+                  {/* Quality Selector */}
+                  <select
+                    className="gcp-select gcp-speed-select"
+                    value={videoQuality}
+                    onChange={(e) => handleQualityChange(e.target.value)}
+                    aria-label="Video quality"
+                    title="Video Quality"
+                  >
+                    <option value="auto">Auto</option>
+                    <option value="1080p">1080p HD</option>
+                    <option value="720p">720p</option>
+                    <option value="480p">480p</option>
+                  </select>
+
                   {/* Speed Selector */}
                   <select
                     className="gcp-select gcp-speed-select"
                     value={playbackRate}
                     onChange={(e) => changePlaybackSpeed(parseFloat(e.target.value))}
                     aria-label="Playback speed"
+                    title="Playback Speed"
                   >
                     <option value="0.75">0.75x</option>
                     <option value="1">1.0x</option>
                     <option value="1.25">1.25x</option>
                     <option value="1.5">1.5x</option>
-                    <option value="2">2.0x</option>
+                    <option value="2.0">2.0x</option>
                   </select>
 
                   {/* Fullscreen Button */}
