@@ -30,6 +30,10 @@ import CoursePlayer from "./pages/Learning/CoursePlayer";
 import Roadmaps from "./pages/Learning/Roadmaps";
 import RoadmapDetail from "./pages/Learning/RoadmapDetail";
 import Resources from "./pages/Learning/Resources";
+import Assessments from "./pages/Learning/Assessments";
+import AssessmentDetail from "./pages/Learning/AssessmentDetail";
+import AssessmentAttempt from "./pages/Learning/AssessmentAttempt";
+import AssessmentAdmin from "./pages/Learning/AssessmentAdmin";
 
 import Events from "./pages/Community/Events";
 import Ambassador from "./pages/Community/Ambassador";
@@ -126,6 +130,10 @@ export default function App() {
               path="/learning/certifications"
               element={<Resources />}
             />
+            <Route path="/assessments" element={<Assessments />} />
+            <Route path="/assessments/admin" element={<AssessmentAdmin />} />
+            <Route path="/assessments/:assessmentId/attempt/:attemptId" element={<AssessmentAttempt />} />
+            <Route path="/assessments/:assessmentId" element={<AssessmentDetail />} />
 
             <Route
               path="/community/events"

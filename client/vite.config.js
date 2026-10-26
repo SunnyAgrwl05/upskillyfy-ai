@@ -5,6 +5,10 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
+    watch: {
+      // Polling is needed for reliable updates on WSL-backed Windows shares.
+      usePolling: true,
+    },
     allowedHosts: [
       'superactively-sphenic-nadia.ngrok-free.dev'
     ]

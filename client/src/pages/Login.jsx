@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { safePostAuthDestination } from '../utils/authRedirect'
 
 export default function Login() {
   const [form, setForm] = useState({ email: '', password: '' })
@@ -8,6 +9,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false)
   const { login } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
 
   const h = e => setForm({ ...form, [e.target.name]: e.target.value })
 
@@ -16,7 +18,10 @@ export default function Login() {
     setLoading(true); setError('')
     try {
       await login(form.email, form.password)
-      navigate('/dashboard')
+      navigate(safePostAuthDestination(location.state?.from), {
+        replace: true,
+        state: location.state?.startAssessment ? { startAssessment: true } : null,
+      })
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed. Check your credentials.')
     } finally { setLoading(false) }
@@ -27,8 +32,7 @@ export default function Login() {
       <div style={{ width: '100%', maxWidth: 440, position: 'relative', zIndex: 1 }}>
         <div style={{ textAlign: 'center', marginBottom: 36 }}>
           <Link to="/" className="nav-logo" style={{ justifyContent: 'center', display: 'inline-flex', marginBottom: 24 }}>
-            <span className="nav-logo-mark">U</span>
-            <span>Upskillyfy</span>
+            <img className="auth-brand-logo-image" src="/upskillyfy-logo.jpg" alt="Upskillyfy" />
           </Link>
           <h1 className="h1" style={{ fontSize: '1.8rem', marginBottom: 8 }}>Welcome Back 👋</h1>
           <p className="muted">Login to your Upskillyfy account</p>
@@ -47,7 +51,7 @@ export default function Login() {
             </button>
           </form>
           <p style={{ textAlign: 'center', marginTop: 20, color: 'var(--muted)', fontSize: '.88rem' }}>
-            Don't have an account? <Link to="/register" style={{ color: 'var(--accent)', fontWeight: 700 }}>Join Free</Link>
+            Don't have an account? <Link to="/register" state={location.state} style={{ color: 'var(--accent)', fontWeight: 700 }}>Join Free</Link>
           </p>
         </div>
       </div>

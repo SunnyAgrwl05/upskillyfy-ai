@@ -2,6 +2,7 @@
   "name": "upskillyfy",
   "version": "1.0.0",
   "scripts": {
+    "dev": "node -e \"require(require('node:path').join(process.env.INIT_CWD,'scripts/dev.js'))\"",
     "client": "cd client && npm run dev",
     "server": "cd server && npm run dev",
     "install-all": "cd client && npm install && cd ../server && npm install"

@@ -65,6 +65,19 @@
   min-height: 100vh;
 }
 
+.gcp-progress-error {
+  margin: 16px 0;
+  padding: 12px 15px;
+  border: 1px solid #d93025;
+  border-radius: 8px;
+  background: rgba(217, 48, 37, .08);
+  color: #b3261e;
+}
+
+[data-theme="dark"] .gcp-progress-error {
+  color: #f28b82;
+}
+
 /* Toast Notification */
 .gcp-toast {
   position: fixed;

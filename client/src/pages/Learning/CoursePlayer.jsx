@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useLocation, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft,
   Play,
@@ -35,7 +35,9 @@ import './Courses.css'
 
 export default function CoursePlayer() {
   const { courseId } = useParams()
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
+  const location = useLocation()
+  const navigate = useNavigate()
 
   const [course, setCourse] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -51,14 +53,9 @@ export default function CoursePlayer() {
   const [mobileView, setMobileView] = useState('content')
 
   // Progress Tracking
-  const [completedLessons, setCompletedLessons] = useState(() => {
-    try {
-      const saved = localStorage.getItem(`upskillyfy-completed-${courseId}`)
-      return saved ? JSON.parse(saved) : []
-    } catch {
-      return []
-    }
-  })
+  const [completedLessons, setCompletedLessons] = useState([])
+  const [progressError, setProgressError] = useState('')
+  const [progressSaving, setProgressSaving] = useState(false)
 
   // Tabs: 'overview' | 'lab' | 'resources' | 'qa' | 'notes'
   const [activeTab, setActiveTab] = useState('overview')
@@ -108,44 +105,60 @@ export default function CoursePlayer() {
   // Certificate Modal
   const [showCertModal, setShowCertModal] = useState(false)
 
-  // Load Course Data
+  // Course access requires a valid session; progress is loaded from the API.
   useEffect(() => {
     let isMounted = true
-    setLoading(true)
+    if (authLoading) return () => { isMounted = false }
+    if (!user) {
+      const from = `${location.pathname}${location.search}${location.hash}`
+      navigate('/login', { replace: true, state: { from } })
+      return () => { isMounted = false }
+    }
 
-    courseAPI.getOne(courseId)
-      .then((res) => {
-        if (isMounted && res?.data) {
-          setCourse(res.data)
-        } else {
-          fallbackLocalCourse()
+    setLoading(true)
+    setProgressError('')
+    const found = COURSES_DATA.find((item) => item.id === courseId)
+    if (!found) {
+      setCourse(null)
+      setLoading(false)
+      return () => { isMounted = false }
+    }
+    setCourse(found)
+
+    Promise.all([courseAPI.enroll(courseId), courseAPI.getProgress(courseId)])
+      .then(([, response]) => {
+        if (isMounted) {
+          setCompletedLessons(response.data.completedLessons || [])
+          const lastLesson = response.data.lastLessonId
+            ? found.modules?.flatMap((module, moduleIndex) => module.lessons?.map((lesson, lessonIndex) => ({
+              id: lesson.id, moduleIndex, lessonIndex,
+            })) || []).find((lesson) => lesson.id === response.data.lastLessonId)
+            : null
+          if (lastLesson) {
+            setActiveModuleIdx(lastLesson.moduleIndex)
+            setActiveLessonIdx(lastLesson.lessonIndex)
+          }
         }
       })
-      .catch(() => {
-        if (isMounted) fallbackLocalCourse()
+      .catch((error) => {
+        if (isMounted) setProgressError(error.response?.data?.message || 'Could not load saved progress. Course progress will not be saved until the connection is restored.')
       })
       .finally(() => {
         if (isMounted) setLoading(false)
       })
 
-    function fallbackLocalCourse() {
-      const found = COURSES_DATA.find(c => c.id === courseId) || COURSES_DATA[0]
-      setCourse(found)
-    }
-
     return () => { isMounted = false }
-  }, [courseId])
-
-  // Save Progress to localStorage
-  useEffect(() => {
-    if (courseId) {
-      localStorage.setItem(`upskillyfy-completed-${courseId}`, JSON.stringify(completedLessons))
-    }
-  }, [completedLessons, courseId])
+  }, [courseId, user, authLoading, location.pathname, location.search, location.hash, navigate])
 
   // Current module & lesson
   const currentModule = course?.modules?.[activeModuleIdx]
   const currentLesson = currentModule?.lessons?.[activeLessonIdx]
+
+  useEffect(() => {
+    if (!user || loading || !currentLesson?.id) return
+    courseAPI.recordLastLesson(courseId, currentLesson.id)
+      .catch((error) => setProgressError(error.response?.data?.message || 'Could not update your last visited lesson.'))
+  }, [courseId, currentLesson?.id, loading, user])
 
   useEffect(() => {
     if (courseId && currentLesson?.id) {
@@ -272,19 +285,27 @@ export default function CoursePlayer() {
     setMobileView('content')
   }
 
-  const toggleLessonComplete = (lessonId) => {
-    setCompletedLessons(prev => {
-      const exists = prev.includes(lessonId)
-      const next = exists ? prev.filter(id => id !== lessonId) : [...prev, lessonId]
-      return next
-    })
-    courseAPI.updateProgress(courseId, { lessonId, completed: true }).catch(() => {})
+  const toggleLessonComplete = async (lessonId) => {
+    const completed = !completedLessons.includes(lessonId)
+    setProgressSaving(true)
+    setProgressError('')
+    try {
+      const response = await courseAPI.updateProgress(courseId, lessonId, completed)
+      setCompletedLessons(response.data.completedLessons || [])
+      return true
+    } catch (error) {
+      setProgressError(error.response?.data?.message || 'Could not save lesson progress. Please retry.')
+      return false
+    } finally {
+      setProgressSaving(false)
+    }
   }
 
-  const handleNextLesson = () => {
+  const handleNextLesson = async () => {
     if (!currentLesson) return
     if (!completedLessons.includes(currentLesson.id)) {
-      toggleLessonComplete(currentLesson.id)
+      const saved = await toggleLessonComplete(currentLesson.id)
+      if (!saved) return
     }
 
     const currentIdxInAll = allLessons.findIndex(l => l.id === currentLesson.id)
@@ -427,6 +448,7 @@ export default function CoursePlayer() {
           Strictly bounded within global .container margins
           ========================================================= */}
       <div className="container">
+        {progressError && <div className="gcp-progress-error" role="alert">{progressError}</div>}
         <div className={`gcp-learning-layout mobile-view-${mobileView}`}>
         {/* LEFT COLUMN: Player & Content Tabs */}
         <main className="gcp-main-stage">
@@ -540,6 +562,7 @@ export default function CoursePlayer() {
               <button 
                 className={`gcp-btn-complete ${completedLessons.includes(currentLesson?.id) ? 'completed' : ''}`}
                 onClick={() => currentLesson && toggleLessonComplete(currentLesson.id)}
+                disabled={progressSaving}
               >
                 {completedLessons.includes(currentLesson?.id) ? (
                   <>

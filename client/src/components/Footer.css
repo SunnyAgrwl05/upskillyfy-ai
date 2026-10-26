@@ -174,13 +174,6 @@
   flex-direction: column;
 }
 
-.gcp-footer-brand-name {
-  font-weight: 700;
-  font-size: 1.2rem;
-  color: var(--text-h, #202124);
-  letter-spacing: -0.02em;
-}
-
 .gcp-footer-desc {
   font-size: 0.88rem;
   color: var(--muted, #5f6368);
@@ -233,7 +226,7 @@
   border-radius: 6px;
   border: 1px solid var(--border, #dadce0);
   background: var(--bg-card, #ffffff);
-  color: var(--muted, #5f6368);
+  color: #1a73e8;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -244,6 +237,7 @@
 [data-theme="dark"] .gcp-footer-soc-btn {
   background: var(--bg-card, #28292c);
   border-color: rgba(255, 255, 255, 0.12);
+  color: #8ab4f8;
 }
 
 .gcp-footer-soc-btn:hover {
@@ -253,10 +247,19 @@
   transform: translateY(-1px);
 }
 
+.gcp-footer-soc-btn:focus-visible {
+  outline: 3px solid #1a73e8;
+  outline-offset: 3px;
+}
+
 [data-theme="dark"] .gcp-footer-soc-btn:hover {
   background: rgba(26, 115, 232, 0.15);
   color: #8ab4f8;
   border-color: #8ab4f8;
+}
+
+[data-theme="dark"] .gcp-footer-soc-btn:focus-visible {
+  outline-color: #8ab4f8;
 }
 
 /* Links Columns Grid */

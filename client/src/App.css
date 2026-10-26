@@ -429,16 +429,20 @@ p {
   text-decoration: none;
 }
 
-.nav-logo-mark {
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
-  background: #1a73e8;
-  color: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
+.gcp-footer-logo-image {
+  display: block;
+  width: 88px;
+  height: 88px;
+  object-fit: contain;
+  border-radius: 12px;
+}
+
+.auth-brand-logo-image {
+  display: block;
+  width: 96px;
+  height: 96px;
+  object-fit: contain;
+  border-radius: 14px;
   font-size: 1rem;
 }
 

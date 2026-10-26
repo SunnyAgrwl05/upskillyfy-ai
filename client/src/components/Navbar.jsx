@@ -94,6 +94,7 @@ const NAV = [
       },
     ],
   },
+  { label: 'Assessments', to: '/assessments' },
   { label: 'Community', to: '/community/events' },
   { label: 'Portfolio', to: '/portfolio' },
   { label: 'About', to: '/about' },
@@ -172,8 +173,7 @@ export default function Navbar() {
           <div className="gcp-navbar-inner">
             {/* BRAND LOGO */}
             <Link to="/" className="gcp-nav-logo" aria-label="Upskillyfy Home">
-              <span className="gcp-nav-logo-mark">U</span>
-              <span className="gcp-nav-logo-text">Upskillyfy</span>
+              <img className="gcp-nav-logo-image" src="/upskillyfy-logo.jpg" alt="Upskillyfy" />
             </Link>
 
             {/* DESKTOP NAVIGATION ITEMS */}
@@ -362,14 +362,14 @@ export default function Navbar() {
                 )}
               </div>
             ) : (
-              <Link
+              <NavLink
                 key={item.label}
                 to={item.to}
-                className="gcp-mob-direct-link"
+                className={({ isActive }) => `gcp-mob-direct-link ${isActive ? 'active' : ''}`}
                 onClick={() => setMobOpen(false)}
               >
                 {item.label}
-              </Link>
+              </NavLink>
             )
           )}
 

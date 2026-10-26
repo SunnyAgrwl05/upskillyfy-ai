@@ -45,8 +45,31 @@ export const newsletterAPI = {
 export const courseAPI = {
   getAll: (params) => API.get('/courses', { params }),
   getOne: (id) => API.get(`/courses/${id}`),
-  enroll: (id) => API.post(`/courses/${id}/enroll`),
-  updateProgress: (id, data) => API.post(`/courses/${id}/progress`, data),
+  enroll: (id) => API.post(`/learning/courses/${id}/enroll`),
+  getProgress: (id) => API.get(`/learning/courses/${id}/progress`),
+  recordLastLesson: (id, lessonId) => API.post(`/learning/courses/${id}/last-lesson`, { lessonId }),
+  updateProgress: (id, lessonId, completed) => API.put(`/learning/courses/${id}/lessons/${encodeURIComponent(lessonId)}`, { completed }),
+}
+
+export const learningAPI = {
+  getProgress: () => API.get('/learning/progress'),
+  getRoadmapProgress: (id) => API.get(`/learning/roadmaps/${id}/progress`),
+  updateRoadmapSkill: (id, skill, mastered) => API.put(`/learning/roadmaps/${id}/skills`, { skill, mastered }),
+}
+
+export const assessmentAPI = {
+  getAll: (params) => API.get('/assessments', { params }),
+  getOne: (id) => API.get(`/assessments/${encodeURIComponent(id)}`),
+  start: (id) => API.post(`/assessments/${encodeURIComponent(id)}/attempts`),
+  getAttempt: (id) => API.get(`/assessments/attempts/${id}`),
+  saveAnswer: (attemptId, questionId, data) => API.put(`/assessments/attempts/${attemptId}/answers/${questionId}`, data),
+  submit: (id) => API.post(`/assessments/attempts/${id}/submit`),
+  getHistory: () => API.get('/assessments/me/history'),
+  adminList: () => API.get('/assessments/admin'),
+  adminResults: () => API.get('/assessments/admin/results'),
+  adminAttempt: (id) => API.get(`/assessments/admin/attempts/${id}`),
+  create: (data) => API.post('/assessments/admin', data),
+  update: (id, data) => API.put(`/assessments/admin/${id}`, data),
 }
 
 export const resourceAPI = {

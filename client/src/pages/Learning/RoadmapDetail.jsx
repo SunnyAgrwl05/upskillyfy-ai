@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom'
 import { 
   ArrowLeft, 
   Bookmark, 
@@ -11,12 +11,16 @@ import {
   Sparkles,
   CheckCircle2
 } from 'lucide-react'
+import { learningAPI } from '../../api'
+import { useAuth } from '../../context/AuthContext'
 import { ROADMAPS_DATA } from '../../data/roadmapsData'
 import './Roadmaps.css'
 
 export default function RoadmapDetail() {
   const { roadmapId } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
+  const { user } = useAuth()
 
   // Find roadmap from data or fallback to first
   const roadmap = ROADMAPS_DATA.find((r) => r.id === roadmapId) || ROADMAPS_DATA[0]
@@ -35,17 +39,8 @@ export default function RoadmapDetail() {
   })
 
   // Completed Skills Tracking: format { "roadmapId:skillName": true }
-  const [completedSkills, setCompletedSkills] = useState(() => {
-    try {
-      const saved = localStorage.getItem('upskillyfy-completed-skills')
-      return saved ? JSON.parse(saved) : { 
-        'cloud-devops-engineer:Bash Scripting': true,
-        'cloud-devops-engineer:Docker Engine': true
-      }
-    } catch {
-      return {}
-    }
-  })
+  const [completedSkills, setCompletedSkills] = useState({})
+  const [progressError, setProgressError] = useState('')
 
   // Synchronize Bookmarks
   useEffect(() => {
@@ -54,12 +49,26 @@ export default function RoadmapDetail() {
     } catch {}
   }, [savedRoadmaps])
 
-  // Synchronize Completed Skills
   useEffect(() => {
-    try {
-      localStorage.setItem('upskillyfy-completed-skills', JSON.stringify(completedSkills))
-    } catch {}
-  }, [completedSkills])
+    if (!user) {
+      setCompletedSkills({})
+      return
+    }
+    let active = true
+    setProgressError('')
+    learningAPI.getRoadmapProgress(roadmapId)
+      .then((response) => {
+        if (active) {
+          setCompletedSkills(Object.fromEntries(
+            (response.data.masteredSkills || []).map((skill) => [`${roadmapId}:${skill}`, true]),
+          ))
+        }
+      })
+      .catch((error) => {
+        if (active) setProgressError(error.response?.data?.message || 'Could not load saved roadmap progress.')
+      })
+    return () => { active = false }
+  }, [roadmapId, user])
 
   // Scroll to top on load
   useEffect(() => {
@@ -82,13 +91,23 @@ export default function RoadmapDetail() {
   }
 
   // Toggle Skill Node
-  const toggleSkillNode = (skillName) => {
+  const toggleSkillNode = async (skillName) => {
+    if (!user) {
+      navigate('/login', { state: { from: `${location.pathname}${location.search}${location.hash}` } })
+      return
+    }
     const key = `${roadmap.id}:${skillName}`
-    setCompletedSkills((prev) => {
-      const next = { ...prev, [key]: !prev[key] }
-      showToast(!prev[key] ? `Marked "${skillName}" as mastered! ✓` : `Unchecked "${skillName}"`)
-      return next
-    })
+    const mastered = !completedSkills[key]
+    setProgressError('')
+    try {
+      const response = await learningAPI.updateRoadmapSkill(roadmap.id, skillName, mastered)
+      setCompletedSkills(Object.fromEntries(
+        (response.data.masteredSkills || []).map((skill) => [`${roadmap.id}:${skill}`, true]),
+      ))
+      showToast(mastered ? `Marked "${skillName}" as mastered! ✓` : `Unchecked "${skillName}"`)
+    } catch (error) {
+      setProgressError(error.response?.data?.message || 'Could not save roadmap progress. Please retry.')
+    }
   }
 
   // Calculate Progress
@@ -134,6 +153,7 @@ export default function RoadmapDetail() {
 
   return (
     <div className="gcp-roadmap-detail-page">
+      {progressError && <div role="alert" className="gcp-roadmap-progress-error">{progressError}</div>}
       {/* Toast Notification */}
       {toastMessage && (
         <div className="gcp-toast" style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 1000, background: '#202124', color: '#fff', padding: '10px 18px', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 4px 14px rgba(0,0,0,0.3)', fontSize: '0.85rem' }}>
