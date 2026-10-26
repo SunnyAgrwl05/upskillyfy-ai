@@ -13,14 +13,51 @@ const API = axios.create({
 })
 
 API.interceptors.request.use((config) => {
+  // Prefer the HttpOnly cookie set by the server; fall back to the Bearer
+  // token stored in localStorage for non-browser clients.
   const token = localStorage.getItem('token')
   if (token) config.headers.Authorization = `Bearer ${token}`
   return config
 })
 
+/**
+ * On a 401 the access token has expired. The client should refresh via
+ * the `/auth/refresh` endpoint, then retry the original request. If refresh
+ * fails too, the token is cleared and the user is sent to the login page.
+ */
+API.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const { response, config } = error
+    if (!response || !config) return Promise.reject(error)
+
+    const isAuthRoute = config.url?.includes('/auth/')
+    if (response.status === 401 && !isAuthRoute && !config._retry) {
+      config._retry = true
+      try {
+        const refreshRes = await API.post('/auth/refresh')
+        const newToken = refreshRes.data.token
+        if (newToken) {
+          localStorage.setItem('token', newToken)
+          config.headers.Authorization = `Bearer ${newToken}`
+          return API(config)
+        }
+      } catch {
+        // Refresh failed — clear local state and redirect.
+        localStorage.removeItem('token')
+        if (typeof window !== 'undefined') {
+          window.location.href = '/login'
+        }
+      }
+    }
+    return Promise.reject(error)
+  },
+)
+
 export const authAPI = {
   register: (data) => API.post('/auth/register', data),
   login: (data) => API.post('/auth/login', data),
+  refresh: () => API.post('/auth/refresh'),
   me: () => API.get('/auth/me'),
 }
 
@@ -75,6 +112,26 @@ export const assessmentAPI = {
   startAttempt: (testId) => API.post('/assessments/attempts/start', { testId }),
   submitAttempt: (payload) => API.post('/assessments/attempts/submit', payload),
   getTestResult: (testId) => API.get(`/assessments/tests/${testId}/result`),
+}
+
+export const resumeProjectAPI = {
+  list: () => API.get('/resume-projects'),
+  get: (id) => API.get(`/resume-projects/${encodeURIComponent(id)}`),
+  create: (project) => API.post('/resume-projects', project),
+  update: (id, project) => API.put(`/resume-projects/${encodeURIComponent(id)}`, project),
+  remove: (id) => API.delete(`/resume-projects/${encodeURIComponent(id)}`),
+  compile: (project) => API.post('/resume-projects/compile', project, { responseType: 'blob' }),
+  sourceZip: (id) => API.get(`/resume-projects/${encodeURIComponent(id)}/source.zip`, { responseType: 'blob' }),
+  importZip: (archive) => {
+    const form = new FormData()
+    form.append('archive', archive)
+    return API.post('/resume-projects/import-zip', form)
+  },
+}
+
+export const latexTemplateAPI = {
+  list: (params) => API.get('/latex-templates', { params }),
+  get: (id) => API.get(`/latex-templates/${encodeURIComponent(id)}`),
 }
 
 export default API

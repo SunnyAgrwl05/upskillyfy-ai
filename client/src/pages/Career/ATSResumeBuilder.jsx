@@ -10,9 +10,10 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl
 
 const emptyExperience = () => ({ role:'',company:'',dates:'',bullets:'' })
 const emptyEducation = () => ({ degree:'',institution:'',dates:'' })
+const draftKey = 'upskillyfy-ats-resume-draft-v1'
+const headingPattern = /^(summary|profile|objective|experience|employment|work history|education|skills|technical skills|projects|certifications|certificates|awards|achievements|leadership|extracurriculars|activities)\s*:?$/i
 const escapeLatex = (value='') => value.replace(/[\\{}$&#_%~^]/g, char => ({'\\':'\\textbackslash{}','{':'\\{','}':'\\}','$':'\\$','&':'\\&','#':'\\#','_':'\\_','%':'\\%','~':'\\textasciitilde{}','^':'\\textasciicircum{}'}[char]))
 const section = (title, body) => body.trim() ? `\\section*{${title}}\n${body.trim()}\n` : ''
-const headingPattern = /^(summary|profile|objective|experience|employment|work history|education|skills|technical skills|projects|certifications|certificates|awards|achievements)\s*:?$/i
 function parseResumeText(text) {
  const lines=text.split(/\r?\n/).map(line=>line.replace(/[•▪◦]\s*/g,'').trim()).filter(Boolean)
  const headingIndex=lines.findIndex(line=>headingPattern.test(line))
@@ -30,12 +31,14 @@ function parseResumeText(text) {
  const experience=experienceLines.length?[{role:experienceLines[0].slice(0,100),company:'',dates:'',bullets:experienceBody}]:[emptyExperience()]
  const educationLines=findSection('education')
  const education=educationLines.length?[{degree:educationLines[0].slice(0,120),institution:educationLines.slice(1,3).join(' · '),dates:''}]:[emptyEducation()]
+ const leadership=findSection('leadership','extracurriculars','activities').join('\n')
  const skills=findSection('technical skills','skills').join(', ').replace(/\s*,\s*/g,', ').slice(0,1200)
  const projects=findSection('projects').join('\n').slice(0,3000)
  const certifications=findSection('certifications','certificates','awards','achievements').join('\n').slice(0,1500)
  const links=[...new Set(text.match(/(?:https?:\/\/|www\.)[^\s|,]+/g)||[])].join(', ')
- return {name:nameLine,email,phone,location:'',links,summary,experience,education,projects,skills,certifications,jobDescription:''}
+ return {name:nameLine,email,phone,location:'',links,summary,experience,education,leadership,projects,skills,certifications,jobDescription:''}
 }
+const linesToLatexItems = (value) => value.split(/\r?\n/).map(line=>line.replace(/^[-*•]\s*/, '').trim()).filter(Boolean).map(line=>`  \\item ${escapeLatex(line)}`).join('\n')
 function toLatex(data){
  const contact=[data.email,data.phone,data.location].filter(Boolean).map(escapeLatex).join(' \\textbar{} ')
  const links=data.links.split(',').map(item=>escapeLatex(item.trim())).filter(Boolean).join(' \\textbar{} ')
@@ -43,6 +46,7 @@ function toLatex(data){
  const education=data.education.filter(item=>item.degree||item.institution).map(item=>`\\textbf{${escapeLatex(item.degree)}}${item.institution?` — ${escapeLatex(item.institution)}`:''}${item.dates?` \\hfill ${escapeLatex(item.dates)}`:''}`).join('\\\\\n')
  const projects=data.projects.split('\n').map(line=>line.trim()).filter(Boolean).map(line=>`\\item ${escapeLatex(line)}`).join('\n')
  const skills=data.skills.split(',').map(item=>escapeLatex(item.trim())).filter(Boolean).join(', ')
+ const leadership=data.leadership.trim()?`\\begin{itemize}[leftmargin=1.2em]\n${linesToLatexItems(data.leadership)}\n\\end{itemize}`:''
  const certifications=data.certifications.split('\n').map(item=>item.trim()).filter(Boolean).map(escapeLatex).join('\\\\\n')
  return String.raw`\documentclass[10pt,a4paper]{article}
 \usepackage[margin=1.6cm]{geometry}
@@ -55,14 +59,17 @@ function toLatex(data){
 \begin{document}
 {\LARGE \textbf{${escapeLatex(data.name||'Your Name')}}}\\
 ${data.headline?`{\\large ${escapeLatex(data.headline)}}\\\n`:''}${contact}${contact&&links?'\\\\\n':''}${links}
-${section('Summary',escapeLatex(data.summary))}${section('Experience',experience)}${section('Education',education)}${section('Projects',projects?`\\begin{itemize}\n${projects}\n\\end{itemize}`:'')}${section('Skills',skills)}${section('Certifications',certifications)}
+${section('Summary',escapeLatex(data.summary))}${section('Experience',experience)}${section('Education',education)}${section('Leadership & Extracurriculars',leadership)}${section('Projects',projects?`\\begin{itemize}\n${projects}\n\\end{itemize}`:'')}${section('Skills',skills)}${section('Certifications',certifications)}
 \end{document}`
 }
 function analyze(data, source){
- const text=[data.name,data.headline,data.email,data.phone,data.location,data.summary,...data.experience.map(item=>`${item.role} ${item.company} ${item.bullets}`),...data.education.map(item=>`${item.degree} ${item.institution}`),data.projects,data.skills,data.certifications].join(' ')
+ const text=[data.name,data.headline,data.email,data.phone,data.location,data.summary,...data.experience.map(item=>`${item.role} ${item.company} ${item.bullets}`),...data.education.map(item=>`${item.degree} ${item.institution}`),data.leadership,data.projects,data.skills,data.certifications].join(' ')
  const stopWords=new Set(['about','after','also','from','have','into','more','must','our','role','team','that','their','this','with','will','work','years','your','ability','experience','skills','responsibilities','required','preferred'])
- const jobTerms=[...new Set((data.jobDescription.toLowerCase().match(/[a-z][a-z+#.]{2,}/g)||[]).filter(term=>!stopWords.has(term)))]
- const matchedTerms=jobTerms.filter(term=>text.toLowerCase().includes(term))
+ const normalizeTerm = (term) => term.toLowerCase().replace(/^[+#]+|[+#]+$/g,'')
+ const jobTerms=[...new Set((data.jobDescription.toLowerCase().match(/[a-z][a-z+#.]{2,}/g)||[]).map(normalizeTerm).filter(term=>term.length>2&&!stopWords.has(term)))]
+ const resumeText=` ${text.toLowerCase().replace(/[^a-z0-9+#.]+/g,' ')} `
+ const matchedTerms=jobTerms.filter(term=>new RegExp(`(^|[^a-z0-9])${term.replace(/[.+#]/g,'\\$&')}(?=$|[^a-z0-9])`,'i').test(resumeText))
+ const keywordCoverage=jobTerms.length?Math.round(matchedTerms.length/jobTerms.length*100):null
  const checks=[
   {label:'Contact email is present',ok:/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email.trim()),detail:'Add a working email address recruiters can use.'},
   {label:'Professional summary is present',ok:data.summary.trim().length>=35,detail:'Add a short summary describing your role and strengths.'},
@@ -71,18 +78,23 @@ function analyze(data, source){
   {label:'Skills are listed',ok:data.skills.split(',').filter(item=>item.trim()).length>=3,detail:'List at least three relevant skills using job-posting terminology.'},
   {label:'Impact numbers are present',ok:/\b\d+\s?(%|x|k\+?|m\+?|hours?|days?|users?|customers?|projects?)\b/i.test(text),detail:'Where accurate, quantify outcomes such as time saved, users reached, or error reduction.'},
   {label:'Single-column source structure',ok:/\\documentclass/.test(source)&&!source.includes('multicol'),detail:'A single-column document is easier for many ATS parsers to read.'},
-  {label:'Job-description keywords are reflected',ok:!data.jobDescription.trim()||matchedTerms.length>0,detail:data.jobDescription.trim()?`${matchedTerms.length} of ${jobTerms.length} useful terms appear in your resume.`:'Paste a job description to see relevant terms to consider.'},
+  {label:'Job-description keywords are reflected',ok:!data.jobDescription.trim()||keywordCoverage>=50,detail:data.jobDescription.trim()?`${matchedTerms.length} of ${jobTerms.length} distinct terms match (${keywordCoverage}%). Matching is a writing aid, not a hiring prediction.`:'Paste a job description to see relevant terms to consider.'},
  ]
- return {checks,score:Math.round(checks.filter(item=>item.ok).length/checks.length*100)}
+ const structuralChecks=checks.slice(0,-1)
+ const structureScore=Math.round(structuralChecks.filter(item=>item.ok).length/structuralChecks.length*100)
+ return {checks,score:structureScore,keywordCoverage,matchedTerms,jobTerms}
 }
 
 export default function ATSResumeBuilder(){
  const navigate=useNavigate()
- const [data,setData]=useState({name:'',headline:'',email:'',phone:'',location:'',links:'',summary:'',experience:[emptyExperience()],education:[emptyEducation()],projects:'',skills:'',certifications:'',jobDescription:''})
+ const [data,setData]=useState(()=>{
+  try{return {...{name:'',headline:'',email:'',phone:'',location:'',links:'',summary:'',experience:[emptyExperience()],education:[emptyEducation()],leadership:'',projects:'',skills:'',certifications:'',jobDescription:''},...JSON.parse(localStorage.getItem(draftKey)||'{}')}}catch{return {name:'',headline:'',email:'',phone:'',location:'',links:'',summary:'',experience:[emptyExperience()],education:[emptyEducation()],leadership:'',projects:'',skills:'',certifications:'',jobDescription:''}}
+ })
  const [showAnalysis,setShowAnalysis]=useState(false)
  const [pdfStatus,setPdfStatus]=useState('')
  const source=useMemo(()=>toLatex(data),[data])
  const analysis=useMemo(()=>analyze(data,source),[data,source])
+ useEffect(()=>{localStorage.setItem(draftKey,JSON.stringify(data))},[data])
  const update=(key,value)=>setData(current=>({...current,[key]:value}))
  const updateRow=(key,index,field,value)=>setData(current=>({...current,[key]:current[key].map((row,i)=>i===index?{...row,[field]:value}:row)}))
  const addRow=key=>setData(current=>({...current,[key]:[...current[key],key==='experience'?emptyExperience():emptyEducation()]}))
@@ -117,8 +129,9 @@ export default function ATSResumeBuilder(){
   <section className="ats-card"><h2>Personal details</h2><div className="ats-fields"><label>Full name<input value={data.name} onChange={e=>update('name',e.target.value)} placeholder="Alex Morgan"/></label><label>Target role<input value={data.headline} onChange={e=>update('headline',e.target.value)} placeholder="Software Engineer"/></label><label>Email<input type="email" value={data.email} onChange={e=>update('email',e.target.value)} placeholder="alex@example.com"/></label><label>Phone<input value={data.phone} onChange={e=>update('phone',e.target.value)} placeholder="+1 555 010 1234"/></label><label>Location<input value={data.location} onChange={e=>update('location',e.target.value)} placeholder="City, Country"/></label><label>Links, separated by commas<input value={data.links} onChange={e=>update('links',e.target.value)} placeholder="linkedin.com/in/alex, github.com/alex"/></label><label className="ats-full">Professional summary<textarea rows="4" value={data.summary} onChange={e=>update('summary',e.target.value)} placeholder="Summarize your focus, experience, and strongest outcomes."/></label><label className="ats-full">Target job description for keyword review<textarea rows="5" value={data.jobDescription} onChange={e=>update('jobDescription',e.target.value)} placeholder="Paste the job posting to compare its terms with your resume content. It stays in this browser."/></label></div></section>
   <section className="ats-card"><div className="ats-card-heading"><h2>Experience</h2><button onClick={()=>addRow('experience')}><Plus size={15}/> Add experience</button></div>{data.experience.map((row,index)=><div className="ats-repeat" key={index}><div className="ats-fields"><label>Role<input value={row.role} onChange={e=>updateRow('experience',index,'role',e.target.value)}/></label><label>Company<input value={row.company} onChange={e=>updateRow('experience',index,'company',e.target.value)}/></label><label>Dates<input value={row.dates} onChange={e=>updateRow('experience',index,'dates',e.target.value)} placeholder="2023 – Present"/></label><label className="ats-full">Achievements, one per line<textarea rows="3" value={row.bullets} onChange={e=>updateRow('experience',index,'bullets',e.target.value)} placeholder="Built a reporting workflow that reduced weekly processing time by 30%."/></label></div>{data.experience.length>1&&<button className="ats-remove" onClick={()=>removeRow('experience',index)} aria-label="Remove experience"><Trash2 size={15}/></button>}</div>)}</section>
   <section className="ats-card"><div className="ats-card-heading"><h2>Education</h2><button onClick={()=>addRow('education')}><Plus size={15}/> Add education</button></div>{data.education.map((row,index)=><div className="ats-fields ats-repeat" key={index}><label>Degree<input value={row.degree} onChange={e=>updateRow('education',index,'degree',e.target.value)} placeholder="B.S. Computer Science"/></label><label>Institution<input value={row.institution} onChange={e=>updateRow('education',index,'institution',e.target.value)}/></label><label>Dates<input value={row.dates} onChange={e=>updateRow('education',index,'dates',e.target.value)}/></label>{data.education.length>1&&<button className="ats-remove" onClick={()=>removeRow('education',index)} aria-label="Remove education"><Trash2 size={15}/></button>}</div>)}</section>
-  <section className="ats-card"><h2>Projects, skills, and certifications</h2><div className="ats-fields"><label className="ats-full">Projects, one per line<textarea rows="3" value={data.projects} onChange={e=>update('projects',e.target.value)} placeholder="Open-source contributor — improved build times by 20%."/></label><label className="ats-full">Skills, separated by commas<textarea rows="2" value={data.skills} onChange={e=>update('skills',e.target.value)} placeholder="JavaScript, React, Node.js, SQL"/></label><label className="ats-full">Certifications and achievements, one per line<textarea rows="2" value={data.certifications} onChange={e=>update('certifications',e.target.value)}/></label></div></section>
-  <div className="ats-actions"><button className="latex-button" onClick={()=>setShowAnalysis(value=>!value)}>{showAnalysis?'Hide':'Analyze'} resume</button><button className="latex-button" onClick={()=>{setShowAnalysis(false);window.setTimeout(()=>window.print(),100)}}>Print / Save as PDF</button><button className="latex-button primary" onClick={createProject}><FileText size={16}/> Open in LaTeX editor</button></div>
+  <section className="ats-card"><h2>Projects, skills, certifications, and extracurriculars</h2><div className="ats-fields"><label className="ats-full">Leadership &amp; extracurriculars, one per line<textarea rows="3" value={data.leadership} onChange={e=>update('leadership',e.target.value)} placeholder="Organized a volunteer team that raised $5K for school STEM club."/></label>
+<label className="ats-full">Projects, one per line<textarea rows="3" value={data.projects} onChange={e=>update('projects',e.target.value)} placeholder="Open-source contributor — improved build times by 20%."/></label><label className="ats-full">Skills, separated by commas<textarea rows="2" value={data.skills} onChange={e=>update('skills',e.target.value)} placeholder="JavaScript, React, Node.js, SQL"/></label><label className="ats-full">Certifications and achievements, one per line<textarea rows="2" value={data.certifications} onChange={e=>update('certifications',e.target.value)}/></label></div></section>
+  <div className="ats-actions"><button className="latex-button" onClick={()=>setShowAnalysis(value=>!value)}>{showAnalysis?'Hide':'Analyze'} resume</button><button className="latex-button" onClick={()=>{setShowAnalysis(false);window.setTimeout(()=>window.print(),100)}}>Print preview / Save as PDF</button><button className="latex-button primary" onClick={createProject}><FileText size={16}/> Open in LaTeX editor</button></div>
   <section className="ats-pdf-note"><Upload size={18}/><div><b>Import an existing PDF resume</b><p>Text-based PDFs are parsed in this browser and mapped to editable fields. Scanned PDFs need OCR and are not supported.</p><label className="latex-button" htmlFor="resume-pdf-upload">Choose PDF</label><input id="resume-pdf-upload" type="file" accept="application/pdf,.pdf" onChange={importPdf}/>{pdfStatus&&<small role="status">{pdfStatus}</small>}</div></section>
- </div><aside className="ats-preview"><div className="ats-preview-title"><div><b>ATS checks</b><small>Heuristic guidance, not a hiring guarantee</small></div><span>{analysis.score}%</span></div>{showAnalysis?<div className="ats-checks">{analysis.checks.map(check=><div key={check.label} className={check.ok?'pass':'todo'}><b>{check.ok?'✓':'○'} {check.label}</b>{!check.ok&&<small>{check.detail}</small>}</div>)}</div>:<div className="ats-preview-content"><div>{data.name||'Your Name'}</div><small>{data.headline||'Target role'}{data.email?` · ${data.email}`:''}</small><hr/><b>Summary</b><p>{data.summary||'Your professional summary will appear here.'}</p><b>Experience</b>{data.experience.map((row,index)=><p key={index}>{row.role||'Role'}{row.company?` · ${row.company}`:''}<br/>{row.bullets||'Add achievement statements with clear outcomes.'}</p>)}<b>Education</b>{data.education.map((row,index)=><p key={index}>{row.degree||'Degree'}{row.institution?` · ${row.institution}`:''}</p>)}<b>Skills</b><p>{data.skills||'Your skills will appear here.'}</p>{data.projects.trim()&&<><b>Projects</b><p>{data.projects}</p></>}{data.certifications.trim()&&<><b>Certifications</b><p>{data.certifications}</p></>}</div>}</aside></div></main>
+ </div><aside className="ats-preview"><div className="ats-preview-title"><div><b>ATS checks</b><small>Structure guidance, not a hiring guarantee</small></div><span>{analysis.score}%</span></div>{showAnalysis?<div className="ats-checks"><p className="ats-score-note">The score measures the completed structural checks below. Keyword coverage is shown separately and does not predict hiring outcomes.</p>{analysis.checks.map(check=><div key={check.label} className={check.ok?'pass':'todo'}><b>{check.ok?'✓':'○'} {check.label}</b>{!check.ok&&<small>{check.detail}</small>}</div>)}{analysis.keywordCoverage!==null&&<div className="ats-keyword-coverage"><b>Keyword coverage: {analysis.keywordCoverage}%</b><small>{analysis.matchedTerms.length} of {analysis.jobTerms.length} distinct job-description terms matched.</small></div>}</div>:<div className="ats-preview-content"><div>{data.name||'Your Name'}</div><small>{data.headline||'Target role'}{data.email?` · ${data.email}`:''}</small><hr/><b>Summary</b><p>{data.summary||'Your professional summary will appear here.'}</p><b>Experience</b>{data.experience.map((row,index)=><p key={index}>{row.role||'Role'}{row.company?` · ${row.company}`:''}<br/>{row.bullets||'Add achievement statements with clear outcomes.'}</p>)}<b>Education</b>{data.education.map((row,index)=><p key={index}>{row.degree||'Degree'}{row.institution?` · ${row.institution}`:''}</p>)}{data.leadership.trim()&&<><b>Leadership &amp; Extracurriculars</b><p>{data.leadership}</p></>}<b>Skills</b><p>{data.skills||'Your skills will appear here.'}</p>{data.projects.trim()&&<><b>Projects</b><p>{data.projects}</p></>}{data.certifications.trim()&&<><b>Certifications</b><p>{data.certifications}</p></>}</div>}</aside></div></main>
 }

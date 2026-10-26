@@ -5,7 +5,7 @@ import { StreamLanguage } from '@codemirror/language'
 import { stex } from '@codemirror/legacy-modes/mode/stex'
 import { oneDark } from '@codemirror/theme-one-dark'
 import { Search, FileText, Plus, ArrowLeft, Download, Play, FolderOpen, Code2, Trash2, Upload, ChevronRight } from 'lucide-react'
-import { resumeProjectAPI } from '../../api'
+import { latexTemplateAPI, resumeProjectAPI } from '../../api'
 import './ResumeWorkspace.css'
 
 const categories = ['Journal Articles','Bibliographies','Books','Calendars','CVs and Résumés','Formal Letters','Assignments','Newsletters','Posters','Presentations','Theses and Dissertations','Research Papers','Reports','Cover Letters']
@@ -51,6 +51,38 @@ const templates = [
  {id:'academic-article',title:'Academic Article',category:'Journal Articles',kind:'Templates',author:'Upskillyfy AI',description:'A concise scholarly article template with the common manuscript sections.',tags:['Article','Academic'],source:starter},
  {id:'community-guide',title:'Preparing a Reproducible LaTeX Project',category:'Reports',kind:'Community',author:'Upskillyfy AI',description:'An original community guide to keeping source files and assets organized in a LaTeX project.',tags:['Community','Guide'],source:starter},
 ]
+const localTemplateAliases = {
+ 'ats-friendly-resume':'ats-resume',
+ 'software-engineer-resume':'software-engineer',
+ 'fresher-resume':'ats-resume',
+ 'experienced-professional-resume':'software-engineer',
+ 'research-paper':'conference-proceedings',
+ 'journal-article':'journal',
+ 'technical-report':'research-report',
+ 'poster':'presentation',
+ 'assignment':'undergraduate-thesis',
+ 'formal-letter':'cover-letter',
+ 'newsletter':'community-guide',
+ 'calendar':'community-guide',
+ 'bibliography':'community-guide',
+ 'book':'thesis',
+}
+function findLocalTemplate(templateId){
+ const localId=localTemplateAliases[templateId]||templateId
+ return templates.find(template=>template.id===localId)
+}
+function normalizeTemplate(template){
+ const mainFile=template.mainFile||template.files?.[0]?.path||'main.tex'
+ const files=template.files?.map(file=>({name:file.path,content:file.content,isBinary:file.isBinary===true}))||[{name:'main.tex',content:template.source||''}]
+ return {...template,source:files.find(file=>file.name===mainFile)?.content||files[0]?.content||'',files}
+}
+function filterLocalTemplates(search,kind,category){
+ const normalizedSearch=search.trim().toLowerCase()
+ return templates.filter(template=>{
+  const searchable=`${template.title} ${template.description} ${template.author} ${template.category} ${(template.tags||[]).join(' ')}`.toLowerCase()
+  return (kind==='All'||template.kind===kind)&&(category==='All'||template.category===category)&&(!normalizedSearch||searchable.includes(normalizedSearch))
+ })
+}
 const key='upskillyfy-latex-projects-v1'
 function getProjects(){try{return JSON.parse(localStorage.getItem(key)||'[]')}catch{return []}}
 function writeProjectsLocal(items){localStorage.setItem(key,JSON.stringify(items))}
@@ -76,7 +108,9 @@ function scheduleCloudSave(project){
    const current=getProjects()
    writeProjectsLocal(current.map(item=>item.id===latest.id?{...item,cloudSaved:true,cloudOwner:owner}:item))
    window.dispatchEvent(new CustomEvent('resume-project-cloud-saved',{detail:latest.id}))
-  }catch{}
+  }catch(error){
+   window.dispatchEvent(new CustomEvent('resume-project-cloud-save-failed',{detail:{id:project.id,message:error.response?.data?.message||'Cloud save failed. Your local draft is still safe.'}}))
+  }
   cloudBusy.delete(project.id)
   cloudTimers.delete(project.id)
   const current=getProjects().find(item=>item.id===project.id)
@@ -122,17 +156,34 @@ async function importProjectFile(file,navigate){
 }
 function download(name,content,type='text/plain'){const url=URL.createObjectURL(content instanceof Blob?content:new Blob([content],{type}));const a=document.createElement('a');a.href=url;a.download=name;a.click();window.setTimeout(()=>URL.revokeObjectURL(url),1000)}
 function Preview({title,category}){return <div className="latex-paper"><div className="paper-kicker">UPSKILLYFY AI · ORIGINAL DEMO</div><h3>{title}</h3><div className="paper-rule"/><div className="paper-meta">{category}</div><div className="paper-lines"><i/><i/><i/><i/><i/><i/><i/></div><b>Experience</b><div className="paper-lines"><i/><i/><i/><i/></div><b>Education</b><div className="paper-lines"><i/><i/><i/></div></div>}
-function createFrom(template){const p=createProject(template.title,template.source,[{name:'main.tex',content:template.source}],template.id);return p}
+function createFrom(template){const normalized=normalizeTemplate(template);const p=createProject(normalized.title,normalized.source,normalized.files,normalized.id,normalized.mainFile||normalized.files[0]?.name||'main.tex');return p}
 
-export function ResumeGallery(){const [q,setQ]=useState('');const [kind,setKind]=useState('All');const [category,setCategory]=useState('All');const [page,setPage]=useState(1);const navigate=useNavigate();const results=useMemo(()=>templates.filter(t=>(kind==='All'||t.kind===kind)&&(category==='All'||t.category===category)&&(`${t.title} ${t.description} ${t.author} ${t.category}`.toLowerCase().includes(q.toLowerCase()))),[q,kind,category]);const shown=results.slice((page-1)*6,page*6);useEffect(()=>setPage(1),[q,kind,category]);return <main className="latex-wrap"><div className="latex-hero"><div className="latex-eyebrow">{'{upskillyfy template gallery}'}</div><h1>LaTeX templates</h1><p>LaTeX templates for journal articles, academic papers, CVs and résumés, presentations, and more.</p><form className="latex-search" onSubmit={e=>e.preventDefault()}><Search size={19}/><input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search templates, authors, categories…" aria-label="Search templates"/><button className="latex-button primary">Search</button></form><div className="latex-quick"><button onClick={()=>navigate('/career/resume/create')}><FileText size={16}/> Create Resume</button><button onClick={()=>navigate('/career/resume/projects')}><FolderOpen size={16}/> My Projects</button><button onClick={()=>navigate(`/career/resume/editor/${createProject().id}`)}><Plus size={16}/> Write Your Own LaTeX Code</button><label className="latex-button"><Upload size={16}/> Import Existing Project<input type="file" accept=".tex,.zip,text/plain,application/zip" hidden onChange={e=>{importProjectFile(e.target.files?.[0],navigate);e.target.value=''}}/></label></div></div><section className="latex-section"><h2>Categories</h2><p>Browse a document type to get started.</p><div className="latex-categories">{categories.map((c,i)=><button className={`latex-category ${category===c?'selected':''}`} key={c} onClick={()=>setCategory(category===c?'All':c)}><span>{String(i+1).padStart(2,'0')}</span><b>{c}</b><small>{['Articles and submissions','Citations and references','Long-form documents','Planning and scheduling','Professional profiles','Formal correspondence','Coursework and classes','Editorial projects','Research communication','Talks and slides','Graduate research','Academic studies','Findings and analysis','Job applications'][i]}</small></button>)}</div></section><section className="latex-section"><div className="latex-section-head"><div><h2>Featured templates</h2><p>Original starters selected for common writing tasks.</p></div></div><div className="latex-grid">{templates.filter(template=>['ats-resume','quick-guide','journal'].includes(template.id)).map(template=><article className="latex-card" key={template.id}><Link to={`/career/resume/templates/${template.id}`} className="latex-card-preview"><Preview title={template.title} category={template.category}/></Link><div className="latex-card-copy"><span>{template.category}</span><Link to={`/career/resume/templates/${template.id}`}><h3>{template.title}</h3></Link><p>{template.description}</p><small>Original demo · {template.author}</small></div></article>)}</div></section><section className="latex-section"><div className="latex-section-head"><div><h2>Recent templates</h2><p>Original Upskillyfy AI demo projects · no external affiliation</p></div><Link to="/career/resume/projects">My Projects <ChevronRight size={16}/></Link></div><div className="latex-filters">{['All','Templates','Examples','Community'].map(k=><button key={k} className={kind===k?'active':''} onClick={()=>setKind(k)}>{k==='Community'?'Community articles':k}</button>)}<select value={category} onChange={e=>setCategory(e.target.value)}><option>All</option>{categories.map(c=><option key={c}>{c}</option>)}</select></div>{shown.length?<div className="latex-grid">{shown.map(t=><article className="latex-card" key={t.id}><Link to={`/career/resume/templates/${t.id}`} className="latex-card-preview"><Preview title={t.title} category={t.category}/></Link><div className="latex-card-copy"><span>{t.category}</span><Link to={`/career/resume/templates/${t.id}`}><h3>{t.title}</h3></Link><p>{t.description}</p><small>Original demo · {t.author}</small></div><button className="latex-card-open" onClick={()=>{const p=createFrom(t);navigate(`/career/resume/editor/${p.id}`)}}>Open as template <ChevronRight size={15}/></button></article>)}</div>:<div className="latex-empty"><FileText/><h3>No matching documents</h3><p>Try another search or clear the selected category.</p><button onClick={()=>{setQ('');setKind('All');setCategory('All')}}>Clear filters</button></div>}<div className="latex-pagination"><span>{results.length} results</span><button disabled={page===1} onClick={()=>setPage(page-1)}>Previous</button><span>Page {page} of {Math.max(1,Math.ceil(results.length/6))}</span><button disabled={page>=Math.ceil(results.length/6)} onClick={()=>setPage(page+1)}>Next</button></div></section></main>}
+export function ResumeGallery(){
+ const [q,setQ]=useState('')
+ const [kind,setKind]=useState('All')
+ const [category,setCategory]=useState('All')
+ const [page,setPage]=useState(1)
+ const [items,setItems]=useState([])
+ const [pagination,setPagination]=useState({page:1,pages:1,total:0})
+ const [catalogStatus,setCatalogStatus]=useState('Loading templates…')
+ const navigate=useNavigate()
+ useEffect(()=>{let active=true;latexTemplateAPI.list({search:q,kind,category,page,limit:6}).then(({data})=>{if(!active)return;setItems(data.templates.map(normalizeTemplate));setPagination(data.pagination);setCatalogStatus('')}).catch(()=>{if(active){const local=filterLocalTemplates(q,kind,category);setItems(local.map(normalizeTemplate).slice((page-1)*6,page*6));setPagination({page,pages:Math.max(1,Math.ceil(local.length/6)),total:local.length});setCatalogStatus('Offline template catalogue')}});return()=>{active=false}},[q,kind,category,page])
+ useEffect(()=>setPage(1),[q,kind,category])
+ return <main className="latex-wrap"><div className="latex-hero"><div className="latex-eyebrow">{'{upskillyfy template gallery}'}</div><h1>LaTeX templates</h1><p>LaTeX templates for journal articles, academic papers, CVs and résumés, presentations, and more.</p><form className="latex-search" onSubmit={e=>e.preventDefault()}><Search size={19}/><input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search templates, authors, categories…" aria-label="Search templates"/><button className="latex-button primary">Search</button></form><div className="latex-quick"><button onClick={()=>navigate('/career/resume/create')}><FileText size={16}/> Create Resume</button><button onClick={()=>navigate('/career/resume/projects')}><FolderOpen size={16}/> My Projects</button><button onClick={()=>navigate(`/career/resume/editor/${createProject().id}`)}><Plus size={16}/> Write Your Own LaTeX Code</button><label className="latex-button"><Upload size={16}/> Import Existing Project<input type="file" accept=".tex,.zip,text/plain,application/zip" hidden onChange={e=>{importProjectFile(e.target.files?.[0],navigate);e.target.value=''}}/></label></div></div>{catalogStatus&&<p role="status" className="latex-catalog-status">{catalogStatus}</p>}<section className="latex-section"><h2>Categories</h2><p>Browse a document type to get started.</p><div className="latex-categories">{categories.map((c,i)=><button className={`latex-category ${category===c?'selected':''}`} key={c} onClick={()=>setCategory(category===c?'All':c)}><span>{String(i+1).padStart(2,'0')}</span><b>{c}</b><small>{['Articles and submissions','Citations and references','Long-form documents','Planning and scheduling','Professional profiles','Formal correspondence','Coursework and classes','Editorial projects','Research communication','Talks and slides','Graduate research','Academic studies','Findings and analysis','Job applications'][i]}</small></button>)}</div></section><section className="latex-section"><div className="latex-section-head"><div><h2>Templates</h2><p>Original Upskillyfy AI document starters.</p></div><Link to="/career/resume/projects">My Projects <ChevronRight size={16}/></Link></div><div className="latex-filters">{['All','Templates','Examples','Community'].map(k=><button key={k} className={kind===k?'active':''} onClick={()=>setKind(k)}>{k==='Community'?'Community articles':k}</button>)}<select value={category} onChange={e=>setCategory(e.target.value)}><option>All</option>{categories.map(c=><option key={c}>{c}</option>)}</select></div>{items.length?<div className="latex-grid">{items.map(t=><article className="latex-card" key={t.id}><Link to={`/career/resume/templates/${t.id}`} className="latex-card-preview"><Preview title={t.title} category={t.category}/></Link><div className="latex-card-copy"><span>{t.category}</span><Link to={`/career/resume/templates/${t.id}`}><h3>{t.title}</h3></Link><p>{t.description}</p><small>{t.author} · {t.kind}</small></div><button className="latex-card-open" onClick={()=>{const p=createFrom(t);navigate(`/career/resume/editor/${p.id}`)}}>Open as template <ChevronRight size={15}/></button></article>)}</div>:<div className="latex-empty"><FileText/><h3>No matching documents</h3><p>Try another search or clear the selected category.</p></div>}<div className="latex-pagination"><span>{pagination.total} results</span><button disabled={page===1} onClick={()=>setPage(page-1)}>Previous</button><span>Page {page} of {pagination.pages}</span><button disabled={page>=pagination.pages} onClick={()=>setPage(page+1)}>Next</button></div></section></main>
+}
 export function ResumeTemplateDetail(){
  const {templateId}=useParams()
  const navigate=useNavigate()
  const [showSource,setShowSource]=useState(false)
- const template=templates.find(item=>item.id===templateId)
- if(!template)return <main className="latex-wrap"><h1>Template not found</h1><Link to="/career/resume">Back to templates</Link></main>
+ const [template,setTemplate]=useState(()=>normalizeTemplate(findLocalTemplate(templateId)||{}))
+ const [loading,setLoading]=useState(true)
+ const [catalogStatus,setCatalogStatus]=useState('')
+ useEffect(()=>{let active=true;setLoading(true);setCatalogStatus('');latexTemplateAPI.get(templateId).then(({data})=>{if(active)setTemplate(normalizeTemplate(data.template))}).catch(()=>{if(active&&findLocalTemplate(templateId))setCatalogStatus('Offline template catalogue')}).finally(()=>{if(active)setLoading(false)});return()=>{active=false}},[templateId])
+ if(loading&&!template.id)return <main className="latex-wrap"><div className="latex-empty"><h3>Loading template…</h3></div></main>
+ if(!template.id)return <main className="latex-wrap"><h1>Template not found</h1><Link to="/career/resume">Back to templates</Link></main>
  return <main className="latex-wrap">
   <Link className="latex-back" to="/career/resume"><ArrowLeft size={16}/> Back to all templates</Link>
+  {catalogStatus&&<p role="status" className="latex-catalog-status">{catalogStatus}</p>}
   <div className="latex-detail-head"><div><span className="latex-eyebrow">{template.category}</span><h1>{template.title}</h1><p>{template.description}</p><div className="latex-detail-actions"><button className="latex-button primary" onClick={()=>{const project=createFrom(template);navigate(`/career/resume/editor/${project.id}`)}}><Code2 size={16}/> Open as Template</button><button className="latex-button" onClick={()=>setShowSource(true)}><Code2 size={16}/> View Source</button><button className="latex-button" onClick={()=>download('main.tex',template.source)}><Download size={16}/> Download Source</button><button className="latex-button" disabled title="No compiled PDF is available">PDF unavailable</button></div></div></div>
   <div className="latex-detail-grid"><aside className="latex-metadata"><h3>About this project</h3><p>{template.description}</p><dl><dt>Author</dt><dd>{template.author}</dd><dt>License</dt><dd>Not provided · original demo</dd><dt>Last updated</dt><dd>Not provided</dd><dt>Compiler</dt><dd>Not provided</dd><dt>Source files</dt><dd>main.tex</dd></dl><div className="latex-tags">{template.tags.map(tag=><span key={tag}>{tag}</span>)}</div></aside><div className="latex-detail-preview"><div className="latex-no-pdf"><FileText size={34}/><b>PDF preview unavailable</b><p>No compiled PDF is available for this original demo template. Open it as a project to edit its source.</p></div></div></div>
   {showSource&&<div className="latex-source-overlay" role="dialog" aria-modal="true" aria-label={`${template.title} source`}><section><header><div><b>main.tex</b><small>{template.title} · original demo source</small></div><button onClick={()=>setShowSource(false)} aria-label="Close source">Close</button></header><pre><code>{template.source}</code></pre><footer><button className="latex-button" onClick={()=>download('main.tex',template.source)}><Download size={15}/> Download source</button><button className="latex-button primary" onClick={()=>{const project=createFrom(template);navigate(`/career/resume/editor/${project.id}`)}}>Open as project</button></footer></section></div>}
@@ -177,6 +228,7 @@ export function ResumeEditor(){
  const {projectId}=useParams()
  const navigate=useNavigate()
  const [project,setProject]=useState(()=>visibleProjects().find(item=>item.id===projectId))
+ const [loadingProject,setLoadingProject]=useState(!visibleProjects().some(item=>item.id===projectId))
  const [active,setActive]=useState(()=>visibleProjects().find(item=>item.id===projectId)?.mainFile||'main.tex')
  const [openFiles,setOpenFiles]=useState(()=>[visibleProjects().find(item=>item.id===projectId)?.mainFile||'main.tex'])
  const [fileSearch,setFileSearch]=useState('')
@@ -188,9 +240,25 @@ export function ResumeEditor(){
  const editorRef=useRef(null)
  const file=project?.files.find(item=>item.name===active)||project?.files[0]
  const outline=useMemo(()=>file&&!file.isBinary?[...file.content.matchAll(/\\(?:chapter|section|subsection|subsubsection)\*?\{([^}]+)\}/g)].map(match=>({label:match[1],index:match.index})):[],[file])
- useEffect(()=>{if(!project)navigate('/career/resume/projects',{replace:true})},[project,projectId,navigate])
+ useEffect(()=>{
+  let active=true
+  if(project){setLoadingProject(false);return undefined}
+  if(!localStorage.getItem('token')){setLoadingProject(false);return undefined}
+  resumeProjectAPI.get(projectId).then(({data})=>{
+   if(!active)return
+   const restored=localProject(data.project,currentUserId())
+   writeProjectsLocal([restored,...getProjects().filter(item=>item.id!==restored.id)])
+   setProject(restored)
+   setActive(restored.mainFile)
+   setOpenFiles([restored.mainFile])
+  }).catch(()=>{}).finally(()=>{if(active)setLoadingProject(false)})
+  return ()=>{active=false}
+ },[project,projectId])
+ useEffect(()=>{if(!loadingProject&&!project)navigate('/career/resume/projects',{replace:true})},[loadingProject,project,navigate])
  useEffect(()=>()=>{if(pdfUrl)URL.revokeObjectURL(pdfUrl)},[pdfUrl])
  useEffect(()=>{const synced=event=>{if(event.detail!==projectId)return;setProject(current=>current?{...current,cloudSaved:true}:current);setStatus('Saved to your account')};window.addEventListener('resume-project-cloud-saved',synced);return()=>window.removeEventListener('resume-project-cloud-saved',synced)},[projectId])
+ useEffect(()=>{const failed=event=>{if(event.detail?.id===projectId)setStatus(event.detail.message)};window.addEventListener('resume-project-cloud-save-failed',failed);return()=>window.removeEventListener('resume-project-cloud-save-failed',failed)},[projectId])
+ if(loadingProject)return <main className="latex-wrap"><div className="latex-empty"><h3>Loading project…</h3><p>Restoring the latest saved workspace.</p></div></main>
  if(!project)return null
  const persist=(next,message='Saved locally')=>{
   const updated={...next,updatedAt:new Date().toISOString()}
