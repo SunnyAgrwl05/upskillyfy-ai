@@ -10,6 +10,8 @@ import communityRoutes from './routes/community.js'
 import newsletterRoutes from './routes/newsletter.js'
 import assessmentRoutes from './routes/assessments.js'
 import courseRoutes from './routes/courses.js'
+import resumeProjectRoutes from './routes/resumeProjects.js'
+import latexTemplateRoutes from './routes/latexTemplates.js'
 
 dotenv.config()
 
@@ -19,6 +21,7 @@ app.use(cors({
   origin: process.env.CLIENT_URL || 'http://localhost:5173',
   credentials: true
 }))
+app.use('/api/resume-projects', express.json({ limit: '15mb' }))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
@@ -31,6 +34,8 @@ app.use('/api/community', communityRoutes)
 app.use('/api/newsletter', newsletterRoutes)
 app.use('/api/assessments', assessmentRoutes)
 app.use('/api/courses', courseRoutes)
+app.use('/api/latex-templates', latexTemplateRoutes)
+app.use('/api/resume-projects', resumeProjectRoutes)
 
 // Health check
 app.get('/api/health', (req, res) => {
