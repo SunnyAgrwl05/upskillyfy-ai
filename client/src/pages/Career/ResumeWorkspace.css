@@ -14,3 +14,18 @@
 .latex-outline>button{display:block;width:100%;text-align:left;padding:6px 12px;border:0;background:transparent;color:var(--text);font-size:12px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .latex-outline>button:hover{background:var(--accent-bg);color:var(--accent)}
 .latex-outline>small{display:block;padding:6px 12px;color:var(--muted);font-size:11px}
+
+/* Overleaf-style editor additions */
+.latex-folder-row{font-weight:600}
+.latex-autocompile{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--muted);cursor:pointer}
+.latex-editor-top button:disabled,.latex-no-pdf button:disabled{opacity:.6;cursor:progress}
+.latex-pdfpane iframe{flex:1;min-height:0}
+.latex-pdf-open{color:var(--accent);display:inline-flex;align-items:center}
+.latex-problems{border-top:1px solid var(--border);max-height:34%;overflow:auto;padding:8px 0;background:var(--bg-card)}
+.latex-problems>b{display:block;padding:2px 12px 6px;font:700 10px ui-monospace,monospace;letter-spacing:.06em}
+.latex-problem{display:block;width:100%;text-align:left;border:0;background:transparent;color:var(--text);padding:6px 12px;font-size:12px;border-left:3px solid transparent;cursor:pointer}
+.latex-problem span{display:block;font:11px ui-monospace,monospace;color:var(--muted)}
+.latex-problem.error{border-left-color:#d92d20}
+.latex-problem.warning{border-left-color:#f79009}
+.latex-problem:hover{background:var(--accent-bg)}
+.latex-project-search{margin:0 0 16px;max-width:none}

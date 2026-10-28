@@ -4,7 +4,7 @@ import CodeMirror from '@uiw/react-codemirror'
 import { StreamLanguage } from '@codemirror/language'
 import { stex } from '@codemirror/legacy-modes/mode/stex'
 import { oneDark } from '@codemirror/theme-one-dark'
-import { Search, FileText, Plus, ArrowLeft, Download, Play, FolderOpen, Code2, Trash2, Upload, ChevronRight } from 'lucide-react'
+import { Search, FileText, Plus, ArrowLeft, Download, Play, FolderOpen, Code2, Trash2, Upload, ChevronRight, ChevronDown, Folder, ExternalLink, Copy } from 'lucide-react'
 import { latexTemplateAPI, resumeProjectAPI } from '../../api'
 import './ResumeWorkspace.css'
 
@@ -192,6 +192,7 @@ export function ResumeTemplateDetail(){
 export function ResumeProjects(){
  const [items,setItems]=useState(visibleProjects)
  const [loading,setLoading]=useState(Boolean(localStorage.getItem('token')))
+ const [query,setQuery]=useState('')
  const navigate=useNavigate()
  useEffect(()=>{
   let active=true
@@ -221,8 +222,10 @@ export function ResumeProjects(){
   }).catch(()=>{}).finally(()=>{if(active)setLoading(false)})
   return ()=>{active=false}
  },[])
+ const duplicate=project=>{createProject(`${project.title} (copy)`,'',project.files.map(file=>({...file})),project.templateId,project.mainFile);setItems(visibleProjects())}
+ const shown=items.filter(p=>p.title.toLowerCase().includes(query.toLowerCase()))
  const remove=id=>{const next=items.filter(x=>x.id!==id);const hidden=getProjects().filter(project=>project.cloudOwner&&project.cloudOwner!==currentUserId());saveProjects([...next,...hidden]);setItems(next)}
- return <main className="latex-wrap"><Link className="latex-back" to="/career/resume"><ArrowLeft size={16}/> Resume Builder</Link><div className="latex-section-head"><div><div className="latex-eyebrow">{'{your workspace}'}</div><h1>My Projects</h1><p>{loading?'Syncing projects…':localStorage.getItem('token')?'Projects sync with your account and remain available on this device.':'Saved on this device in this browser.'}</p></div><button className="latex-button primary" onClick={()=>{const p=createProject();navigate(`/career/resume/editor/${p.id}`)}}><Plus size={16}/> New project</button></div>{items.length?<div className="latex-project-list">{items.map(p=><article key={p.id}><FileText/><div><b>{p.title}</b><small>{p.cloudSaved?'Synced · ': 'Local draft · '}{new Date(p.updatedAt).toLocaleString()}</small></div><button onClick={()=>navigate(`/career/resume/editor/${p.id}`)}>Continue editing</button><button aria-label="Delete project" onClick={()=>remove(p.id)}><Trash2 size={16}/></button></article>)}</div>:<div className="latex-empty"><FileText/><h3>{loading?'Loading projects…':'No projects yet'}</h3><p>Create a resume from a template or start with a blank document.</p><button onClick={()=>{const p=createProject();navigate(`/career/resume/editor/${p.id}`)}}>Start blank project</button></div>}</main>
+ return <main className="latex-wrap"><Link className="latex-back" to="/career/resume"><ArrowLeft size={16}/> Resume Builder</Link><div className="latex-section-head"><div><div className="latex-eyebrow">{'{your workspace}'}</div><h1>My Projects</h1><p>{loading?'Syncing projects…':localStorage.getItem('token')?'Projects sync with your account and remain available on this device.':'Saved on this device in this browser.'}</p></div><button className="latex-button primary" onClick={()=>{const p=createProject();navigate(`/career/resume/editor/${p.id}`)}}><Plus size={16}/> New project</button></div>{items.length>0&&<div className="latex-search latex-project-search"><Search size={16}/><input value={query} onChange={event=>setQuery(event.target.value)} placeholder="Search projects" aria-label="Search projects"/></div>}{shown.length?<div className="latex-project-list">{shown.map(p=><article key={p.id}><FileText/><div><b>{p.title}</b><small>{p.cloudSaved?'Synced · ': 'Local draft · '}{new Date(p.updatedAt).toLocaleString()}</small></div><button onClick={()=>navigate(`/career/resume/editor/${p.id}`)}>Continue editing</button><button aria-label="Duplicate project" title="Duplicate" onClick={()=>duplicate(p)}><Copy size={16}/></button><button aria-label="Delete project" onClick={()=>remove(p.id)}><Trash2 size={16}/></button></article>)}</div>:<div className="latex-empty"><FileText/><h3>{loading?'Loading projects…':items.length?'No matching projects':'No projects yet'}</h3><p>Create a resume from a template or start with a blank document.</p><button onClick={()=>{const p=createProject();navigate(`/career/resume/editor/${p.id}`)}}>Start blank project</button></div>}</main>
 }
 export function ResumeEditor(){
  const {projectId}=useParams()
@@ -237,6 +240,10 @@ export function ResumeEditor(){
  const [pdfUrl,setPdfUrl]=useState('')
  const [compileError,setCompileError]=useState('')
  const [compilerLog,setCompilerLog]=useState('')
+ const [compiling,setCompiling]=useState(false)
+ const [collapsed,setCollapsed]=useState(()=>new Set())
+ const [autoCompile,setAutoCompile]=useState(()=>localStorage.getItem('latex-auto-compile')==='1')
+ const compileRef=useRef(null)
  const editorRef=useRef(null)
  const file=project?.files.find(item=>item.name===active)||project?.files[0]
  const outline=useMemo(()=>file&&!file.isBinary?[...file.content.matchAll(/\\(?:chapter|section|subsection|subsubsection)\*?\{([^}]+)\}/g)].map(match=>({label:match[1],index:match.index})):[],[file])
@@ -258,6 +265,8 @@ export function ResumeEditor(){
  useEffect(()=>()=>{if(pdfUrl)URL.revokeObjectURL(pdfUrl)},[pdfUrl])
  useEffect(()=>{const synced=event=>{if(event.detail!==projectId)return;setProject(current=>current?{...current,cloudSaved:true}:current);setStatus('Saved to your account')};window.addEventListener('resume-project-cloud-saved',synced);return()=>window.removeEventListener('resume-project-cloud-saved',synced)},[projectId])
  useEffect(()=>{const failed=event=>{if(event.detail?.id===projectId)setStatus(event.detail.message)};window.addEventListener('resume-project-cloud-save-failed',failed);return()=>window.removeEventListener('resume-project-cloud-save-failed',failed)},[projectId])
+ useEffect(()=>{const onKey=event=>{if((event.metaKey||event.ctrlKey)&&event.key==='Enter'){event.preventDefault();compileRef.current?.()}};window.addEventListener('keydown',onKey);return()=>window.removeEventListener('keydown',onKey)},[])
+ useEffect(()=>{if(!autoCompile||!project||!localStorage.getItem('token'))return undefined;const timer=setTimeout(()=>compileRef.current?.(),3500);return()=>clearTimeout(timer)},[autoCompile,project?.updatedAt])
  if(loadingProject)return <main className="latex-wrap"><div className="latex-empty"><h3>Loading project…</h3><p>Restoring the latest saved workspace.</p></div></main>
  if(!project)return null
  const persist=(next,message='Saved locally')=>{
@@ -326,7 +335,8 @@ export function ResumeEditor(){
  }
  const compile=async()=>{
   if(!localStorage.getItem('token')){setCompileError('Sign in to compile this project with the isolated compiler service.');return}
-  setCompileError('');setCompilerLog('');setStatus('Compiling…')
+  if(compiling)return
+  setCompiling(true);setCompileError('');setCompilerLog('');setStatus('Compiling…')
   try{
    const {data,headers}=await resumeProjectAPI.compile(cloudPayload(project))
    if(pdfUrl)URL.revokeObjectURL(pdfUrl)
@@ -340,24 +350,41 @@ export function ResumeEditor(){
    if(response instanceof Blob){try{const body=JSON.parse(await response.text());message=body.message||message;setCompilerLog(body.log||'')}catch{}}
    else if(response?.message)message=response.message
    setCompileError(message||'Compilation failed.');setStatus('Compilation failed')
-  }
+  }finally{setCompiling(false)}
  }
+ compileRef.current=compile
+ const problems=[...compilerLog.matchAll(/^(error|warning):\s*(?:([^\s:]+\.(?:tex|sty|cls|bib)):(\d+):\s*)?(.+)$/gim)].map(match=>({level:match[1].toLowerCase(),file:match[2]||'',line:Number(match[3]||0),message:match[4].trim()}))
+ const jumpTo=problem=>{
+  if(problem.file&&project.files.some(item=>item.name===problem.file))openFile(problem.file)
+  if(!problem.line)return
+  window.setTimeout(()=>{const view=editorRef.current;if(!view)return;const line=view.state.doc.line(Math.min(problem.line,view.state.doc.lines));view.dispatch({selection:{anchor:line.from},scrollIntoView:true});view.focus()},80)
+ }
+ const toggleFolder=dir=>setCollapsed(current=>{const next=new Set(current);if(next.has(dir))next.delete(dir);else next.add(dir);return next})
+ const treeRows=(()=>{
+  const query=fileSearch.toLowerCase()
+  const list=project.files.filter(item=>item.name.toLowerCase().includes(query)).sort((a,b)=>{const ap=a.name.split('/'),bp=b.name.split('/');for(let i=0;i<Math.min(ap.length,bp.length);i++){if(ap[i]!==bp[i]){const ad=i<ap.length-1,bd=i<bp.length-1;if(ad!==bd)return ad?-1:1;return ap[i].localeCompare(bp[i])}}return ap.length-bp.length})
+  const rows=[];const seen=new Set()
+  for(const item of list){const parts=item.name.split('/');let hidden=false
+   for(let i=0;i<parts.length-1;i++){const dir=parts.slice(0,i+1).join('/');if(!seen.has(dir)){seen.add(dir);if(!hidden)rows.push({folder:dir,depth:i})}if(collapsed.has(dir))hidden=true}
+   if(!hidden)rows.push({item,depth:parts.length-1})}
+  return rows
+ })()
  const downloadPdf=()=>{if(!pdfUrl)return;const link=document.createElement('a');link.href=pdfUrl;link.download=`${project.title.replace(/[^\w-]/g,'-')}.pdf`;link.click()}
  const downloadZip=async()=>{if(!localStorage.getItem('token')){setCompileError('Sign in to download the project ZIP.');return}try{const {data}=await resumeProjectAPI.sourceZip(project.id);download(`${project.title.replace(/[^\w-]/g,'-')}.zip`,data,'application/zip')}catch(error){setCompileError(error.response?.data?.message||'Could not download the source ZIP. Save the project to your account and try again.')}}
  const downloadSource=()=>download(`${file.name.split('/').pop()||'source.tex'}`,file.isBinary?Uint8Array.from(atob(file.content),char=>char.charCodeAt(0)):file.content,file.isBinary?'application/octet-stream':'text/plain')
  const closeTab=(name,event)=>{event.stopPropagation();const remaining=openFiles.filter(item=>item!==name);setOpenFiles(remaining.length?remaining:[project.mainFile]);if(active===name)setActive(remaining[remaining.length-1]||project.mainFile)}
  return <div className="latex-editor">
-  <header className="latex-editor-top"><Link to="/career/resume/projects"><ArrowLeft size={17}/></Link><input value={project.title} aria-label="Project name" onChange={event=>persist({...project,title:event.target.value})}/><span>{status}</span><button onClick={compile}><Play size={15}/> Recompile</button>{pdfUrl&&<button onClick={downloadPdf}><Download size={15}/> PDF</button>}<button onClick={downloadZip}><Download size={15}/> Source ZIP</button><button onClick={downloadSource}><Download size={15}/> File</button></header>
+  <header className="latex-editor-top"><Link to="/career/resume/projects"><ArrowLeft size={17}/></Link><input value={project.title} aria-label="Project name" onChange={event=>persist({...project,title:event.target.value})}/><span>{status}</span><button onClick={compile} disabled={compiling} title="Recompile (Ctrl/Cmd + Enter)"><Play size={15}/> {compiling?'Compiling…':'Recompile'}</button><label className="latex-autocompile" title="Recompile automatically after you stop typing"><input type="checkbox" checked={autoCompile} onChange={event=>{setAutoCompile(event.target.checked);localStorage.setItem('latex-auto-compile',event.target.checked?'1':'0')}}/> Auto</label>{pdfUrl&&<button onClick={downloadPdf}><Download size={15}/> PDF</button>}<button onClick={downloadZip}><Download size={15}/> Source ZIP</button><button onClick={downloadSource}><Download size={15}/> File</button></header>
   <div className="latex-editor-body">
    <aside className="latex-filepane"><div className="latex-pane-title">PROJECT FILES <button onClick={addFile} title="New file"><Plus size={15}/></button></div>
     <input className="latex-file-search" value={fileSearch} onChange={event=>setFileSearch(event.target.value)} placeholder="Search files" aria-label="Search project files"/>
-    {project.files.filter(item=>item.name.toLowerCase().includes(fileSearch.toLowerCase())).map(item=><div className="latex-file-row" key={item.name}><button className={item.name===active?'active':''} onClick={()=>openFile(item.name)} title={item.name}><FileText size={15}/>{item.name.split('/').pop()}{item.name===project.mainFile&&<small>main</small>}</button>{/\.tex$/i.test(item.name)&&<button title="Set main document" aria-label={`Set ${item.name} as the main document`} onClick={()=>setMain(item.name)}>{item.name===project.mainFile?'●':'○'}</button>}<button title="Rename file" aria-label={`Rename ${item.name}`} onClick={()=>renameFile(item.name)}>✎</button><button title="Delete file" aria-label={`Delete ${item.name}`} onClick={()=>removeFile(item.name)}>×</button></div>)}
+    {treeRows.map(row=>{const item=row.item;return row.folder?<button className="latex-folder-row" key={'dir:'+row.folder} style={{paddingLeft:12+row.depth*12}} onClick={()=>toggleFolder(row.folder)}>{collapsed.has(row.folder)?<ChevronRight size={14}/>:<ChevronDown size={14}/>}<Folder size={14}/>{row.folder.split('/').pop()}</button>:<div className="latex-file-row" key={item.name} style={{paddingLeft:row.depth*12}}><button className={item.name===active?'active':''} onClick={()=>openFile(item.name)} title={item.name}><FileText size={15}/>{item.name.split('/').pop()}{item.name===project.mainFile&&<small>main</small>}</button>{/\.tex$/i.test(item.name)&&<button title="Set main document" aria-label={`Set ${item.name} as the main document`} onClick={()=>setMain(item.name)}>{item.name===project.mainFile?'●':'○'}</button>}<button title="Rename file" aria-label={`Rename ${item.name}`} onClick={()=>renameFile(item.name)}>✎</button><button title="Delete file" aria-label={`Delete ${item.name}`} onClick={()=>removeFile(item.name)}>×</button></div>})}
     <label className="latex-upload">Upload source or asset<input type="file" accept=".tex,.bib,.sty,.cls,.txt,.md,.png,.jpg,.jpeg,.pdf" hidden onChange={importFile}/></label>
     <div className="latex-outline"><b>OUTLINE</b>{outline.length?outline.map(item=><button key={`${item.index}-${item.label}`} onClick={()=>navigateOutline(item.index)}>{item.label}</button>):<small>No sections in this file</small>}</div>
     <div className="latex-editor-note">{project.cloudSaved?'Account-synced project':'Local draft'} · source autosaves as you edit.</div>
    </aside>
    <section className="latex-codepane"><div className="latex-open-tabs">{openFiles.map(name=><button className={name===active?'active':''} key={name} onClick={()=>setActive(name)}>{name.split('/').pop()}<span onClick={event=>closeTab(name,event)}>×</span></button>)}</div><div className="latex-insert-tools"><label className="latex-font-size">Editor text<select aria-label="Editor font size" value={editorFontSize} onChange={event=>{const size=Number(event.target.value);setEditorFontSize(size);localStorage.setItem('latex-editor-font-size',String(size))}}>{[12,13,14,15,16,18,20,22,24].map(size=><option key={size} value={size}>{size}px</option>)}</select></label><button onClick={()=>insertSnippet('\\section*{New section}\n')}>Section</button><button onClick={()=>insertSnippet('\\begin{itemize}\n  \\item New item\n\\end{itemize}\n')}>List</button><button onClick={()=>insertSnippet('\\begin{figure}[ht]\n  \\centering\n  \\includegraphics[width=0.8\\linewidth]{image.png}\n  \\caption{Caption}\n\\end{figure}\n')}>Figure</button><button onClick={()=>insertSnippet('\\cite{citation-key}')}>Citation</button><button onClick={()=>insertSnippet('\\ref{section-label}')}>Reference</button></div>{file?.isBinary?<div className="latex-binary-file"><FileText size={30}/><b>{file.name}</b><p>Binary asset · {Math.round(atob(file.content).length/1024)} KB</p></div>:<CodeMirror value={file?.content||''} height="calc(100vh - 205px)" style={{fontSize:`${editorFontSize}px`}} extensions={[StreamLanguage.define(stex)]} theme={document.documentElement.dataset.theme==='dark'?oneDark:undefined} onChange={updateSource} onCreateEditor={view=>{editorRef.current=view}} basicSetup={{lineNumbers:true,foldGutter:true,highlightActiveLine:true,indentOnInput:true,tabSize:2}}/>}{compileError&&<div className="latex-compile-error" role="alert">{compileError}</div>}{compilerLog&&<details className="latex-compiler-log"><summary>Compiler log</summary><pre>{compilerLog}</pre></details>}</section>
-   <aside className="latex-pdfpane"><div className="latex-pane-title">PDF PREVIEW</div>{pdfUrl?<iframe title="Compiled PDF" src={pdfUrl}/>:<div className="latex-no-pdf"><FileText size={34}/><b>Compile to preview your PDF</b><p>Successful compilation creates the real document preview here.</p><button onClick={compile}>Recompile</button></div>}</aside>
+   <aside className="latex-pdfpane"><div className="latex-pane-title">PDF PREVIEW{pdfUrl&&<a className="latex-pdf-open" href={pdfUrl} target="_blank" rel="noreferrer" title="Open PDF in new tab"><ExternalLink size={14}/></a>}</div>{pdfUrl?<iframe title="Compiled PDF" src={`${pdfUrl}#view=FitH`}/>:<div className="latex-no-pdf"><FileText size={34}/><b>Compile to preview your PDF</b><p>Successful compilation creates the real document preview here.</p><button onClick={compile} disabled={compiling}>{compiling?'Compiling…':'Recompile'}</button></div>}{problems.length>0&&<div className="latex-problems"><b>Problems ({problems.length})</b>{problems.slice(0,50).map((item,index)=><button key={index} className={`latex-problem ${item.level}`} onClick={()=>jumpTo(item)}>{item.file&&<span>{item.file}{item.line?`:${item.line}`:''}</span>}{item.message}</button>)}</div>}</aside>
   </div>
   <div className="latex-editor-mobilebar"><Link to="/career/resume/projects">Projects</Link><label>Upload<input type="file" accept=".tex,.bib,.sty,.cls,.txt,.md,.png,.jpg,.jpeg,.pdf" hidden onChange={importFile}/></label><button onClick={compile}>Recompile</button>{pdfUrl&&<button onClick={downloadPdf}>PDF</button>}</div>
  </div>
