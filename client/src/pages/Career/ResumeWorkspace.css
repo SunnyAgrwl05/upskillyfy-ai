@@ -29,3 +29,13 @@
 .latex-problem.warning{border-left-color:#f79009}
 .latex-problem:hover{background:var(--accent-bg)}
 .latex-project-search{margin:0 0 16px;max-width:none}
+/* History, status bar and pane toggles */
+.latex-editor-top button[aria-pressed="false"]{opacity:.55}
+.latex-statusbar{display:flex;gap:14px;padding:5px 12px;border-top:1px solid var(--border);color:var(--muted);font:11px ui-monospace,monospace;background:var(--bg-alt)}
+.latex-history-list{overflow:auto;padding:8px 16px;display:grid;gap:8px}
+.latex-history-list article{display:flex;align-items:center;gap:12px;border:1px solid var(--border);border-radius:9px;padding:10px 12px}
+.latex-history-list article>div{flex:1;display:flex;flex-direction:column}
+.latex-history-list small{color:var(--muted);font-size:11px}
+.latex-history-list button{border:1px solid var(--border);background:var(--bg-card);color:var(--text);border-radius:7px;padding:6px 10px}
+.latex-history-list p{color:var(--muted);font-size:13px;padding:14px 0}
+@media(min-width:901px){.latex-editor-body.hide-files{grid-template-columns:minmax(300px,1fr) minmax(250px,35%)}.latex-editor-body.hide-pdf{grid-template-columns:205px minmax(300px,1fr)}.latex-editor-body.hide-files.hide-pdf{grid-template-columns:minmax(300px,1fr)}}
