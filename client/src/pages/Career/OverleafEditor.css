@@ -1,0 +1,99 @@
+.ove{--bg:#1b222c;--panel:#212a36;--line:#2f3b4a;--text:#e6ebf1;--muted:#9aa8b8;--green:#2f9e4f;--green-2:#38b45c;--ed:#282c34;
+  display:flex;flex-direction:column;height:calc(100vh - 80px);min-height:560px;background:var(--bg);color:var(--text);font:13px/1.45 "IBM Plex Sans","Segoe UI",system-ui,sans-serif}
+.ove *{box-sizing:border-box}
+.ove button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+.ove button:focus-visible,.ove input:focus-visible,.ove select:focus-visible{outline:2px solid var(--green-2);outline-offset:1px}
+.ove-top{display:flex;align-items:center;gap:8px;padding:6px 12px;background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap}
+.ove-spacer{flex:1}
+.ove-icon{padding:6px;border-radius:5px}
+.ove-icon:hover{background:#2f3b4a}
+.ove-title{background:transparent;border:1px solid transparent;border-radius:5px;color:var(--text);font:600 14px inherit;padding:5px 8px;min-width:160px;max-width:300px}
+.ove-title:hover,.ove-title:focus{border-color:var(--line);background:var(--bg)}
+.ove-status{color:var(--muted);font-size:12px}
+.ove-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border:1px solid var(--line);border-radius:5px}
+.ove-btn:hover:not(:disabled){background:#2f3b4a}
+.ove-btn:disabled{opacity:.55;cursor:not-allowed}
+.ove-btn.go{background:var(--green);border-color:var(--green);color:#fff;font-weight:600}
+.ove-btn.go:hover:not(:disabled){background:var(--green-2)}
+.ove-btn.small{padding:3px 9px;font-size:12px}
+.ove-btn.warn{border-color:#b9892b;color:#ffd47a}
+.ove-auto{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-size:12px}
+.ove-dd{position:relative}
+.ove-menu{position:absolute;right:0;top:calc(100% + 4px);background:#2a3544;border:1px solid var(--line);border-radius:6px;min-width:190px;z-index:10;overflow:hidden}
+.ove-menu button{display:block;width:100%;text-align:left;padding:9px 12px}
+.ove-menu button:hover:not(:disabled){background:#34425a}
+.ove-menu button:disabled{opacity:.5}
+.spin{animation:ove-spin 1s linear infinite}
+@keyframes ove-spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation:none}}
+
+.ove-body{flex:1;display:grid;grid-template-columns:230px minmax(0,1fr) minmax(0,1fr);min-height:0;position:relative}
+.ove-body.layout-editor{grid-template-columns:230px minmax(0,1fr) 0}
+.ove-body.layout-editor .ove-right{display:none}
+.ove-body.layout-pdf{grid-template-columns:230px 0 minmax(0,1fr)}
+.ove-body.layout-pdf .ove-center{display:none}
+
+.ove-left{display:flex;flex-direction:column;background:var(--panel);border-right:1px solid var(--line);min-height:0}
+.ove-left-head{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-bottom:1px solid var(--line);font-size:12px}
+.ove-left-head.outline{border-top:1px solid var(--line);margin-top:auto}
+.ove-tree{overflow:auto;padding:4px 0;flex:1;min-height:90px}
+.ove-indent{margin-left:12px;border-left:1px solid var(--line)}
+.ove-row{display:flex;align-items:center;justify-content:space-between;padding:0 6px 0 10px}
+.ove-row:hover{background:#2a3544}
+.ove-row.on{background:#2d3b4f;box-shadow:inset 3px 0 0 var(--green-2)}
+.ove-name{display:flex;align-items:center;gap:6px;flex:1;min-width:0;padding:5px 0;text-align:left;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.ove-name em{font-style:normal;font-size:10px;margin-left:6px;padding:0 5px;border-radius:8px;background:#34425a;color:var(--muted)}
+.ove-ops{display:none;gap:2px}
+.ove-row:hover .ove-ops,.ove-ops.show{display:inline-flex}
+.ove-ops button{padding:4px;border-radius:4px;color:var(--muted);font-size:11px;font-weight:700}
+.ove-ops button:hover{background:#34425a;color:var(--text)}
+.ove-outline{max-height:28%;overflow:auto;padding:4px 0}
+.ove-outline button{display:block;width:100%;text-align:left;padding:3px 12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ove-outline button:hover{color:var(--text);background:#2a3544}
+.ove-outline .lvl-subsection{padding-left:24px}
+.ove-outline .lvl-subsubsection{padding-left:36px}
+.ove .muted{color:var(--muted);padding:2px 12px;margin:0}
+.ove .muted.pad{padding:10px 14px}
+
+.ove-center{display:flex;flex-direction:column;min-width:0;min-height:0;background:var(--ed)}
+.ove-tabs{display:flex;background:var(--panel);border-bottom:1px solid var(--line);overflow-x:auto}
+.ove-tab{display:flex;align-items:center;border-right:1px solid var(--line);color:var(--muted)}
+.ove-tab button{padding:7px 10px}
+.ove-tab.on{background:var(--ed);color:var(--text);box-shadow:inset 0 2px 0 var(--green-2)}
+.ove-toolbar{display:flex;align-items:center;gap:2px;padding:4px 8px;background:#242b36;border-bottom:1px solid var(--line)}
+.ove-toolbar button{padding:5px 7px;border-radius:4px;color:var(--muted)}
+.ove-toolbar button:hover{background:#34425a;color:var(--text)}
+.ove-toolbar i{width:1px;height:16px;background:var(--line);margin:0 6px}
+.ove-hint{margin-left:auto;color:var(--muted);font-size:11px}
+.ove-editor{flex:1;min-height:0;overflow:hidden}
+.ove-editor .cm-editor{height:100%;font-size:13px}
+.ove-editor .cm-scroller{font-family:"JetBrains Mono","Fira Code",ui-monospace,Menlo,monospace}
+.ove-binary{display:flex;align-items:center;justify-content:center;height:100%;padding:20px;color:var(--muted);text-align:center}
+.ove-binary img{max-width:100%;max-height:100%}
+.ove-foot{padding:3px 12px;border-top:1px solid var(--line);color:var(--muted);font-size:11px;background:#242b36}
+
+.ove-right{display:flex;flex-direction:column;min-width:0;min-height:0;background:#323944;border-left:1px solid var(--line)}
+.ove-pdfbar{display:flex;align-items:center;gap:10px;padding:5px 10px;background:var(--panel);border-bottom:1px solid var(--line)}
+.ove-pdfbar select{background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:4px;padding:3px 6px;margin-left:auto}
+.ove-pdf{position:relative;flex:1;min-height:0}
+.ove-pdf iframe{width:100%;height:100%;border:0;background:#fff}
+.ove-pdf-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;height:100%;color:var(--muted);text-align:center;padding:24px}
+.ove-pdf-empty h3{margin:0;color:var(--text);font-weight:500;font-size:16px}
+.ove-pdf-empty p{margin:0 0 6px;max-width:300px}
+.ove-log{position:absolute;left:0;right:0;bottom:0;max-height:55%;display:flex;flex-direction:column;background:#1a1f27;border-top:2px solid #b9892b}
+.ove-log>div{display:flex;justify-content:space-between;align-items:center;padding:6px 12px;border-bottom:1px solid var(--line)}
+.ove-log pre{margin:0;padding:10px 12px;overflow:auto;white-space:pre-wrap;font:12px/1.5 ui-monospace,Menlo,monospace;color:#ffd7a0}
+
+.ove-history{position:absolute;right:0;top:0;bottom:0;width:340px;background:var(--panel);border-left:1px solid var(--line);overflow:auto;z-index:8;box-shadow:-8px 0 24px rgba(0,0,0,.35)}
+.ove-history-head{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line)}
+.ove-history-head b{flex:1}
+.ove-hist-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 12px;border-bottom:1px solid var(--line)}
+.ove-hist-row small{display:block;color:var(--muted)}
+
+@media (max-width:900px){
+  .ove{height:auto}
+  .ove-body,.ove-body.layout-editor,.ove-body.layout-pdf{grid-template-columns:1fr;grid-template-rows:auto 70vh 70vh}
+  .ove-left{max-height:220px}
+  .ove-body.layout-editor .ove-right,.ove-body.layout-pdf .ove-center{display:none}
+  .ove-history{width:100%}
+}

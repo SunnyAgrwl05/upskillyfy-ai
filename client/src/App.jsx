@@ -40,6 +40,8 @@ import Resources from "./pages/Learning/Resources";
 
 import Events from "./pages/Community/Events";
 import Ambassador from "./pages/Community/Ambassador";
+import OverleafDashboard from './pages/Career/OverleafDashboard'
+import OverleafEditor from './pages/Career/OverleafEditor'
 
 export default function App() {
   return (
@@ -115,8 +117,8 @@ export default function App() {
             />
             <Route path="/career/resume/templates/:templateId" element={<ResumeTemplateDetail />} />
             <Route path="/career/resume/create" element={<ATSResumeBuilder />} />
-            <Route path="/career/resume/projects" element={<ResumeProjects />} />
-            <Route path="/career/resume/editor/:projectId" element={<ResumeEditor />} />
+            <Route path="/career/resume/projects" element={<OverleafDashboard />} />
+            <Route path="/career/resume/editor/:projectId" element={<OverleafEditor />} />
             <Route
               path="/career/interviews"
               element={<Contact />}
