@@ -5,13 +5,15 @@ import { StreamLanguage } from '@codemirror/language'
 import { stex } from '@codemirror/legacy-modes/mode/stex'
 import { oneDark } from '@codemirror/theme-one-dark'
 import { undo, redo } from '@codemirror/commands'
+import { EditorView } from '@codemirror/view'
+import { visualLatex } from './visualLatex'
 import {
   ArrowLeft, Play, Download, FilePlus, FolderPlus, Upload, Pencil, Trash2,
   ChevronRight, ChevronDown, File as FileIcon, Folder, Bold, Italic, List,
   Sigma, Link2, Heading, Undo2, Redo2, History, Columns, X, RefreshCw, AlertTriangle,
 } from 'lucide-react'
 import { resumeProjectAPI } from '../../api'
-import { readProjects, upsertProject, downloadBlob } from './ovStore'
+import { readProjects, upsertProject, downloadBlob, toCloud, syncFromCloud } from './ovStore'
 import './OverleafEditor.css'
 
 const HIDDEN = '.gitkeep'
@@ -51,6 +53,8 @@ export default function OverleafEditor() {
   const [showLog, setShowLog] = useState(false)
   const [auto, setAuto] = useState(false)
   const [layout, setLayout] = useState('split')
+  const [mode, setMode] = useState('code')
+  const [spell, setSpell] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
   const [history, setHistory] = useState([])
   const [dlOpen, setDlOpen] = useState(false)
@@ -64,7 +68,13 @@ export default function OverleafEditor() {
   projectRef.current = project
 
   useEffect(() => {
-    if (!project) { navigate('/career/resume/projects', { replace: true }); return }
+    if (!project) {
+      const back = () => navigate('/career/resume/projects', { replace: true })
+      if (localStorage.getItem('token')) {
+        syncFromCloud().then(() => { const found = readProjects().find((x) => x.id === projectId); if (found) setProject(found); else back() }).catch(back)
+      } else back()
+      return
+    }
     if (!active) {
       const first = project.mainFile || project.files[0]?.name
       setActive(first)
@@ -89,19 +99,25 @@ export default function OverleafEditor() {
     return { lines: t ? t.split('\n').length : 0, words: (t.match(/\S+/g) || []).length }
   }, [file])
 
+  const problems = useMemo(
+    () => [...log.matchAll(/^(error|warning):\s*(?:([^\s:]+\.(?:tex|sty|cls|bib)):(\d+):\s*)?(.+)$/gim)]
+      .map((m) => ({ level: m[1].toLowerCase(), file: m[2] || '', line: Number(m[3] || 0), message: m[4].trim() })),
+    [log],
+  )
+
   /* ---------- persistence ---------- */
   const scheduleCloud = useCallback((p) => {
     if (!localStorage.getItem('token')) return
     clearTimeout(cloudTimer.current)
     cloudTimer.current = setTimeout(async () => {
       try {
-        await resumeProjectAPI.update(p.id, p)
+        await resumeProjectAPI.update(p.id, toCloud(p))
         setStatus('Saved to your account')
       } catch (e) {
         if (e.response?.status === 404) {
-          try { await resumeProjectAPI.create(p); setStatus('Saved to your account'); return } catch { /* fall through */ }
+          try { await resumeProjectAPI.create(toCloud(p)); setStatus('Saved to your account'); return } catch { /* fall through */ }
         }
-        setStatus('Saved locally (cloud save failed)')
+        setStatus(e.response?.data?.message ? `Saved locally (cloud: ${e.response.data.message})` : 'Saved locally (cloud save failed)')
       }
     }, 1500)
   }, [])
@@ -156,6 +172,18 @@ export default function OverleafEditor() {
     if (!v) return
     v.dispatch({ selection: { anchor: index }, scrollIntoView: true })
     v.focus()
+  }
+
+  const jumpProblem = (problem) => {
+    if (problem.file && project.files.some((f) => f.name === problem.file)) openFile(problem.file)
+    if (!problem.line) return
+    setTimeout(() => {
+      const v = viewRef.current
+      if (!v) return
+      const line = v.state.doc.line(Math.min(problem.line, v.state.doc.lines))
+      v.dispatch({ selection: { anchor: line.from }, scrollIntoView: true })
+      v.focus()
+    }, 80)
   }
 
   /* ---------- files ---------- */
@@ -232,10 +260,11 @@ export default function OverleafEditor() {
   const compile = async () => {
     const p = projectRef.current
     if (!p) return
+    if (!localStorage.getItem('token')) { setLog('Sign in to compile this project. Compiling runs on the server and needs your account.'); setShowLog(true); return }
     setCompiling(true)
     setLog('')
     try {
-      const { data } = await resumeProjectAPI.compile(p)
+      const { data } = await resumeProjectAPI.compile(toCloud(p))
       if (data.type && data.type.includes('json')) {
         const body = JSON.parse(await data.text())
         throw Object.assign(new Error(body.message || 'Compile failed'), { detail: body.log || body.details })
@@ -263,6 +292,16 @@ export default function OverleafEditor() {
       setCompiling(false)
     }
   }
+
+  const compileRef = useRef(null)
+  compileRef.current = compile
+  useEffect(() => {
+    const onKey = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); compileRef.current?.() }
+    }
+    window.addEventListener('keydown', onKey, true)
+    return () => window.removeEventListener('keydown', onKey, true)
+  }, [])
 
   const downloadZip = async () => {
     try {
@@ -374,6 +413,7 @@ export default function OverleafEditor() {
             ))}
           </div>
           <div className="ove-toolbar">
+            <div className="ove-mode" role="group" aria-label="Editor mode"><button className={mode === 'code' ? 'on' : ''} onClick={() => setMode('code')}>Code</button><button className={mode === 'visual' ? 'on' : ''} onClick={() => setMode('visual')} title="Formatted view. The line you edit shows the raw LaTeX.">Visual</button></div>
             <button aria-label="Undo" title="Undo" onClick={() => viewRef.current && undo(viewRef.current)}><Undo2 size={15} /></button>
             <button aria-label="Redo" title="Redo" onClick={() => viewRef.current && redo(viewRef.current)}><Redo2 size={15} /></button>
             <i />
@@ -383,7 +423,7 @@ export default function OverleafEditor() {
             <button aria-label="Math" title="Inline math" onClick={() => wrap('$', '$', 'x^2')}><Sigma size={15} /></button>
             <button aria-label="Link" title="Link" onClick={() => wrap('\\href{https://}{', '}', 'text')}><Link2 size={15} /></button>
             <button aria-label="Bullet list" title="Bullet list" onClick={() => wrap('\\begin{itemize}\n  \\item ', '\n\\end{itemize}', 'item')}><List size={15} /></button>
-            <span className="ove-hint">Ctrl/Cmd + F to find and replace</span>
+            <label className="ove-spell"><input type="checkbox" checked={spell} onChange={(e) => setSpell(e.target.checked)} /> Spell check</label><span className="ove-hint">Ctrl/Cmd + Enter to recompile · Ctrl/Cmd + F to find</span>
           </div>
           <div className="ove-editor">
             {file && !file.isBinary && (
@@ -392,7 +432,7 @@ export default function OverleafEditor() {
                 value={file.content}
                 height="100%"
                 theme={oneDark}
-                extensions={[StreamLanguage.define(stex)]}
+                extensions={[StreamLanguage.define(stex), EditorView.contentAttributes.of({ spellcheck: spell ? 'true' : 'false' }), ...(mode === 'visual' ? [visualLatex] : [])]}
                 onChange={onChange}
                 onCreateEditor={(v) => { viewRef.current = v }}
                 basicSetup={{ lineNumbers: true, foldGutter: true, highlightActiveLine: true, searchKeymap: true }}
@@ -421,7 +461,7 @@ export default function OverleafEditor() {
           </div>
           <div className="ove-pdf">
             {pdfUrl
-              ? <iframe title="PDF preview" src={`${pdfUrl}#zoom=${zoom}&toolbar=1`} />
+              ? <iframe key={zoom} title="PDF preview" src={`${pdfUrl}#zoom=${zoom}&toolbar=1`} />
               : (
                 <div className="ove-pdf-empty">
                   <FileIcon size={30} />
@@ -433,6 +473,13 @@ export default function OverleafEditor() {
             {showLog && (
               <div className="ove-log" role="alert">
                 <div><b>Compile log</b><button onClick={() => setShowLog(false)} aria-label="Close log"><X size={14} /></button></div>
+                {problems.length > 0 && (
+                  <ul className="ove-problems">
+                    {problems.slice(0, 50).map((pr, i) => (
+                      <li key={i}><button className={pr.level} onClick={() => jumpProblem(pr)}>{pr.file && <small>{pr.file}{pr.line ? ':' + pr.line : ''}</small>}{pr.message}</button></li>
+                    ))}
+                  </ul>
+                )}
                 <pre>{log || 'No errors. Last compile succeeded.'}</pre>
               </div>
             )}

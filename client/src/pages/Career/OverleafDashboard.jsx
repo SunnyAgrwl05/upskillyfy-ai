@@ -7,7 +7,7 @@ import {
 import { resumeProjectAPI } from '../../api'
 import {
   readProjects, upsertProject, removeProject, duplicateProject,
-  makeProject, timeAgo, downloadBlob, uid,
+  makeProject, timeAgo, downloadBlob, uid, syncFromCloud, filesFromCloud,
 } from './ovStore'
 import './OverleafDashboard.css'
 
@@ -31,6 +31,11 @@ export default function OverleafDashboard() {
   const fileRef = useRef(null)
 
   const refresh = () => setProjects(readProjects())
+  useEffect(() => {
+    let live = true
+    syncFromCloud().then((changed) => { if (live && changed) refresh() }).catch(() => {})
+    return () => { live = false }
+  }, [])
   useEffect(() => {
     const onStorage = () => refresh()
     window.addEventListener('storage', onStorage)
@@ -105,7 +110,7 @@ export default function OverleafDashboard() {
         const { data } = await resumeProjectAPI.importZip(file)
         const incoming = data.project || data
         if (!incoming?.files) throw new Error('Unexpected server response')
-        open(upsertProject({ ...makeProject(incoming.title || file.name), ...incoming, id: uid() }))
+        open(upsertProject({ ...makeProject(file.name.replace(/\.zip$/i, '')), mainFile: incoming.mainFile || 'main.tex', files: filesFromCloud(incoming.files), id: uid() }))
       } else {
         setNotice('Upload a .tex file or a .zip project.')
       }

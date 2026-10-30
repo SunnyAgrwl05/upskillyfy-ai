@@ -97,3 +97,25 @@
   .ove-body.layout-editor .ove-right,.ove-body.layout-pdf .ove-center{display:none}
   .ove-history{width:100%}
 }
+
+/* FINAL-OVERLEAF-PATCH: mode toggle, problems, visual mode */
+.ove-mode{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin-right:8px}
+.ove-mode button{padding:3px 10px;font-size:12px;color:var(--muted)}
+.ove-mode button.on{background:#34425a;color:var(--text)}
+.ove-spell{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);margin-left:10px;cursor:pointer}
+.ove-problems{list-style:none;margin:0;padding:4px 0;max-height:150px;overflow:auto;border-bottom:1px solid var(--line)}
+.ove-problems button{display:block;width:100%;text-align:left;padding:5px 12px;font-size:12px;color:#ffd7a0;border-left:3px solid #d92d20;cursor:pointer}
+.ove-problems button.warning{border-left-color:#f79009}
+.ove-problems button:hover{background:#242b36}
+.ove-problems small{display:block;color:var(--muted);font:11px ui-monospace,monospace}
+.ove-editor .cmv-h1{font-size:1.7em;font-weight:700;line-height:1.5}
+.ove-editor .cmv-h2{font-size:1.4em;font-weight:700;line-height:1.5}
+.ove-editor .cmv-h3{font-size:1.2em;font-weight:700}
+.ove-editor .cmv-b{font-weight:700}
+.ove-editor .cmv-i{font-style:italic}
+.ove-editor .cmv-u{text-decoration:underline}
+.ove-editor .cmv-tt{font-family:ui-monospace,Menlo,monospace}
+.ove-editor .cmv-sc{font-variant:small-caps}
+.ove-editor .cmv-link{color:#6aa9ff;text-decoration:underline}
+.ove-editor .cmv-dim{opacity:.4}
+.ove-editor .cmv-bullet{opacity:.85}

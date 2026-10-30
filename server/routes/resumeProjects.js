@@ -12,7 +12,7 @@ import { asyncHandler } from '../middleware/error.js'
 import ResumeProject from '../models/ResumeProject.js'
 
 const router = express.Router()
-const VALID_FILE = /^(?!\/)(?!.*(?:^|\/)\.\.(?:\/|$))[\w .()/-]+\.(?:tex|bib|sty|cls|txt|md|png|jpe?g|pdf)$/i
+const VALID_FILE = /^(?!\/)(?!.*(?:^|\/)\.\.(?:\/|$))[\w .()/-]+\.(?:tex|bib|sty|cls|bst|cfg|txt|md|png|jpe?g|pdf)$/i
 const MAX_FILES = 100
 const MAX_FILE_CHARS = 7_000_000
 const MAX_TOTAL_CHARS = 7_000_000
@@ -21,7 +21,7 @@ const COMPILER_TIMEOUT_MS = 30_000
 const zipUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024, files: 1 } })
 const compileLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
-  limit: 8,
+  limit: Number(process.env.COMPILE_LIMIT_PER_HOUR) || 60,
   standardHeaders: 'draft-7',
   legacyHeaders: false,
   keyGenerator: (req) => String(req.user._id),
