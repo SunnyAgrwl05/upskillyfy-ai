@@ -107,7 +107,7 @@ const PORTFOLIO_PROJECTS = [
   },
 ]
 
-const STORY_NAMES = ['Kajal Kumari', 'Alok Raj', 'Abhijeet Gupta', 'Shrestha Saran', 'Tanya Gupta', 'Shivam Kumar']
+const STORY_NAMES = ['Tanu Kumari', 'Alok Raj', 'Abhijeet Gupta', 'Savita Kumari', 'Tanya Garg', 'Yash Pathak']
 
 export default function Home() {
   return (
