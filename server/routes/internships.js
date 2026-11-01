@@ -1,73 +1,81 @@
 import express from 'express'
 import Internship from '../models/Internship.js'
 import { protect, adminOnly } from '../middleware/auth.js'
+import { validate } from '../middleware/validate.js'
+import { asyncHandler } from '../middleware/error.js'
+import { createInternshipSchema, updateInternshipSchema } from '../validation/internshipSchemas.js'
 
 const router = express.Router()
 
 // Get all (with filters)
-router.get('/', async (req, res) => {
-  try {
+router.get(
+  '/',
+  asyncHandler(async (req, res) => {
     const { branch, mode, status, search } = req.query
-    let query = { isVerified: true }
+    const query = { isVerified: true }
     if (branch && branch !== 'All') query.branch = { $in: [branch, 'All'] }
     if (mode && mode !== 'All Modes') query.mode = mode
     if (status && status !== 'All') query.status = status
     if (search) query.$or = [
       { title: { $regex: search, $options: 'i' } },
-      { company: { $regex: search, $options: 'i' } }
+      { company: { $regex: search, $options: 'i' } },
     ]
     const internships = await Internship.find(query).sort({ createdAt: -1 })
     res.json(internships)
-  } catch (err) {
-    res.status(500).json({ message: err.message })
-  }
-})
+  }),
+)
 
 // Get single
-router.get('/:id', async (req, res) => {
-  try {
+router.get(
+  '/:id',
+  asyncHandler(async (req, res) => {
     const internship = await Internship.findByIdAndUpdate(
-      req.params.id, { $inc: { views: 1 } }, { new: true }
+      req.params.id,
+      { $inc: { views: 1 } },
+      { new: true },
     )
     if (!internship) return res.status(404).json({ message: 'Not found' })
     res.json(internship)
-  } catch (err) {
-    res.status(500).json({ message: err.message })
-  }
-})
+  }),
+)
 
 // Create (admin only)
-router.post('/', protect, adminOnly, async (req, res) => {
-  try {
+router.post(
+  '/',
+  protect,
+  adminOnly,
+  validate(createInternshipSchema),
+  asyncHandler(async (req, res) => {
     const internship = await Internship.create(req.body)
     res.status(201).json(internship)
-  } catch (err) {
-    res.status(500).json({ message: err.message })
-  }
-})
+  }),
+)
 
 // Update
-router.put('/:id', protect, adminOnly, async (req, res) => {
-  try {
+router.put(
+  '/:id',
+  protect,
+  adminOnly,
+  validate(updateInternshipSchema),
+  asyncHandler(async (req, res) => {
     const internship = await Internship.findByIdAndUpdate(req.params.id, req.body, { new: true })
     res.json(internship)
-  } catch (err) {
-    res.status(500).json({ message: err.message })
-  }
-})
+  }),
+)
 
 // Delete
-router.delete('/:id', protect, adminOnly, async (req, res) => {
-  try {
+router.delete(
+  '/:id',
+  protect,
+  adminOnly,
+  asyncHandler(async (req, res) => {
     await Internship.findByIdAndDelete(req.params.id)
     res.json({ message: 'Deleted successfully' })
-  } catch (err) {
-    res.status(500).json({ message: err.message })
-  }
-})
+  }),
+)
 
 // Seed sample data
-router.post('/seed', protect, adminOnly, async (req, res) => {
+router.post('/seed', protect, adminOnly, asyncHandler(async (req, res) => {
   try {
     await Internship.deleteMany({})
     const samples = [
@@ -84,6 +92,6 @@ router.post('/seed', protect, adminOnly, async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: err.message })
   }
-})
+}))
 
 export default router

@@ -1,18 +1,19 @@
 import express from 'express'
 import Community from '../models/Community.js'
+import { asyncHandler } from '../middleware/error.js'
 
 const router = express.Router()
 
-router.get('/', async (req, res) => {
+router.get('/', asyncHandler(async (req, res) => {
   try {
     const events = await Community.find({ isActive: true }).sort({ createdAt: -1 })
     res.json(events)
   } catch (err) {
     res.status(500).json({ message: err.message })
   }
-})
+}))
 
-router.post('/seed', async (req, res) => {
+router.post('/seed', asyncHandler(async (req, res) => {
   try {
     await Community.deleteMany({})
     const events = [
@@ -27,6 +28,6 @@ router.post('/seed', async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: err.message })
   }
-})
+}))
 
 export default router

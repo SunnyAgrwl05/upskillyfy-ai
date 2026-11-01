@@ -2,9 +2,11 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import CodeMirror from '@uiw/react-codemirror'
 import { StreamLanguage } from '@codemirror/language'
+import { EditorView, keymap } from '@codemirror/view'
+import { Prec } from '@codemirror/state'
 import { stex } from '@codemirror/legacy-modes/mode/stex'
 import { oneDark } from '@codemirror/theme-one-dark'
-import { Search, FileText, Plus, ArrowLeft, Download, Play, FolderOpen, Code2, Trash2, Upload, ChevronRight } from 'lucide-react'
+import { Search, FileText, Plus, ArrowLeft, Download, Play, FolderOpen, Code2, Trash2, Upload, ChevronRight, ChevronDown, Folder, ExternalLink, Copy, History, PanelLeft, PanelRight, WrapText, Keyboard, SpellCheck } from 'lucide-react'
 import { latexTemplateAPI, resumeProjectAPI } from '../../api'
 import './ResumeWorkspace.css'
 
@@ -192,6 +194,8 @@ export function ResumeTemplateDetail(){
 export function ResumeProjects(){
  const [items,setItems]=useState(visibleProjects)
  const [loading,setLoading]=useState(Boolean(localStorage.getItem('token')))
+ const [query,setQuery]=useState('')
+ const [sort,setSort]=useState('recent')
  const navigate=useNavigate()
  useEffect(()=>{
   let active=true
@@ -221,9 +225,15 @@ export function ResumeProjects(){
   }).catch(()=>{}).finally(()=>{if(active)setLoading(false)})
   return ()=>{active=false}
  },[])
+ const duplicate=project=>{createProject(`${project.title} (copy)`,'',project.files.map(file=>({...file})),project.templateId,project.mainFile);setItems(visibleProjects())}
+ const shown=items.filter(p=>p.title.toLowerCase().includes(query.toLowerCase())).sort((a,b)=>sort==='name'?a.title.localeCompare(b.title):new Date(b.updatedAt)-new Date(a.updatedAt))
  const remove=id=>{const next=items.filter(x=>x.id!==id);const hidden=getProjects().filter(project=>project.cloudOwner&&project.cloudOwner!==currentUserId());saveProjects([...next,...hidden]);setItems(next)}
- return <main className="latex-wrap"><Link className="latex-back" to="/career/resume"><ArrowLeft size={16}/> Resume Builder</Link><div className="latex-section-head"><div><div className="latex-eyebrow">{'{your workspace}'}</div><h1>My Projects</h1><p>{loading?'Syncing projects…':localStorage.getItem('token')?'Projects sync with your account and remain available on this device.':'Saved on this device in this browser.'}</p></div><button className="latex-button primary" onClick={()=>{const p=createProject();navigate(`/career/resume/editor/${p.id}`)}}><Plus size={16}/> New project</button></div>{items.length?<div className="latex-project-list">{items.map(p=><article key={p.id}><FileText/><div><b>{p.title}</b><small>{p.cloudSaved?'Synced · ': 'Local draft · '}{new Date(p.updatedAt).toLocaleString()}</small></div><button onClick={()=>navigate(`/career/resume/editor/${p.id}`)}>Continue editing</button><button aria-label="Delete project" onClick={()=>remove(p.id)}><Trash2 size={16}/></button></article>)}</div>:<div className="latex-empty"><FileText/><h3>{loading?'Loading projects…':'No projects yet'}</h3><p>Create a resume from a template or start with a blank document.</p><button onClick={()=>{const p=createProject();navigate(`/career/resume/editor/${p.id}`)}}>Start blank project</button></div>}</main>
+ return <main className="latex-wrap"><Link className="latex-back" to="/career/resume"><ArrowLeft size={16}/> Resume Builder</Link><div className="latex-section-head"><div><div className="latex-eyebrow">{'{your workspace}'}</div><h1>My Projects</h1><p>{loading?'Syncing projects…':localStorage.getItem('token')?'Projects sync with your account and remain available on this device.':'Saved on this device in this browser.'}</p></div><button className="latex-button primary" onClick={()=>{const p=createProject();navigate(`/career/resume/editor/${p.id}`)}}><Plus size={16}/> New project</button></div>{items.length>0&&<div className="latex-search latex-project-search"><Search size={16}/><input value={query} onChange={event=>setQuery(event.target.value)} placeholder="Search projects" aria-label="Search projects"/><select value={sort} onChange={event=>setSort(event.target.value)} aria-label="Sort projects"><option value="recent">Last modified</option><option value="name">Name</option></select></div>}{shown.length?<div className="latex-project-list">{shown.map(p=><article key={p.id}><FileText/><div><b>{p.title}</b><small>{p.cloudSaved?'Synced · ': 'Local draft · '}{new Date(p.updatedAt).toLocaleString()}</small></div><button onClick={()=>navigate(`/career/resume/editor/${p.id}`)}>Continue editing</button><button aria-label="Duplicate project" title="Duplicate" onClick={()=>duplicate(p)}><Copy size={16}/></button><button aria-label="Delete project" onClick={()=>remove(p.id)}><Trash2 size={16}/></button></article>)}</div>:<div className="latex-empty"><FileText/><h3>{loading?'Loading projects…':items.length?'No matching projects':'No projects yet'}</h3><p>Create a resume from a template or start with a blank document.</p><button onClick={()=>{const p=createProject();navigate(`/career/resume/editor/${p.id}`)}}>Start blank project</button></div>}</main>
 }
+const historyKey=id=>`latex-history:${id}`
+function readVersions(id){try{const list=JSON.parse(localStorage.getItem(historyKey(id))||'[]');return Array.isArray(list)?list:[]}catch{return[]}}
+function writeVersions(id,list){let next=list;while(next.length){try{localStorage.setItem(historyKey(id),JSON.stringify(next));return next}catch{next=next.slice(0,-1)}}return next}
+function countWords(text){return (text.replace(/%.*$/gm,'').replace(/\\[a-zA-Z]+\*?/g,' ').match(/[\p{L}\p{N}][\p{L}\p{N}'’-]*/gu)||[]).length}
 export function ResumeEditor(){
  const {projectId}=useParams()
  const navigate=useNavigate()
@@ -237,6 +247,22 @@ export function ResumeEditor(){
  const [pdfUrl,setPdfUrl]=useState('')
  const [compileError,setCompileError]=useState('')
  const [compilerLog,setCompilerLog]=useState('')
+ const [compiling,setCompiling]=useState(false)
+ const [collapsed,setCollapsed]=useState(()=>new Set())
+ const [autoCompile,setAutoCompile]=useState(()=>localStorage.getItem('latex-auto-compile')==='1')
+ const compileRef=useRef(null)
+ const [showFiles,setShowFiles]=useState(true)
+ const [showPdf,setShowPdf]=useState(true)
+ const [wrap,setWrap]=useState(()=>localStorage.getItem('latex-wrap')==='1')
+ const [historyOpen,setHistoryOpen]=useState(false)
+ const [versions,setVersions]=useState(()=>readVersions(projectId))
+ const saveVersionRef=useRef(null)
+ const toolRef=useRef({})
+ const [spell,setSpell]=useState(()=>localStorage.getItem('latex-spell')==='1')
+ const [helpOpen,setHelpOpen]=useState(false)
+ const [searchOpen,setSearchOpen]=useState(false)
+ const [globalQuery,setGlobalQuery]=useState('')
+ const [searchCase,setSearchCase]=useState(false)
  const editorRef=useRef(null)
  const file=project?.files.find(item=>item.name===active)||project?.files[0]
  const outline=useMemo(()=>file&&!file.isBinary?[...file.content.matchAll(/\\(?:chapter|section|subsection|subsubsection)\*?\{([^}]+)\}/g)].map(match=>({label:match[1],index:match.index})):[],[file])
@@ -258,6 +284,17 @@ export function ResumeEditor(){
  useEffect(()=>()=>{if(pdfUrl)URL.revokeObjectURL(pdfUrl)},[pdfUrl])
  useEffect(()=>{const synced=event=>{if(event.detail!==projectId)return;setProject(current=>current?{...current,cloudSaved:true}:current);setStatus('Saved to your account')};window.addEventListener('resume-project-cloud-saved',synced);return()=>window.removeEventListener('resume-project-cloud-saved',synced)},[projectId])
  useEffect(()=>{const failed=event=>{if(event.detail?.id===projectId)setStatus(event.detail.message)};window.addEventListener('resume-project-cloud-save-failed',failed);return()=>window.removeEventListener('resume-project-cloud-save-failed',failed)},[projectId])
+ useEffect(()=>{const onKey=event=>{if((event.metaKey||event.ctrlKey)&&event.key==='Enter'){event.preventDefault();compileRef.current?.()}};window.addEventListener('keydown',onKey);return()=>window.removeEventListener('keydown',onKey)},[])
+ useEffect(()=>{if(!autoCompile||!project||!localStorage.getItem('token'))return undefined;const timer=setTimeout(()=>compileRef.current?.(),3500);return()=>clearTimeout(timer)},[autoCompile,project?.updatedAt])
+ useEffect(()=>{const onKey=event=>{if((event.metaKey||event.ctrlKey)&&event.key.toLowerCase()==='s'){event.preventDefault();saveVersionRef.current?.('Manual save')}};window.addEventListener('keydown',onKey);return()=>window.removeEventListener('keydown',onKey)},[])
+ useEffect(()=>{const onKey=event=>{if((event.metaKey||event.ctrlKey)&&event.shiftKey&&event.key.toLowerCase()==='f'){event.preventDefault();setSearchOpen(true)}if(event.key==='Escape'){setSearchOpen(false);setHelpOpen(false);setHistoryOpen(false)}};window.addEventListener('keydown',onKey);return()=>window.removeEventListener('keydown',onKey)},[])
+ const editorExtensions=useMemo(()=>[StreamLanguage.define(stex),Prec.highest(keymap.of([
+  {key:'Mod-b',run:()=>{toolRef.current.wrapSelection?.('\\textbf{','}');return true}},
+  {key:'Mod-i',run:()=>{toolRef.current.wrapSelection?.('\\textit{','}');return true}},
+  {key:'Mod-u',run:()=>{toolRef.current.wrapSelection?.('\\underline{','}');return true}},
+  {key:'Mod-/',run:()=>{toolRef.current.toggleComment?.();return true}},
+  {key:'Mod-Enter',run:()=>{compileRef.current?.();return true}}
+ ])),...(wrap?[EditorView.lineWrapping]:[]),...(spell?[EditorView.contentAttributes.of({spellcheck:'true'})]:[])],[wrap,spell])
  if(loadingProject)return <main className="latex-wrap"><div className="latex-empty"><h3>Loading project…</h3><p>Restoring the latest saved workspace.</p></div></main>
  if(!project)return null
  const persist=(next,message='Saved locally')=>{
@@ -266,6 +303,21 @@ export function ResumeEditor(){
   saveProjects(getProjects().map(item=>item.id===updated.id?updated:item))
   setStatus(localStorage.getItem('token')?'Saved locally · syncing':'Saved locally')
   window.setTimeout(()=>setStatus(message),700)
+ }
+ const saveVersion=(label,auto=false)=>{
+  const files=project.files.map(item=>({...item}))
+  const list=readVersions(project.id)
+  if(list[0]&&JSON.stringify(list[0].files)===JSON.stringify(files)){if(!auto)setStatus('No changes since the last version');return}
+  setVersions(writeVersions(project.id,[{id:String(Date.now()),at:new Date().toISOString(),label,mainFile:project.mainFile,files},...list].slice(0,20)))
+  if(!auto)setStatus('Version saved')
+ }
+ saveVersionRef.current=saveVersion
+ const restoreVersion=version=>{
+  if(!confirm(`Restore the version from ${new Date(version.at).toLocaleString()}? Your current files are saved as a version first.`))return
+  saveVersion('Before restore',true)
+  const mainFile=version.files.some(item=>item.name===version.mainFile)?version.mainFile:version.files[0]?.name||project.mainFile
+  persist({...project,mainFile,files:version.files.map(item=>({...item}))},'Version restored')
+  setOpenFiles([mainFile]);setActive(mainFile);setHistoryOpen(false)
  }
  const openFile=name=>{setOpenFiles(current=>current.includes(name)?current:[...current,name]);setActive(name)}
  const updateSource=value=>persist({...project,files:project.files.map(item=>item.name===file.name?{...item,content:value}:item)},'Saved locally')
@@ -318,6 +370,27 @@ export function ResumeEditor(){
   view.dispatch({changes:{from,to,insert:snippet},selection:{anchor:from+snippet.length},scrollIntoView:true})
   view.focus()
  }
+ const wrapSelection=(before,after,placeholder='text')=>{
+  const view=editorRef.current
+  if(!view||!file||file.isBinary)return
+  const {from,to}=view.state.selection.main
+  const selected=view.state.sliceDoc(from,to)||placeholder
+  view.dispatch({changes:{from,to,insert:before+selected+after},selection:{anchor:from+before.length,head:from+before.length+selected.length},scrollIntoView:true})
+  view.focus()
+ }
+ const toggleComment=()=>{
+  const view=editorRef.current
+  if(!view||!file||file.isBinary)return
+  const {from,to}=view.state.selection.main
+  const lines=[];for(let n=view.state.doc.lineAt(from).number;n<=view.state.doc.lineAt(to).number;n++)lines.push(view.state.doc.line(n))
+  const filled=lines.filter(line=>line.text.trim())
+  const uncomment=filled.length>0&&filled.every(line=>/^\s*%/.test(line.text))
+  const changes=filled.map(line=>{if(uncomment){const match=line.text.match(/^(\s*)%\s?/);return {from:line.from+match[1].length,to:line.from+match[0].length,insert:''}}return {from:line.from,insert:'% '}})
+  if(changes.length)view.dispatch({changes})
+  view.focus()
+ }
+ toolRef.current={wrapSelection,toggleComment}
+ const searchResults=searchOpen&&globalQuery.trim().length>1?project.files.filter(item=>!item.isBinary).flatMap(item=>item.content.split('\n').flatMap((text,index)=>{const hay=searchCase?text:text.toLowerCase();const needle=searchCase?globalQuery:globalQuery.toLowerCase();return hay.includes(needle)?[{file:item.name,line:index+1,text:text.trim().slice(0,160)}]:[]})).slice(0,200):[]
  const navigateOutline=index=>{
   const view=editorRef.current
   if(!view)return
@@ -326,7 +399,9 @@ export function ResumeEditor(){
  }
  const compile=async()=>{
   if(!localStorage.getItem('token')){setCompileError('Sign in to compile this project with the isolated compiler service.');return}
-  setCompileError('');setCompilerLog('');setStatus('Compiling…')
+  if(compiling)return
+  saveVersion('Compiled',true)
+  setCompiling(true);setCompileError('');setCompilerLog('');setStatus('Compiling…')
   try{
    const {data,headers}=await resumeProjectAPI.compile(cloudPayload(project))
    if(pdfUrl)URL.revokeObjectURL(pdfUrl)
@@ -340,25 +415,45 @@ export function ResumeEditor(){
    if(response instanceof Blob){try{const body=JSON.parse(await response.text());message=body.message||message;setCompilerLog(body.log||'')}catch{}}
    else if(response?.message)message=response.message
    setCompileError(message||'Compilation failed.');setStatus('Compilation failed')
-  }
+  }finally{setCompiling(false)}
  }
+ compileRef.current=compile
+ const problems=[...compilerLog.matchAll(/^(error|warning):\s*(?:([^\s:]+\.(?:tex|sty|cls|bib)):(\d+):\s*)?(.+)$/gim)].map(match=>({level:match[1].toLowerCase(),file:match[2]||'',line:Number(match[3]||0),message:match[4].trim()}))
+ const jumpTo=problem=>{
+  if(problem.file&&project.files.some(item=>item.name===problem.file))openFile(problem.file)
+  if(!problem.line)return
+  window.setTimeout(()=>{const view=editorRef.current;if(!view)return;const line=view.state.doc.line(Math.min(problem.line,view.state.doc.lines));view.dispatch({selection:{anchor:line.from},scrollIntoView:true});view.focus()},80)
+ }
+ const toggleFolder=dir=>setCollapsed(current=>{const next=new Set(current);if(next.has(dir))next.delete(dir);else next.add(dir);return next})
+ const treeRows=(()=>{
+  const query=fileSearch.toLowerCase()
+  const list=project.files.filter(item=>item.name.toLowerCase().includes(query)).sort((a,b)=>{const ap=a.name.split('/'),bp=b.name.split('/');for(let i=0;i<Math.min(ap.length,bp.length);i++){if(ap[i]!==bp[i]){const ad=i<ap.length-1,bd=i<bp.length-1;if(ad!==bd)return ad?-1:1;return ap[i].localeCompare(bp[i])}}return ap.length-bp.length})
+  const rows=[];const seen=new Set()
+  for(const item of list){const parts=item.name.split('/');let hidden=false
+   for(let i=0;i<parts.length-1;i++){const dir=parts.slice(0,i+1).join('/');if(!seen.has(dir)){seen.add(dir);if(!hidden)rows.push({folder:dir,depth:i})}if(collapsed.has(dir))hidden=true}
+   if(!hidden)rows.push({item,depth:parts.length-1})}
+  return rows
+ })()
  const downloadPdf=()=>{if(!pdfUrl)return;const link=document.createElement('a');link.href=pdfUrl;link.download=`${project.title.replace(/[^\w-]/g,'-')}.pdf`;link.click()}
  const downloadZip=async()=>{if(!localStorage.getItem('token')){setCompileError('Sign in to download the project ZIP.');return}try{const {data}=await resumeProjectAPI.sourceZip(project.id);download(`${project.title.replace(/[^\w-]/g,'-')}.zip`,data,'application/zip')}catch(error){setCompileError(error.response?.data?.message||'Could not download the source ZIP. Save the project to your account and try again.')}}
  const downloadSource=()=>download(`${file.name.split('/').pop()||'source.tex'}`,file.isBinary?Uint8Array.from(atob(file.content),char=>char.charCodeAt(0)):file.content,file.isBinary?'application/octet-stream':'text/plain')
  const closeTab=(name,event)=>{event.stopPropagation();const remaining=openFiles.filter(item=>item!==name);setOpenFiles(remaining.length?remaining:[project.mainFile]);if(active===name)setActive(remaining[remaining.length-1]||project.mainFile)}
  return <div className="latex-editor">
-  <header className="latex-editor-top"><Link to="/career/resume/projects"><ArrowLeft size={17}/></Link><input value={project.title} aria-label="Project name" onChange={event=>persist({...project,title:event.target.value})}/><span>{status}</span><button onClick={compile}><Play size={15}/> Recompile</button>{pdfUrl&&<button onClick={downloadPdf}><Download size={15}/> PDF</button>}<button onClick={downloadZip}><Download size={15}/> Source ZIP</button><button onClick={downloadSource}><Download size={15}/> File</button></header>
-  <div className="latex-editor-body">
-   <aside className="latex-filepane"><div className="latex-pane-title">PROJECT FILES <button onClick={addFile} title="New file"><Plus size={15}/></button></div>
+  <header className="latex-editor-top"><Link to="/career/resume/projects"><ArrowLeft size={17}/></Link><input value={project.title} aria-label="Project name" onChange={event=>persist({...project,title:event.target.value})}/><span>{status}</span><button onClick={compile} disabled={compiling} title="Recompile (Ctrl/Cmd + Enter)"><Play size={15}/> {compiling?'Compiling…':'Recompile'}</button><label className="latex-autocompile" title="Recompile automatically after you stop typing"><input type="checkbox" checked={autoCompile} onChange={event=>{setAutoCompile(event.target.checked);localStorage.setItem('latex-auto-compile',event.target.checked?'1':'0')}}/> Auto</label><button onClick={()=>setSearchOpen(true)} title="Search in project (Ctrl/Cmd + Shift + F)"><Search size={15}/> Search</button><button onClick={()=>setHelpOpen(true)} title="Keyboard shortcuts"><Keyboard size={15}/></button><button onClick={()=>{setVersions(readVersions(project.id));setHistoryOpen(true)}} title="Version history (Ctrl/Cmd + S saves a version)"><History size={15}/> History</button><button onClick={()=>{const next=!wrap;setWrap(next);localStorage.setItem('latex-wrap',next?'1':'0')}} title="Toggle line wrapping" aria-pressed={wrap}><WrapText size={15}/> Wrap</button><button onClick={()=>setShowFiles(value=>!value)} title="Show or hide the file panel" aria-pressed={showFiles}><PanelLeft size={15}/></button><button onClick={()=>setShowPdf(value=>!value)} title="Show or hide the PDF panel" aria-pressed={showPdf}><PanelRight size={15}/></button>{pdfUrl&&<button onClick={downloadPdf}><Download size={15}/> PDF</button>}<button onClick={downloadZip}><Download size={15}/> Source ZIP</button><button onClick={downloadSource}><Download size={15}/> File</button></header>
+  <div className={`latex-editor-body${showFiles?'':' hide-files'}${showPdf?'':' hide-pdf'}`}>
+   {showFiles&&<aside className="latex-filepane"><div className="latex-pane-title">PROJECT FILES <button onClick={addFile} title="New file"><Plus size={15}/></button></div>
     <input className="latex-file-search" value={fileSearch} onChange={event=>setFileSearch(event.target.value)} placeholder="Search files" aria-label="Search project files"/>
-    {project.files.filter(item=>item.name.toLowerCase().includes(fileSearch.toLowerCase())).map(item=><div className="latex-file-row" key={item.name}><button className={item.name===active?'active':''} onClick={()=>openFile(item.name)} title={item.name}><FileText size={15}/>{item.name.split('/').pop()}{item.name===project.mainFile&&<small>main</small>}</button>{/\.tex$/i.test(item.name)&&<button title="Set main document" aria-label={`Set ${item.name} as the main document`} onClick={()=>setMain(item.name)}>{item.name===project.mainFile?'●':'○'}</button>}<button title="Rename file" aria-label={`Rename ${item.name}`} onClick={()=>renameFile(item.name)}>✎</button><button title="Delete file" aria-label={`Delete ${item.name}`} onClick={()=>removeFile(item.name)}>×</button></div>)}
+    {treeRows.map(row=>{const item=row.item;return row.folder?<button className="latex-folder-row" key={'dir:'+row.folder} style={{paddingLeft:12+row.depth*12}} onClick={()=>toggleFolder(row.folder)}>{collapsed.has(row.folder)?<ChevronRight size={14}/>:<ChevronDown size={14}/>}<Folder size={14}/>{row.folder.split('/').pop()}</button>:<div className="latex-file-row" key={item.name} style={{paddingLeft:row.depth*12}}><button className={item.name===active?'active':''} onClick={()=>openFile(item.name)} title={item.name}><FileText size={15}/>{item.name.split('/').pop()}{item.name===project.mainFile&&<small>main</small>}</button>{/\.tex$/i.test(item.name)&&<button title="Set main document" aria-label={`Set ${item.name} as the main document`} onClick={()=>setMain(item.name)}>{item.name===project.mainFile?'●':'○'}</button>}<button title="Rename file" aria-label={`Rename ${item.name}`} onClick={()=>renameFile(item.name)}>✎</button><button title="Delete file" aria-label={`Delete ${item.name}`} onClick={()=>removeFile(item.name)}>×</button></div>})}
     <label className="latex-upload">Upload source or asset<input type="file" accept=".tex,.bib,.sty,.cls,.txt,.md,.png,.jpg,.jpeg,.pdf" hidden onChange={importFile}/></label>
     <div className="latex-outline"><b>OUTLINE</b>{outline.length?outline.map(item=><button key={`${item.index}-${item.label}`} onClick={()=>navigateOutline(item.index)}>{item.label}</button>):<small>No sections in this file</small>}</div>
     <div className="latex-editor-note">{project.cloudSaved?'Account-synced project':'Local draft'} · source autosaves as you edit.</div>
-   </aside>
-   <section className="latex-codepane"><div className="latex-open-tabs">{openFiles.map(name=><button className={name===active?'active':''} key={name} onClick={()=>setActive(name)}>{name.split('/').pop()}<span onClick={event=>closeTab(name,event)}>×</span></button>)}</div><div className="latex-insert-tools"><label className="latex-font-size">Editor text<select aria-label="Editor font size" value={editorFontSize} onChange={event=>{const size=Number(event.target.value);setEditorFontSize(size);localStorage.setItem('latex-editor-font-size',String(size))}}>{[12,13,14,15,16,18,20,22,24].map(size=><option key={size} value={size}>{size}px</option>)}</select></label><button onClick={()=>insertSnippet('\\section*{New section}\n')}>Section</button><button onClick={()=>insertSnippet('\\begin{itemize}\n  \\item New item\n\\end{itemize}\n')}>List</button><button onClick={()=>insertSnippet('\\begin{figure}[ht]\n  \\centering\n  \\includegraphics[width=0.8\\linewidth]{image.png}\n  \\caption{Caption}\n\\end{figure}\n')}>Figure</button><button onClick={()=>insertSnippet('\\cite{citation-key}')}>Citation</button><button onClick={()=>insertSnippet('\\ref{section-label}')}>Reference</button></div>{file?.isBinary?<div className="latex-binary-file"><FileText size={30}/><b>{file.name}</b><p>Binary asset · {Math.round(atob(file.content).length/1024)} KB</p></div>:<CodeMirror value={file?.content||''} height="calc(100vh - 205px)" style={{fontSize:`${editorFontSize}px`}} extensions={[StreamLanguage.define(stex)]} theme={document.documentElement.dataset.theme==='dark'?oneDark:undefined} onChange={updateSource} onCreateEditor={view=>{editorRef.current=view}} basicSetup={{lineNumbers:true,foldGutter:true,highlightActiveLine:true,indentOnInput:true,tabSize:2}}/>}{compileError&&<div className="latex-compile-error" role="alert">{compileError}</div>}{compilerLog&&<details className="latex-compiler-log"><summary>Compiler log</summary><pre>{compilerLog}</pre></details>}</section>
-   <aside className="latex-pdfpane"><div className="latex-pane-title">PDF PREVIEW</div>{pdfUrl?<iframe title="Compiled PDF" src={pdfUrl}/>:<div className="latex-no-pdf"><FileText size={34}/><b>Compile to preview your PDF</b><p>Successful compilation creates the real document preview here.</p><button onClick={compile}>Recompile</button></div>}</aside>
+   </aside>}
+   <section className="latex-codepane"><div className="latex-open-tabs">{openFiles.map(name=><button className={name===active?'active':''} key={name} onClick={()=>setActive(name)}>{name.split('/').pop()}<span onClick={event=>closeTab(name,event)}>×</span></button>)}</div><div className="latex-insert-tools"><label className="latex-font-size">Editor text<select aria-label="Editor font size" value={editorFontSize} onChange={event=>{const size=Number(event.target.value);setEditorFontSize(size);localStorage.setItem('latex-editor-font-size',String(size))}}>{[12,13,14,15,16,18,20,22,24].map(size=><option key={size} value={size}>{size}px</option>)}</select></label><button onClick={()=>wrapSelection('\\textbf{','}')} title="Bold (Ctrl/Cmd + B)"><b>B</b></button><button onClick={()=>wrapSelection('\\textit{','}')} title="Italic (Ctrl/Cmd + I)"><i>I</i></button><button onClick={()=>wrapSelection('\\underline{','}')} title="Underline (Ctrl/Cmd + U)"><u>U</u></button><button onClick={()=>wrapSelection('$','$','x')} title="Inline math">$ x $</button><button onClick={()=>wrapSelection('\\href{https://example.com}{','}','link text')} title="Link">Link</button><button onClick={()=>insertSnippet('\\begin{enumerate}\n  \\item First\n  \\item Second\n\\end{enumerate}\n')}>1. List</button><button onClick={()=>insertSnippet('\\begin{tabular}{ll}\n  \\hline\n  A & B \\\\\n  \\hline\n  1 & 2 \\\\\n  \\hline\n\\end{tabular}\n')}>Table</button><button onClick={toggleComment} title="Comment or uncomment (Ctrl/Cmd + /)">%</button><button onClick={()=>insertSnippet('\\section*{New section}\n')}>Section</button><button onClick={()=>insertSnippet('\\begin{itemize}\n  \\item New item\n\\end{itemize}\n')}>List</button><button onClick={()=>insertSnippet('\\begin{figure}[ht]\n  \\centering\n  \\includegraphics[width=0.8\\linewidth]{image.png}\n  \\caption{Caption}\n\\end{figure}\n')}>Figure</button><button onClick={()=>insertSnippet('\\cite{citation-key}')}>Citation</button><button onClick={()=>insertSnippet('\\ref{section-label}')}>Reference</button><button onClick={()=>{const next=!spell;setSpell(next);localStorage.setItem('latex-spell',next?'1':'0')}} title="Browser spell check" aria-pressed={spell}><SpellCheck size={13}/> Spell</button></div>{file?.isBinary?<div className="latex-binary-file"><FileText size={30}/><b>{file.name}</b><p>Binary asset · {Math.round(atob(file.content).length/1024)} KB</p></div>:<CodeMirror value={file?.content||''} height="calc(100vh - 205px)" style={{fontSize:`${editorFontSize}px`}} extensions={editorExtensions} theme={document.documentElement.dataset.theme==='dark'?oneDark:undefined} onChange={updateSource} onCreateEditor={view=>{editorRef.current=view}} basicSetup={{lineNumbers:true,foldGutter:true,highlightActiveLine:true,indentOnInput:true,tabSize:2}}/>}{file&&!file.isBinary&&<div className="latex-statusbar"><span>{countWords(file.content)} words</span><span>{file.content.length} chars</span><span>{file.content.split('\n').length} lines</span><span>{file.name}</span></div>}{compileError&&<div className="latex-compile-error" role="alert">{compileError}</div>}{compilerLog&&<details className="latex-compiler-log"><summary>Compiler log</summary><pre>{compilerLog}</pre></details>}</section>
+   {showPdf&&<aside className="latex-pdfpane"><div className="latex-pane-title">PDF PREVIEW{pdfUrl&&<a className="latex-pdf-open" href={pdfUrl} target="_blank" rel="noreferrer" title="Open PDF in new tab"><ExternalLink size={14}/></a>}</div>{pdfUrl?<iframe title="Compiled PDF" src={`${pdfUrl}#view=FitH`}/>:<div className="latex-no-pdf"><FileText size={34}/><b>Compile to preview your PDF</b><p>Successful compilation creates the real document preview here.</p><button onClick={compile} disabled={compiling}>{compiling?'Compiling…':'Recompile'}</button></div>}{problems.length>0&&<div className="latex-problems"><b>Problems ({problems.length})</b>{problems.slice(0,50).map((item,index)=><button key={index} className={`latex-problem ${item.level}`} onClick={()=>jumpTo(item)}>{item.file&&<span>{item.file}{item.line?`:${item.line}`:''}</span>}{item.message}</button>)}</div>}</aside>}
   </div>
+  {searchOpen&&<div className="latex-source-overlay" role="dialog" aria-modal="true" aria-label="Search in project" onClick={event=>{if(event.target===event.currentTarget)setSearchOpen(false)}}><section><header><div><b>Search in project</b><small>All text files · Ctrl/Cmd + Shift + F · Esc closes</small></div><button onClick={()=>setSearchOpen(false)}>Close</button></header><div className="latex-gsearch"><input autoFocus value={globalQuery} onChange={event=>setGlobalQuery(event.target.value)} placeholder="Search text (2+ characters)" aria-label="Search text"/><label><input type="checkbox" checked={searchCase} onChange={event=>setSearchCase(event.target.checked)}/> Match case</label></div><div className="latex-history-list">{searchResults.length?searchResults.map((result,index)=><article key={`${result.file}:${result.line}:${index}`}><div><b>{result.file}:{result.line}</b><small>{result.text}</small></div><button onClick={()=>{setSearchOpen(false);jumpTo({file:result.file,line:result.line})}}>Go</button></article>):<p>{globalQuery.trim().length>1?'No matches.':'Type at least 2 characters.'}</p>}</div></section></div>}
+  {helpOpen&&<div className="latex-source-overlay" role="dialog" aria-modal="true" aria-label="Keyboard shortcuts" onClick={event=>{if(event.target===event.currentTarget)setHelpOpen(false)}}><section><header><div><b>Keyboard shortcuts</b><small>Use Ctrl instead of Cmd on Windows and Linux</small></div><button onClick={()=>setHelpOpen(false)}>Close</button></header><dl className="latex-shortcuts">{[['Cmd + Enter','Recompile'],['Cmd + S','Save a version'],['Cmd + B','Bold'],['Cmd + I','Italic'],['Cmd + U','Underline'],['Cmd + /','Comment or uncomment lines'],['Cmd + F','Find and replace in this file'],['Cmd + Shift + F','Search in project'],['Cmd + Z / Cmd + Shift + Z','Undo / redo'],['Esc','Close dialogs']].map(([keys,label])=><div key={keys}><dt>{keys}</dt><dd>{label}</dd></div>)}</dl></section></div>}
+  {historyOpen&&<div className="latex-source-overlay" role="dialog" aria-modal="true" aria-label="Version history"><section><header><div><b>Version history</b><small>Saved in this browser · up to 20 versions · Ctrl/Cmd + S saves one</small></div><button onClick={()=>setHistoryOpen(false)}>Close</button></header><div className="latex-history-list">{versions.length?versions.map(version=><article key={version.id}><div><b>{version.label}</b><small>{new Date(version.at).toLocaleString()} · {version.files.length} file{version.files.length===1?'':'s'}</small></div><button onClick={()=>restoreVersion(version)}>Restore</button></article>):<p>No versions yet. Press Ctrl/Cmd + S or compile to save one.</p>}</div><footer><button className="latex-button primary" onClick={()=>saveVersion('Manual save')}>Save version now</button></footer></section></div>}
   <div className="latex-editor-mobilebar"><Link to="/career/resume/projects">Projects</Link><label>Upload<input type="file" accept=".tex,.bib,.sty,.cls,.txt,.md,.png,.jpg,.jpeg,.pdf" hidden onChange={importFile}/></label><button onClick={compile}>Recompile</button>{pdfUrl&&<button onClick={downloadPdf}>PDF</button>}</div>
  </div>
 }

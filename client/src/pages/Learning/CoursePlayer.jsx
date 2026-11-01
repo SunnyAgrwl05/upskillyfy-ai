@@ -1,33 +1,31 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import {
-  ArrowLeft,
-  Play,
-  Pause,
-  RotateCcw,
-  RotateCw,
-  Volume2,
-  VolumeX,
-  Maximize,
-  CheckCircle2,
-  Circle,
-  Award,
-  ChevronDown,
-  ChevronUp,
-  FileText,
-  Code2,
-  MessageSquare,
-  Copy,
-  Check,
-  Download,
-  HelpCircle,
-  Sparkles,
-  Search,
-  Send,
-  X,
-  Video,
-  List
-} from 'lucide-react'
+import ArrowLeft from 'lucide-react/dist/esm/icons/arrow-left.mjs'
+import Play from 'lucide-react/dist/esm/icons/play.mjs'
+import Pause from 'lucide-react/dist/esm/icons/pause.mjs'
+import RotateCcw from 'lucide-react/dist/esm/icons/rotate-ccw.mjs'
+import RotateCw from 'lucide-react/dist/esm/icons/rotate-cw.mjs'
+import Volume2 from 'lucide-react/dist/esm/icons/volume-2.mjs'
+import VolumeX from 'lucide-react/dist/esm/icons/volume-x.mjs'
+import Maximize from 'lucide-react/dist/esm/icons/maximize.mjs'
+import CheckCircle2 from 'lucide-react/dist/esm/icons/circle-check.mjs'
+import Circle from 'lucide-react/dist/esm/icons/circle.mjs'
+import Award from 'lucide-react/dist/esm/icons/award.mjs'
+import ChevronDown from 'lucide-react/dist/esm/icons/chevron-down.mjs'
+import ChevronUp from 'lucide-react/dist/esm/icons/chevron-up.mjs'
+import FileText from 'lucide-react/dist/esm/icons/file-text.mjs'
+import Code2 from 'lucide-react/dist/esm/icons/code-xml.mjs'
+import MessageSquare from 'lucide-react/dist/esm/icons/message-square.mjs'
+import Copy from 'lucide-react/dist/esm/icons/copy.mjs'
+import Check from 'lucide-react/dist/esm/icons/check.mjs'
+import Download from 'lucide-react/dist/esm/icons/download.mjs'
+import HelpCircle from 'lucide-react/dist/esm/icons/circle-question-mark.mjs'
+import Sparkles from 'lucide-react/dist/esm/icons/sparkles.mjs'
+import Search from 'lucide-react/dist/esm/icons/search.mjs'
+import Send from 'lucide-react/dist/esm/icons/send.mjs'
+import X from 'lucide-react/dist/esm/icons/x.mjs'
+import Video from 'lucide-react/dist/esm/icons/video.mjs'
+import List from 'lucide-react/dist/esm/icons/list.mjs'
 import { courseAPI } from '../../api'
 import { COURSES_DATA } from '../../data/coursesData'
 import { useAuth } from '../../context/AuthContext'

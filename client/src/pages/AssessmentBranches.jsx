@@ -1,21 +1,19 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import {
-  Code2,
-  Monitor,
-  Cpu,
-  Zap,
-  Cog,
-  Building2,
-  Brain,
-  Puzzle,
-  ArrowRight,
-  BookOpen,
-  Clock,
-  Target,
-  CheckCircle2,
-  AlertCircle,
-} from 'lucide-react'
+import Code2 from 'lucide-react/dist/esm/icons/code-xml.mjs'
+import Monitor from 'lucide-react/dist/esm/icons/monitor.mjs'
+import Cpu from 'lucide-react/dist/esm/icons/cpu.mjs'
+import Zap from 'lucide-react/dist/esm/icons/zap.mjs'
+import Cog from 'lucide-react/dist/esm/icons/cog.mjs'
+import Building2 from 'lucide-react/dist/esm/icons/building-2.mjs'
+import Brain from 'lucide-react/dist/esm/icons/brain.mjs'
+import Puzzle from 'lucide-react/dist/esm/icons/puzzle.mjs'
+import ArrowRight from 'lucide-react/dist/esm/icons/arrow-right.mjs'
+import BookOpen from 'lucide-react/dist/esm/icons/book-open.mjs'
+import Clock from 'lucide-react/dist/esm/icons/clock.mjs'
+import Target from 'lucide-react/dist/esm/icons/target.mjs'
+import CheckCircle2 from 'lucide-react/dist/esm/icons/circle-check.mjs'
+import AlertCircle from 'lucide-react/dist/esm/icons/circle-alert.mjs'
 import { fetchBranches } from '../services/assessmentService'
 import './AssessmentBranches.css'
 

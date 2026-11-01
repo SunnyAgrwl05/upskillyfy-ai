@@ -15,6 +15,20 @@ function ScrollTop() {
 }
 
 export default function MainLayout() {
+  const { pathname } = useLocation();
+  const isResumeEditor = pathname.startsWith("/career/resume/editor/");
+
+  if (isResumeEditor) {
+    return (
+      <>
+        <ScrollTop />
+        <main className="resume-editor-page">
+          <Outlet />
+        </main>
+      </>
+    );
+  }
+
   return (
     <>
       <ScrollTop />

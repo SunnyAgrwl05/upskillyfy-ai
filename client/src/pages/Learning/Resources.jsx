@@ -1,18 +1,16 @@
 import { useState, useEffect, useMemo } from 'react'
-import {
-  Search,
-  X,
-  Download,
-  Bookmark,
-  FileText,
-  CheckCircle2,
-  Layers,
-  BookOpen,
-  Code2,
-  Copy,
-  Check,
-  ArrowDownToLine
-} from 'lucide-react'
+import Search from 'lucide-react/dist/esm/icons/search.mjs'
+import X from 'lucide-react/dist/esm/icons/x.mjs'
+import Download from 'lucide-react/dist/esm/icons/download.mjs'
+import Bookmark from 'lucide-react/dist/esm/icons/bookmark.mjs'
+import FileText from 'lucide-react/dist/esm/icons/file-text.mjs'
+import CheckCircle2 from 'lucide-react/dist/esm/icons/circle-check.mjs'
+import Layers from 'lucide-react/dist/esm/icons/layers.mjs'
+import BookOpen from 'lucide-react/dist/esm/icons/book-open.mjs'
+import Code2 from 'lucide-react/dist/esm/icons/code-xml.mjs'
+import Copy from 'lucide-react/dist/esm/icons/copy.mjs'
+import Check from 'lucide-react/dist/esm/icons/check.mjs'
+import ArrowDownToLine from 'lucide-react/dist/esm/icons/arrow-down-to-line.mjs'
 import { resourceAPI } from '../../api'
 import { RESOURCES_DATA } from '../../data/resourcesData'
 import './Resources.css'

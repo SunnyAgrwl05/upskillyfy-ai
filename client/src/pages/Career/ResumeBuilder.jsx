@@ -1,12 +1,24 @@
 import { Link } from 'react-router-dom'
+import { ArrowLeft } from 'lucide-react'
 
-const TIPS = ['Use single-column ATS-friendly layout', 'Quantify achievements (e.g. 40% improvement)', 'Use action verbs (Built, Led, Developed)', 'Keep it to 1 page for students', 'Tailor keywords to each job description', 'Include GitHub, LinkedIn and portfolio links', 'List projects with tech stack and impact']
+const TIPS = [
+  'Use single-column ATS-friendly layout',
+  'Quantify achievements (e.g. 40% improvement)',
+  'Use action verbs (Built, Led, Developed)',
+  'Keep it to 1 page for students',
+  'Tailor keywords to each job description',
+  'Include GitHub, LinkedIn and portfolio links',
+  'List projects with tech stack and impact'
+]
 
 export default function ResumeBuilder() {
   return (
     <div>
       <section className="ph">
         <div className="container">
+          <Link to="/" className="btn-link" style={{ marginBottom: 12, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <ArrowLeft size={16}/> Home
+          </Link>
           <div className="eyebrow" style={{ justifyContent: 'center', display: 'inline-flex' }}>Resume Builder</div>
           <h1 className="h1" style={{ marginBottom: 12 }}>Build an <span className="grad">ATS-Friendly Resume</span></h1>
           <p className="lead">Templates and tips for resumes that pass ATS filters and impress recruiters.</p>
@@ -19,17 +31,20 @@ export default function ResumeBuilder() {
               <h2 className="h2" style={{ marginBottom: 24 }}>Resume <span className="grad">Templates</span></h2>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 {[
-                  { e: '💼', t: 'SDE / Tech Intern Resume', tags: ['CSE', 'IT', 'AI/ML'] },
-                  { e: '⚙️', t: 'Core Engineering Resume', tags: ['ECE', 'ME', 'EE', 'Civil'] },
-                  { e: '🎨', t: 'Designer / Creative Resume', tags: ['UI/UX', 'Design'] },
-                  { e: '📊', t: 'MBA / Management Resume', tags: ['MBA', 'Business'] },
+                  { e: '💼', t: 'SDE / Tech Intern Resume', tags: ['CSE', 'IT', 'AI/ML'], link: '/career/resume/create' },
+                  { e: '⚙️', t: 'Core Engineering Resume', tags: ['ECE', 'ME', 'EE', 'Civil'], link: '/career/resume/create' },
+                  { e: '🎨', t: 'Designer / Creative Resume', tags: ['UI/UX', 'Design'], link: '/career/resume/create' },
+                  { e: '📊', t: 'MBA / Management Resume', tags: ['MBA', 'Business'], link: '/career/resume/create' },
                 ].map((item, i) => (
                   <div key={i} className="card" style={{ padding: '18px 22px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}><span style={{ fontSize: '1.5rem' }}>{item.e}</span><span style={{ fontWeight: 700 }}>{item.t}</span></div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <span style={{ fontSize: '1.5rem' }}>{item.e}</span>
+                        <span style={{ fontWeight: 700 }}>{item.t}</span>
+                      </div>
                       <div style={{ display: 'flex', gap: 6 }}>{item.tags.map((t, j) => <span key={j} className="bdg bdg-b">{t}</span>)}</div>
                     </div>
-                    <Link to="/contact" className="btn-g btn-xs" style={{ marginTop: 12, display: 'inline-flex' }}>Download Template →</Link>
+                    <Link to={item.link} className="btn-g btn-xs" style={{ marginTop: 12, display: 'inline-flex' }}>Build Resume →</Link>
                   </div>
                 ))}
               </div>

@@ -1,19 +1,17 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { 
-  Search, 
-  X, 
-  Star, 
-  Clock, 
-  ArrowRight, 
-  Sparkles,
-  Bookmark,
-  CheckCircle2,
-  Download,
-  Layers,
-  ChevronDown,
-  ChevronUp
-} from 'lucide-react'
+import Search from 'lucide-react/dist/esm/icons/search.mjs'
+import X from 'lucide-react/dist/esm/icons/x.mjs'
+import Star from 'lucide-react/dist/esm/icons/star.mjs'
+import Clock from 'lucide-react/dist/esm/icons/clock.mjs'
+import ArrowRight from 'lucide-react/dist/esm/icons/arrow-right.mjs'
+import Sparkles from 'lucide-react/dist/esm/icons/sparkles.mjs'
+import Bookmark from 'lucide-react/dist/esm/icons/bookmark.mjs'
+import CheckCircle2 from 'lucide-react/dist/esm/icons/circle-check.mjs'
+import Download from 'lucide-react/dist/esm/icons/download.mjs'
+import Layers from 'lucide-react/dist/esm/icons/layers.mjs'
+import ChevronDown from 'lucide-react/dist/esm/icons/chevron-down.mjs'
+import ChevronUp from 'lucide-react/dist/esm/icons/chevron-up.mjs'
 import { courseAPI } from '../../api'
 import { COURSES_DATA } from '../../data/coursesData'
 import './Courses.css'

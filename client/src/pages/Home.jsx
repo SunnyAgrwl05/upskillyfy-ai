@@ -1,16 +1,14 @@
 import { Link } from 'react-router-dom'
-import { 
-  Code2, 
-  Briefcase, 
-  Bot, 
-  Palette, 
-  Cloud, 
-  Compass, 
-  GraduationCap, 
-  ArrowRight, 
-  ArrowUpRight, 
-  Cpu
-} from 'lucide-react'
+import Code2 from 'lucide-react/dist/esm/icons/code-xml.mjs'
+import Briefcase from 'lucide-react/dist/esm/icons/briefcase.mjs'
+import Bot from 'lucide-react/dist/esm/icons/bot.mjs'
+import Palette from 'lucide-react/dist/esm/icons/palette.mjs'
+import Cloud from 'lucide-react/dist/esm/icons/cloud.mjs'
+import Compass from 'lucide-react/dist/esm/icons/compass.mjs'
+import GraduationCap from 'lucide-react/dist/esm/icons/graduation-cap.mjs'
+import ArrowRight from 'lucide-react/dist/esm/icons/arrow-right.mjs'
+import ArrowUpRight from 'lucide-react/dist/esm/icons/arrow-up-right.mjs'
+import Cpu from 'lucide-react/dist/esm/icons/cpu.mjs'
 import TechCarousel from '../components/TechCarousel'
 import StoriesCarousel from '../components/StoriesCarousel'
 import './Home.css'

@@ -1,17 +1,15 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom'
-import { 
-  Menu, 
-  X, 
-  ChevronDown, 
-  Sun, 
-  Moon, 
-  ArrowRight, 
-  Sparkles,
-  LayoutDashboard,
-  LogOut,
-  UserCheck
-} from 'lucide-react'
+import Menu from 'lucide-react/dist/esm/icons/menu.mjs'
+import X from 'lucide-react/dist/esm/icons/x.mjs'
+import ChevronDown from 'lucide-react/dist/esm/icons/chevron-down.mjs'
+import Sun from 'lucide-react/dist/esm/icons/sun.mjs'
+import Moon from 'lucide-react/dist/esm/icons/moon.mjs'
+import ArrowRight from 'lucide-react/dist/esm/icons/arrow-right.mjs'
+import Sparkles from 'lucide-react/dist/esm/icons/sparkles.mjs'
+import LayoutDashboard from 'lucide-react/dist/esm/icons/layout-dashboard.mjs'
+import LogOut from 'lucide-react/dist/esm/icons/log-out.mjs'
+import UserCheck from 'lucide-react/dist/esm/icons/user-check.mjs'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import './Navbar.css'

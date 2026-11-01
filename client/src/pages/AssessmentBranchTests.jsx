@@ -1,17 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams, Navigate } from 'react-router-dom'
-import {
-  ArrowLeft,
-  ArrowRight,
-  Clock,
-  Target,
-  FileQuestion,
-  AlertTriangle,
-  Search,
-  X,
-  CheckCircle2,
-  AlertCircle,
-} from 'lucide-react'
+import ArrowLeft from 'lucide-react/dist/esm/icons/arrow-left.mjs'
+import ArrowRight from 'lucide-react/dist/esm/icons/arrow-right.mjs'
+import Clock from 'lucide-react/dist/esm/icons/clock.mjs'
+import Target from 'lucide-react/dist/esm/icons/target.mjs'
+import FileQuestion from 'lucide-react/dist/esm/icons/file-question-mark.mjs'
+import AlertTriangle from 'lucide-react/dist/esm/icons/triangle-alert.mjs'
+import Search from 'lucide-react/dist/esm/icons/search.mjs'
+import X from 'lucide-react/dist/esm/icons/x.mjs'
+import CheckCircle2 from 'lucide-react/dist/esm/icons/circle-check.mjs'
+import AlertCircle from 'lucide-react/dist/esm/icons/circle-alert.mjs'
 import { fetchBranch, fetchBranchTests } from '../services/assessmentService'
 import './AssessmentBranchTests.css'
 

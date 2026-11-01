@@ -12,21 +12,19 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import {
-  ArrowLeft,
-  ArrowRight,
-  CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
-  Clock,
-  Flag,
-  MoreHorizontal,
-  X,
-  AlertTriangle,
-  Save,
-  Eraser,
-  ListChecks,
-} from 'lucide-react'
+import ArrowLeft from 'lucide-react/dist/esm/icons/arrow-left.mjs'
+import ArrowRight from 'lucide-react/dist/esm/icons/arrow-right.mjs'
+import CheckCircle2 from 'lucide-react/dist/esm/icons/circle-check.mjs'
+import ChevronLeft from 'lucide-react/dist/esm/icons/chevron-left.mjs'
+import ChevronRight from 'lucide-react/dist/esm/icons/chevron-right.mjs'
+import Clock from 'lucide-react/dist/esm/icons/clock.mjs'
+import Flag from 'lucide-react/dist/esm/icons/flag.mjs'
+import MoreHorizontal from 'lucide-react/dist/esm/icons/ellipsis.mjs'
+import X from 'lucide-react/dist/esm/icons/x.mjs'
+import AlertTriangle from 'lucide-react/dist/esm/icons/triangle-alert.mjs'
+import Save from 'lucide-react/dist/esm/icons/save.mjs'
+import Eraser from 'lucide-react/dist/esm/icons/eraser.mjs'
+import ListChecks from 'lucide-react/dist/esm/icons/list-checks.mjs'
 import { getBranchById } from '../data/assessmentsSeed'
 import {
   fetchTest,
@@ -222,6 +220,7 @@ export default function AssessmentTest() {
       QUESTION NAVIGATION
       ========================================================= */
   const total = test?.questions?.length ?? 0
+  const currentQuestion = test?.questions?.[currentIdx]
 
   const handlePrev = useCallback(() => {
     if (currentIdx <= 0 || !attempt) return
@@ -290,14 +289,16 @@ export default function AssessmentTest() {
     if (!attempt || !currentQuestion) return
     const qId = currentQuestion.id
     const alreadyMarked = attempt.markedForReview?.includes(qId)
+    let updatedAttempt = attempt
     if (!alreadyMarked) {
-      setAttempt(toggleMarkForReview({ attempt, questionId: qId }))
+      updatedAttempt = toggleMarkForReview({ attempt: updatedAttempt, questionId: qId })
     }
     if (currentIdx < total - 1) {
       const newIdx = currentIdx + 1
-      setAttempt(setCurrentQuestion({ attempt, index: newIdx, total }))
+      updatedAttempt = setCurrentQuestion({ attempt: updatedAttempt, index: newIdx, total })
       setCurrentIdx(newIdx)
     }
+    setAttempt(updatedAttempt)
     setPaletteOpen(false)
   }, [attempt, currentQuestion, currentIdx, total])
 
@@ -343,7 +344,6 @@ export default function AssessmentTest() {
     return 'unvisited'
   }
 
-  const currentQuestion = test?.questions?.[currentIdx]
   const summary = attempt ? getSummary(attempt, test) : null
 
   /* =========================================================

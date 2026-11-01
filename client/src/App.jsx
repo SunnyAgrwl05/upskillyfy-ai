@@ -26,7 +26,9 @@ import Cloud from "./pages/Services/Cloud";
 import Internships from "./pages/Career/Internships";
 import Placements from "./pages/Career/Placements";
 import DSAHub from "./pages/Career/DSAHub";
-import ResumeBuilder from "./pages/Career/ResumeBuilder";
+import { ResumeEditor, ResumeGallery, ResumeProjects, ResumeTemplateDetail } from "./pages/Career/ResumeWorkspace";
+import OverleafDashboard from "./pages/Career/OverleafDashboard";
+import ATSResumeBuilder from "./pages/Career/ATSResumeBuilder";
 
 import Courses from "./pages/Learning/Courses";
 import CoursePlayer from "./pages/Learning/CoursePlayer";
@@ -93,8 +95,16 @@ export default function App() {
             <Route path="/career/dsa" element={<DSAHub />} />
             <Route
               path="/career/resume"
-              element={<ResumeBuilder />}
+              element={<OverleafDashboard />}
             />
+            <Route
+              path="/career/resume/templates"
+              element={<ResumeGallery />}
+            />
+            <Route path="/career/resume/templates/:templateId" element={<ResumeTemplateDetail />} />
+            <Route path="/career/resume/create" element={<ATSResumeBuilder />} />
+            <Route path="/career/resume/projects" element={<ResumeProjects />} />
+            <Route path="/career/resume/editor/:projectId" element={<ResumeEditor />} />
             <Route
               path="/career/interviews"
               element={<Contact />}

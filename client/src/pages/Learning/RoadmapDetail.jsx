@@ -1,16 +1,14 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { 
-  ArrowLeft, 
-  Bookmark, 
-  Clock, 
-  Check, 
-  Download, 
-  ArrowUpRight, 
-  GraduationCap, 
-  Sparkles,
-  CheckCircle2
-} from 'lucide-react'
+import ArrowLeft from 'lucide-react/dist/esm/icons/arrow-left.mjs'
+import Bookmark from 'lucide-react/dist/esm/icons/bookmark.mjs'
+import Clock from 'lucide-react/dist/esm/icons/clock.mjs'
+import Check from 'lucide-react/dist/esm/icons/check.mjs'
+import Download from 'lucide-react/dist/esm/icons/download.mjs'
+import ArrowUpRight from 'lucide-react/dist/esm/icons/arrow-up-right.mjs'
+import GraduationCap from 'lucide-react/dist/esm/icons/graduation-cap.mjs'
+import Sparkles from 'lucide-react/dist/esm/icons/sparkles.mjs'
+import CheckCircle2 from 'lucide-react/dist/esm/icons/circle-check.mjs'
 import { ROADMAPS_DATA } from '../../data/roadmapsData'
 import './Roadmaps.css'
 
