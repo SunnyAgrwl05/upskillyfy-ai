@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 
 const stories = [
   {
-    name: 'Kajal Kumari',
+    name: 'Tanu Kumari',
     role: 'Upskillyfy-ai learning journey',
     text: 'Learning, building and discovering new opportunities with the Upskillyfy-ai ecosystem.',
     tag: 'Community member',
@@ -26,7 +26,7 @@ const stories = [
     image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80',
   },
   {
-    name: 'Shrestha Saran',
+    name: 'Savita Kumari',
     role: 'Learning and building with Upskillyfy-ai',
     text: 'Finding resources, challenges and opportunities that make the journey from learning to building easier.',
     tag: 'Community member',
@@ -34,7 +34,7 @@ const stories = [
     image: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=600&q=80',
   },
   {
-    name: 'Tanya Gupta',
+    name: 'Tanya Garg',
     role: 'Developing skills with Upskillyfy-ai',
     text: 'Growing skills and staying connected with a community focused on learning, building and career growth.',
     tag: 'Community member',
@@ -42,7 +42,7 @@ const stories = [
     image: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=600&q=80',
   },
   {
-    name: 'Shivam Kumar',
+    name: 'Yash Pathak',
     role: 'Full Stack & AI Systems',
     text: 'Building scalable modern applications, mastering production tools, and growing with the community.',
     tag: 'Community member',
@@ -51,7 +51,7 @@ const stories = [
   },
 ]
 
-export default function StoriesCarousel({ names = ['Kajal Kumari', 'Alok Raj', 'Abhijeet Gupta', 'Shrestha Saran', 'Tanya Gupta', 'Shivam Kumar'] }) {
+export default function StoriesCarousel({ names = ['Tanu Kumari', 'Alok Raj', 'Abhijeet Gupta', 'Savita Kumari', 'Tanya Garg', 'Yash Pathak'] }) {
   const trackRef = useRef(null)
 
   const [progress, setProgress] = useState(0)
@@ -118,8 +118,10 @@ export default function StoriesCarousel({ names = ['Kajal Kumari', 'Alok Raj', '
         className="story-track"
         onScroll={updateProgress}
       >
-        {stories.map((story) => (
-          <article key={story.name} className="story-card">
+        {stories.map((story, index) => {
+          const displayName = names[index] || story.name
+          return (
+          <article key={`${displayName}-${index}`} className="story-card">
 
             <div className="story-body">
 
@@ -132,7 +134,7 @@ export default function StoriesCarousel({ names = ['Kajal Kumari', 'Alok Raj', '
                 className="story-link"
                 onClick={() => {}}
               >
-                {story.name} - {story.tag}
+                {displayName} - {story.tag}
               </button>
 
             </div>
@@ -146,7 +148,7 @@ export default function StoriesCarousel({ names = ['Kajal Kumari', 'Alok Raj', '
               {story.image && (
                 <img
                   src={story.image}
-                  alt={story.name}
+                  alt={displayName}
                   className="story-img"
                   loading="lazy"
                 />
@@ -168,7 +170,7 @@ export default function StoriesCarousel({ names = ['Kajal Kumari', 'Alok Raj', '
 
               <div className="story-label">
 
-                <span className="story-name">{story.name}</span>
+                <span className="story-name">{displayName}</span>
 
                 <span className="story-tag">{story.tag}</span>
 
@@ -177,7 +179,8 @@ export default function StoriesCarousel({ names = ['Kajal Kumari', 'Alok Raj', '
             </div>
 
           </article>
-        ))}
+          )
+        })}
       </div>
 
       <div className="stories-controls">
@@ -269,7 +272,7 @@ export function StoriesSection() {
 
         </div>
 
-        <StoriesCarousel names={['Kajal Kumari', 'Alok Raj', 'Abhijeet Gupta', 'Shrestha Saran', 'Tanya Gupta']} />
+        <StoriesCarousel names={['Tanu Kumari', 'Alok Raj', 'Abhijeet Gupta', 'Savita Kumari', 'Tanya Garg', 'Yash Pathak']} />
 
       </div>
 
