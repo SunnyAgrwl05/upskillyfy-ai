@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Course Completion Certificate</title>
+    <style>{{styles}}</style>
+  </head>
+  <body>
+    <main class="certificate">
+      <div class="certificate__inner">
+        <div class="certificate__demo-watermark {{demoWatermarkClass}}">{{demoWatermark}}</div>
+        <header class="certificate__brand">
+          <img class="certificate__logo" src="{{logoDataUrl}}" alt="Upskillyfy logo">
+          <span class="certificate__brand-name">UPSKILLYFY <span>AI</span></span>
+          <span class="certificate__eyebrow">CERTIFICATE OF COMPLETION</span>
+        </header>
+
+        <section class="certificate__content">
+          <p class="certificate__intro">This certificate is proudly presented to</p>
+          <h1 class="certificate__recipient">{{recipientName}}</h1>
+          <p class="certificate__description">for successfully completing the course</p>
+          <h2 class="certificate__course">{{courseTitle}}</h2>
+          <p class="certificate__completion">Completed on <strong>{{completionDate}}</strong></p>
+        </section>
+
+        <footer class="certificate__footer">
+          <div class="certificate__issuer">
+            <img class="certificate__signature-image" src="{{signatureDataUrl}}" alt="Authorized signature">
+            <span class="certificate__signature"></span>
+            <strong>{{issuerName}}</strong>
+            <span>{{issuerTitle}}</span>
+            <span class="certificate__date">Issued {{issueDate}}</span>
+          </div>
+          <div class="certificate__number">
+            <span>Certificate ID</span>
+            <strong>{{certificateNumber}}</strong>
+          </div>
+          <div class="certificate__verification">
+            <img src="{{qrCode}}" alt="Scan to verify certificate">
+            <span>Scan to verify</span>
+          </div>
+        </footer>
+      </div>
+    </main>
+  </body>
+</html>

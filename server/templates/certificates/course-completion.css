@@ -1,0 +1,202 @@
+@page {
+  size: A4 landscape;
+  margin: 0;
+}
+
+/* Change the certificate background here. */
+html,
+body {
+  width: 297mm;
+  height: 210mm;
+  margin: 0;
+  background: #f4f7fc;
+}
+
+/* Change the certificate border, inset, and corner treatment here. */
+.certificate {
+  width: 297mm;
+  height: 210mm;
+  padding: 11mm;
+  color: #17243b;
+  background: #f4f7fc;
+  box-sizing: border-box;
+}
+
+.certificate__inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  padding: 12mm 18mm;
+  border: 2px solid #163b71;
+  outline: 1px solid #c09a51;
+  outline-offset: -5mm;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.certificate__demo-watermark {
+  display: none;
+}
+
+.certificate__demo-watermark.is-demo {
+  position: absolute;
+  z-index: 3;
+  top: 46%;
+  left: 50%;
+  display: block;
+  width: 100%;
+  color: rgba(170, 35, 35, 0.18);
+  font: 800 29px Arial, sans-serif;
+  letter-spacing: 5px;
+  text-align: center;
+  transform: translate(-50%, -50%) rotate(-18deg);
+  pointer-events: none;
+}
+
+/* Change certificate typography and font families here. */
+body {
+  font-family: Georgia, 'Times New Roman', serif;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.certificate__brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #163b71;
+}
+
+/* Change logo sizing or replace the text mark in the HTML template here. */
+.certificate__logo {
+  display: none;
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.certificate__logo[src^="data:"] {
+  display: block;
+}
+
+.certificate__brand-name {
+  font: 700 15px Arial, sans-serif;
+  letter-spacing: 2px;
+}
+
+.certificate__brand-name span {
+  color: #c09a51;
+}
+
+/* Change accent colors and section spacing here. */
+.certificate__eyebrow {
+  margin-left: 18px;
+  color: #b1873b;
+  font: 700 10px Arial, sans-serif;
+  letter-spacing: 3px;
+}
+
+.certificate__content {
+  margin-top: 13mm;
+  text-align: center;
+}
+
+.certificate__intro,
+.certificate__description,
+.certificate__completion {
+  margin: 0;
+  color: #59677a;
+  font: 14px Arial, sans-serif;
+}
+
+/* Change recipient-name position, size, and formatting here. */
+.certificate__recipient {
+  margin: 4mm 0 2mm;
+  color: #153763;
+  font: italic 42px Georgia, serif;
+  font-weight: 400;
+}
+
+/* Change course-title placement and formatting here. */
+.certificate__course {
+  margin: 3mm 0;
+  color: #17243b;
+  font: 700 23px Arial, sans-serif;
+}
+
+.certificate__completion strong {
+  color: #17243b;
+}
+
+.certificate__footer {
+  position: absolute;
+  right: 18mm;
+  bottom: 11mm;
+  left: 18mm;
+  display: grid;
+  grid-template-columns: 1fr 1fr 50px;
+  align-items: end;
+  gap: 12mm;
+  font-family: Arial, sans-serif;
+}
+
+/* Change the signature artwork or signature line here. */
+.certificate__signature-image {
+  display: none;
+  width: 42mm;
+  height: 8mm;
+  object-fit: contain;
+  object-position: left bottom;
+}
+
+.certificate__signature-image[src^="data:"] {
+  display: block;
+}
+
+.certificate__signature-image[src^="data:"] + .certificate__signature {
+  display: none;
+}
+
+.certificate__signature {
+  display: block;
+  width: 42mm;
+  height: 8mm;
+  margin-bottom: 2mm;
+  border-bottom: 1px solid #163b71;
+}
+
+.certificate__issuer,
+.certificate__number {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: #59677a;
+  font-size: 9px;
+}
+
+.certificate__issuer strong,
+.certificate__number strong {
+  color: #17243b;
+  font-size: 10px;
+}
+
+.certificate__date {
+  margin-top: 3px;
+}
+
+/* Change QR code position and size here. */
+.certificate__verification {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #59677a;
+  font-size: 8px;
+}
+
+.certificate__verification img {
+  width: 26mm;
+  height: 26mm;
+}
+
+/* To add another design, add a versioned template/CSS pair and register it in certificateTemplates.js. */

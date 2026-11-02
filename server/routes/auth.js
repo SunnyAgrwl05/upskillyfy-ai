@@ -5,12 +5,18 @@ import { protect } from '../middleware/auth.js'
 
 const router = express.Router()
 
-const getJwtSecret = () => process.env.JWT_SECRET || 'upskillyfy_super_secret_key_2026'
+const getJwtSecret = () => {
+  if (!process.env.JWT_SECRET) {
+    throw Object.assign(new Error('Authentication is unavailable until JWT_SECRET is configured.'), { status: 503 })
+  }
+  return process.env.JWT_SECRET
+}
 const signToken = (id) => jwt.sign({ id }, getJwtSecret(), { expiresIn: '30d' })
 
 // POST /api/auth/register
 router.post('/register', async (req, res) => {
   try {
+    getJwtSecret()
     const { name, email, password, role, branch, college, year } = req.body
 
     if (!name || !email || !password) {
@@ -53,13 +59,14 @@ router.post('/register', async (req, res) => {
     })
   } catch (err) {
     console.error('Registration error:', err)
-    res.status(500).json({ message: err.message || 'Failed to register account' })
+    res.status(err.status || 500).json({ message: err.status ? err.message : 'Failed to register account' })
   }
 })
 
 // POST /api/auth/login
 router.post('/login', async (req, res) => {
   try {
+    getJwtSecret()
     const { email, password } = req.body
 
     if (!email || !password) {
@@ -89,7 +96,7 @@ router.post('/login', async (req, res) => {
     })
   } catch (err) {
     console.error('Login error:', err)
-    res.status(500).json({ message: err.message || 'Failed to login' })
+    res.status(err.status || 500).json({ message: err.status ? err.message : 'Failed to login' })
   }
 })
 

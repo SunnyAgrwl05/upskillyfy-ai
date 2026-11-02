@@ -109,4 +109,36 @@ export const latexTemplateAPI = {
   get: (id) => API.get(`/latex-templates/${encodeURIComponent(id)}`),
 }
 
+export const certificateAPI = {
+  getMine: () => API.get('/certificates/my'),
+  getOne: (id) => API.get(`/certificates/${encodeURIComponent(id)}`),
+  download: (id) => API.get(`/certificates/${encodeURIComponent(id)}/download`, { responseType: 'blob' }),
+}
+
+export const documentAPI = {
+  getMine: () => API.get('/documents/my'),
+  getOne: (id) => API.get(`/documents/${encodeURIComponent(id)}`),
+  download: (id) => API.get(`/documents/${encodeURIComponent(id)}/download`, { responseType: 'blob' }),
+}
+
+export const verificationAPI = {
+  verify: (token) => API.get(`/verification/${encodeURIComponent(token)}`),
+}
+
+export const adminCredentialAPI = {
+  findStudents: (search) => API.get('/admin/credentials/students', { params: { search } }),
+  getCourses: () => API.get('/admin/credentials/courses'),
+  getCertificates: () => API.get('/admin/credentials/certificates'),
+  previewCertificate: (data) => API.post('/admin/credentials/certificates/preview', data, { responseType: 'blob' }),
+  issueCertificate: (data) => API.post('/admin/credentials/certificates', data),
+  revokeCertificate: (id, reason) => API.patch(`/admin/credentials/certificates/${encodeURIComponent(id)}/revoke`, { reason }),
+  getDocuments: () => API.get('/admin/credentials/documents'),
+  uploadDocument: (data) => {
+    const form = new FormData()
+    Object.entries(data).forEach(([key, value]) => form.append(key, value))
+    return API.post('/admin/credentials/documents', form)
+  },
+  revokeDocument: (id, reason) => API.patch(`/admin/credentials/documents/${encodeURIComponent(id)}/revoke`, { reason }),
+}
+
 export default API

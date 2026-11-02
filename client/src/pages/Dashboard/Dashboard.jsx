@@ -47,9 +47,11 @@ export default function Dashboard() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               {[
                 { icon: '🚀', title: 'Browse Internships', desc: 'Find verified internships for your branch', link: '/career/internships', cls: 'btn-p' },
+                { icon: '🏆', title: 'My Achievements', desc: 'View certificates and official documents', link: '/learning/certifications', cls: 'btn-g' },
                 { icon: '🧠', title: 'DSA Hub', desc: 'Practice problems and track your progress', link: '/career/dsa', cls: 'btn-g' },
                 { icon: '📄', title: 'Resume Builder Tips', desc: 'Build an ATS-friendly resume', link: '/career/resume', cls: 'btn-g' },
                 { icon: '🎯', title: 'Community Events', desc: 'Join workshops, hackathons and webinars', link: '/community/events', cls: 'btn-g' },
+                ...(user.role === 'admin' ? [{ icon: '🛡️', title: 'Credential administration', desc: 'Issue certificates and manage student documents', link: '/admin/credentials', cls: 'btn-g' }] : []),
               ].map((a, i) => (
                 <div key={i} className="card" style={{ padding: '18px 22px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>

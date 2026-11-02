@@ -14,6 +14,11 @@ import resourceRoutes from './routes/resources.js'
 import resumeProjectRoutes from './routes/resumeProjects.js'
 import latexTemplateRoutes from './routes/latexTemplates.js'
 import roadmapRoutes from './routes/roadmaps.js'
+import certificateRoutes from './routes/certificates.js'
+import documentRoutes from './routes/documents.js'
+import verificationRoutes from './routes/verification.js'
+import adminCredentialRoutes from './routes/adminCredentials.js'
+import { errorHandler, notFound } from './middleware/error.js'
 
 dotenv.config()
 
@@ -58,11 +63,18 @@ app.use('/api/resources', resourceRoutes)
 app.use('/api/latex-templates', latexTemplateRoutes)
 app.use('/api/resume-projects', resumeProjectRoutes)
 app.use('/api/roadmaps', roadmapRoutes)
+app.use('/api/certificates', certificateRoutes)
+app.use('/api/documents', documentRoutes)
+app.use('/api/verification', verificationRoutes)
+app.use('/api/admin/credentials', adminCredentialRoutes)
 
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Upskillyfy API running 🚀', time: new Date() })
 })
+
+app.use(notFound)
+app.use(errorHandler)
 
 // MongoDB
 if (process.env.MONGODB_URI) {

@@ -5,7 +5,7 @@
  */
 
 const getApiBaseUrl = () => process.env.COURSE_API_BASE_URL || 'https://course-api-1eqv.onrender.com'
-const getApiKey = () => process.env.COURSE_API_KEY || 'cap_live_69b5446095cf8a01a5ba4f5be5b2c9c7a84e6aa077d67110'
+const getApiKey = () => process.env.COURSE_API_KEY
 const getServerUrl = () => process.env.SERVER_URL || 'http://localhost:5000'
 
 // In-memory cache to stay well within API rate limits (catalog: 60/min, playback: 15/min)
@@ -95,6 +95,9 @@ async function callLicensingApi(endpoint, options = {}) {
   const baseUrl = getApiBaseUrl().replace(/\/$/, '')
   const url = `${baseUrl}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`
   const apiKey = getApiKey()
+  if (!apiKey) {
+    throw Object.assign(new Error('COURSE_API_KEY is required to access the licensed course catalog.'), { status: 503 })
+  }
 
   const headers = {
     'Authorization': `Bearer ${apiKey}`,
