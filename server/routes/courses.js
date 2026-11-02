@@ -110,7 +110,8 @@ const getOptionalUser = async (req) => {
   const token = req.headers.authorization?.split(' ')[1]
   if (!token) return null
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'upskillyfy_super_secret_key_2026')
+    if (!process.env.JWT_SECRET) return null
+    const decoded = jwt.verify(token, process.env.JWT_SECRET)
     return await User.findById(decoded.id)
   } catch {
     return null

@@ -15,13 +15,14 @@ export const notFound = (req, res, next) => {
 
 // eslint-disable-next-line no-unused-vars -- Express identifies error handlers by arity.
 export const errorHandler = (err, req, res, next) => {
+  if (res.headersSent) return next(err)
   let status = err.status || err.statusCode || 500
   let message = err.message || 'Something went wrong.'
   let code = err.code || null
 
   if (err.code === 'LIMIT_FILE_SIZE') {
     status = 413
-    message = 'Uploaded archive exceeds the 5 MB limit.'
+    message = 'Uploaded file exceeds the 5 MB limit.'
     code = 'UPLOAD_TOO_LARGE'
   }
 
@@ -60,7 +61,7 @@ export const errorHandler = (err, req, res, next) => {
     code = 'AUTH_ERROR'
   }
 
-  if (status >= 500) {
+  if (status >= 500 && status !== 503) {
     console.error('[error]', req.method, req.originalUrl, '-', err.stack || err)
     // Never leak internals to the client on a server fault.
     message = 'Something went wrong on our end. Please try again.'

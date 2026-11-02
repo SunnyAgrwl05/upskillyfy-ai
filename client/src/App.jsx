@@ -39,6 +39,11 @@ import CoursePlayer from "./pages/Learning/Courses/CoursePlayer";
 import Roadmaps from "./pages/Learning/Roadmaps/Roadmaps";
 import RoadmapDetail from "./pages/Learning/Roadmaps/RoadmapDetail";
 import Resources from "./pages/Learning/Resources/Resources";
+import Achievements from "./pages/Achievements/Achievements";
+import CertificateDetails from "./pages/Achievements/CertificateDetails";
+import CertificateVerification from "./pages/Verification/CertificateVerification";
+import AdminCertificates from "./pages/Admin/AdminCertificates";
+import AdminDocuments from "./pages/Admin/AdminDocuments";
 
 import Events from "./pages/Community/Events/Events";
 import Ambassador from "./pages/Community/Ambassador/Ambassador";
@@ -62,6 +67,10 @@ export default function App() {
 
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/admin/credentials" element={<AdminCertificates />} />
+            <Route path="/admin/documents" element={<AdminDocuments />} />
+            <Route path="/verify/:token" element={<CertificateVerification />} />
             <Route path="/assessments" element={<AssessmentHub />} />
             <Route path="/assessment" element={<AssessmentHub />} />
             <Route path="/assessment/student" element={<AssessmentBranches />} />
@@ -162,8 +171,9 @@ export default function App() {
             />
             <Route
               path="/learning/certifications"
-              element={<Resources />}
+              element={<Achievements />}
             />
+            <Route path="/learning/certifications/:id" element={<CertificateDetails />} />
 
             <Route
               path="/community/events"
