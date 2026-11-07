@@ -233,7 +233,28 @@ PORT=5000
 MONGODB_URI=mongodb+srv://YOUR_USERNAME:YOUR_PASSWORD@cluster0.xxxxx.mongodb.net/upskillyfy
 JWT_SECRET=your_secure_jwt_secret
 CLIENT_URL=http://localhost:5173
+
+# Optional email delivery (Gmail or custom SMTP)
+EMAIL_USER=your_email@example.com
+EMAIL_PASS=your_email_app_password
+EMAIL_FROM=Upskillyfy <your_email@example.com>
+# EMAIL_HOST=smtp.example.com
+# EMAIL_PORT=587
+# EMAIL_SECURE=false
+
+# Optional Google Identity Services client ID (verified server-side)
+GOOGLE_CLIENT_ID=your_google_oauth_client_id
+
+# Optional private Cloudflare R2 storage for Hackathon attachments
+R2_ENDPOINT=https://YOUR_ACCOUNT_ID.r2.cloudflarestorage.com
+R2_ACCESS_KEY_ID=your_bucket_scoped_access_key
+R2_SECRET_ACCESS_KEY=your_bucket_scoped_secret_key
+R2_BUCKET_NAME=your_private_bucket_name
 ```
+
+R2 is optional. Without all four R2 values, upload URL requests return `503 STORAGE_UNAVAILABLE`; the app does not expose uploaded objects publicly. Create a private bucket and an API token scoped to that bucket. Configure the bucket's CORS policy to allow `PUT` from the frontend origin in `CLIENT_URL`, allow the `Content-Type` request header, and expose `ETag` if the client needs it. Do not configure a public bucket domain for user uploads.
+
+Hackathon attachment flow: create a draft submission, then request `POST /api/hackathons/:slug/submissions/upload-url` with `{ "fileName": "deck.pptx", "contentType": "application/vnd.openxmlformats-officedocument.presentationml.presentation", "size": 12345 }`; upload the bytes with `PUT` to the returned `uploadUrl` using the returned headers; then confirm with `POST /api/hackathons/:slug/submissions/:submissionId/files/confirm` and the returned `key` plus file metadata. The API accepts PDF, PPT, PPTX, DOC, DOCX and ZIP files up to 20 MB. Download requests are authorized and return a short-lived signed URL.
 
 ### `client/.env` (optional)
 

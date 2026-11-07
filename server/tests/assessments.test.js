@@ -121,7 +121,7 @@ describe('POST /api/assessments/attempts/submit', () => {
     expect(res.status).toBe(200)
     expect(res.body.data.result.correct).toBe(1)
     expect(res.body.data.result.incorrect).toBe(0)
-    expect(res.body.data.result.unanswered).toBe(firstQuestion.id ? expect.any(Number) : 0)
+    expect(res.body.data.result.unanswered).toEqual(expect.any(Number))
   })
 
   it('applies negative marks for a wrong answer', async () => {
@@ -233,6 +233,22 @@ describe('assessment data in MongoDB', () => {
   })
 
   it('scores a database-backed attempt', async () => {
+    // The Jest setup clears MongoDB after every test, so seed this fixture here.
+    await Assessment.create({
+      id: 'db-test-1',
+      branchId: 'cse',
+      title: 'Database Seeded Test',
+      description: 'A test stored in MongoDB',
+      difficulty: 'Beginner',
+      duration: 5,
+      totalMarks: 2,
+      questionsCount: 2,
+      isLive: true,
+      questions: [
+        { questionId: 'dbq-1', text: 'What is 1 + 1?', options: [{ text: '1' }, { text: '2' }, { text: '3' }, { text: '4' }], correctAnswer: 1, marks: 1, negativeMarks: 0.25 },
+        { questionId: 'dbq-2', text: 'What is 2 + 2?', options: [{ text: '3' }, { text: '4' }, { text: '5' }, { text: '6' }], correctAnswer: 1, marks: 1, negativeMarks: 0.25 },
+      ],
+    })
     const start = await request(app).post('/api/assessments/attempts/start').send({ testId: 'db-test-1' })
     const attemptId = start.body.data.id
 

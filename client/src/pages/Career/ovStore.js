@@ -136,7 +136,8 @@ export function fromCloud(c) {
   return {
     id: c.id, title: c.name, mainFile: c.mainFile, templateId: c.templateId || null,
     files: filesFromCloud(c.files), createdAt: c.createdAt, updatedAt: c.updatedAt,
-    cloudSaved: true, tags: [], archived: false, trashed: false,
+    cloudSaved: true, tags: [], archived: !!c.archived, trashed: !!c.trashed,
+    status: c.status || 'active', revision: c.revision || 1, lastEditedAt: c.lastEditedAt || null,
   }
 }
 
@@ -150,7 +151,7 @@ export async function syncFromCloud() {
     const mine = byId.get(c.id)
     if (!mine) { local.push(fromCloud(c)); changed = true }
     else if (new Date(c.updatedAt) > new Date(mine.updatedAt || 0)) {
-      Object.assign(mine, fromCloud(c), { tags: mine.tags || [], archived: !!mine.archived, trashed: !!mine.trashed })
+      Object.assign(mine, fromCloud(c), { tags: mine.tags || [] })
       changed = true
     }
   }

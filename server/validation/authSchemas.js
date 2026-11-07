@@ -25,6 +25,19 @@ export const resetPasswordSchema = z.object({
   password: z.string().min(8, 'Password must be at least 8 characters').max(128),
 })
 
+export const emailVerificationSchema = z.object({
+  code: z.string().trim().regex(/^\d{6}$/, 'Enter the 6-digit verification code.'),
+})
+
+export const googleLoginSchema = z.object({
+  idToken: z.string().min(1).max(8192),
+})
+
+export const accountDeletionSchema = z.object({
+  confirm: z.literal(true),
+  password: z.string().max(128).optional(),
+}).strict()
+
 export const updateProfileSchema = z.object({
   name: z.string().trim().min(2, 'Name must be at least 2 characters').max(80).optional(),
   branch: z.string().max(60).optional(),

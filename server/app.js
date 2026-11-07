@@ -19,6 +19,10 @@ import newsletterRoutes from './routes/newsletter.js'
 import assessmentRoutes from './routes/assessments.js'
 import resumeProjectRoutes from './routes/resumeProjects.js'
 import latexTemplateRoutes from './routes/latexTemplates.js'
+import hackathonRoutes from './routes/hackathons.js'
+import resumeAnalysisRoutes from './routes/resumeAnalysis.js'
+import adminRoutes from './routes/admin.js'
+import { adminLimiter } from './middleware/security.js'
 
 /**
  * Builds the Express application.
@@ -83,7 +87,8 @@ export const createApp = () => {
     res.on('finish', () => {
       const ms = Number(process.hrtime.bigint() - startedAt) / 1e6
       if (!req.originalUrl.startsWith('/api/health')) {
-        console.log(`${req.method} ${req.originalUrl} ${res.statusCode} ${ms.toFixed(1)}ms`)
+        // Query values can contain email addresses, search terms, or tokens.
+        console.log(`${req.method} ${req.path} ${res.statusCode} ${ms.toFixed(1)}ms`)
       }
     })
     next()
@@ -101,10 +106,13 @@ export const createApp = () => {
   app.use('/api/assessments', assessmentRoutes)
   app.use('/api/latex-templates', latexTemplateRoutes)
   app.use('/api/resume-projects', resumeProjectRoutes)
+  app.use('/api/hackathons', hackathonRoutes)
+  app.use('/api/resume-analysis', resumeAnalysisRoutes)
+  app.use('/api/admin', adminLimiter, adminRoutes)
 
   /* --------------------------------------------------------------- health */
 
-  app.get('/api/health', asyncHandler(async (_req, res) => {
+  const healthHandler = asyncHandler(async (_req, res) => {
     // Imported lazily to keep this module free of a hard DB dependency.
     const { default: mongoose } = await import('mongoose')
     const dbState = mongoose.connection.readyState
@@ -116,7 +124,9 @@ export const createApp = () => {
       uptime: Math.round(process.uptime()),
       timestamp: new Date().toISOString(),
     })
-  }))
+  })
+  app.get('/health', healthHandler)
+  app.get('/api/health', healthHandler)
 
   /* ----------------------------------------------- 404 + error handler (last) */
 

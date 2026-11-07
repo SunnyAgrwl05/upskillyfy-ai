@@ -1,5 +1,6 @@
 import express from 'express'
 import { spawn } from 'node:child_process'
+import { randomUUID } from 'node:crypto'
 import { chmod, mkdtemp, mkdir, readFile, rm, writeFile, access, constants } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
@@ -10,6 +11,7 @@ import rateLimit from 'express-rate-limit'
 import { protect } from '../middleware/auth.js'
 import { asyncHandler } from '../middleware/error.js'
 import ResumeProject from '../models/ResumeProject.js'
+import MongoRateLimitStore from '../services/MongoRateLimitStore.js'
 
 const router = express.Router()
 const VALID_FILE = /^(?!\/)(?!.*(?:^|\/)\.\.(?:\/|$))[\w .()/-]+\.(?:tex|bib|sty|cls|txt|md|png|jpe?g|pdf)$/i
@@ -22,6 +24,7 @@ const zipUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 
 const compileLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   limit: 8,
+  store: new MongoRateLimitStore('resume-compile'),
   standardHeaders: 'draft-7',
   legacyHeaders: false,
   keyGenerator: (req) => String(req.user._id),
@@ -100,7 +103,20 @@ function cleanInput(body) {
 }
 
 function publicProject(project) {
-  return { id: project.clientId || String(project._id), name: project.name, mainFile: project.mainFile, templateId: project.templateId, files: project.files, createdAt: project.createdAt, updatedAt: project.updatedAt }
+  return {
+    id: project.clientId || String(project._id),
+    name: project.name,
+    mainFile: project.mainFile,
+    templateId: project.templateId,
+    files: project.files,
+    archived: !!project.archived,
+    trashed: !!project.trashed,
+    status: project.status || (project.trashed ? 'trashed' : project.archived ? 'archived' : 'active'),
+    revision: project.revision || 1,
+    lastEditedAt: project.lastEditedAt,
+    createdAt: project.createdAt,
+    updatedAt: project.updatedAt,
+  }
 }
 
 router.use(protect)
@@ -112,12 +128,94 @@ router.get('/', asyncHandler(async (req, res) => {
 
 router.post('/', asyncHandler(async (req, res) => {
   const input = cleanInput(req.body)
-  const project = await ResumeProject.findOneAndUpdate(
-    { owner: req.user._id, clientId: input.clientId },
-    { $set: input, $setOnInsert: { owner: req.user._id } },
-    { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true },
-  )
+  const existing = await ResumeProject.findOne({ owner: req.user._id, clientId: input.clientId })
+  const project = existing
+    ? await ResumeProject.findOneAndUpdate(
+      { _id: existing._id },
+      { $set: { ...input, lastEditedBy: req.user._id, lastEditedAt: new Date() }, $inc: { revision: 1 } },
+      { new: true, runValidators: true },
+    )
+    : await ResumeProject.create({
+      ...input,
+      owner: req.user._id,
+      lastEditedBy: req.user._id,
+      lastEditedAt: new Date(),
+    })
   res.status(201).json({ project: publicProject(project) })
+}))
+
+router.post('/:projectId/duplicate', asyncHandler(async (req, res) => {
+  const source = await ResumeProject.findOne({ clientId: req.params.projectId, owner: req.user._id }).lean()
+  if (!source) return res.status(404).json({ message: 'Project not found.' })
+  const requestedName = typeof req.body?.name === 'string' ? req.body.name.trim().slice(0, 120) : ''
+  const copy = await ResumeProject.create({
+    owner: req.user._id,
+    clientId: randomUUID(),
+    name: requestedName || `${source.name} (copy)`.slice(0, 120),
+    mainFile: source.mainFile,
+    templateId: source.templateId,
+    files: source.files,
+    lastEditedBy: req.user._id,
+    lastEditedAt: new Date(),
+  })
+  res.status(201).json({ project: publicProject(copy) })
+}))
+
+router.post('/:projectId/archive', asyncHandler(async (req, res) => {
+  const archived = req.body?.archived !== false
+  const project = await ResumeProject.findOneAndUpdate(
+    { clientId: req.params.projectId, owner: req.user._id },
+    {
+      $set: {
+        archived,
+        status: archived ? 'archived' : 'active',
+        lastEditedBy: req.user._id,
+        lastEditedAt: new Date(),
+      },
+      $inc: { revision: 1 },
+    },
+    { new: true, runValidators: true },
+  )
+  if (!project) return res.status(404).json({ message: 'Project not found.' })
+  res.json({ project: publicProject(project) })
+}))
+
+router.post('/:projectId/trash', asyncHandler(async (req, res) => {
+  const trashed = req.body?.trashed !== false
+  const project = await ResumeProject.findOneAndUpdate(
+    { clientId: req.params.projectId, owner: req.user._id },
+    {
+      $set: {
+        trashed,
+        status: trashed ? 'trashed' : (req.body?.archived === true ? 'archived' : 'active'),
+        lastEditedBy: req.user._id,
+        lastEditedAt: new Date(),
+      },
+      $inc: { revision: 1 },
+    },
+    { new: true, runValidators: true },
+  )
+  if (!project) return res.status(404).json({ message: 'Project not found.' })
+  res.json({ project: publicProject(project) })
+}))
+
+router.post('/:projectId/restore', asyncHandler(async (req, res) => {
+  const project = await ResumeProject.findOneAndUpdate(
+    { clientId: req.params.projectId, owner: req.user._id },
+    {
+      $set: {
+        trashed: false,
+        archived: req.body?.archived === true,
+        status: req.body?.archived === true ? 'archived' : 'active',
+        lastEditedBy: req.user._id,
+        lastEditedAt: new Date(),
+      },
+      $inc: { revision: 1 },
+    },
+    { new: true, runValidators: true },
+  )
+  if (!project) return res.status(404).json({ message: 'Project not found.' })
+  res.json({ project: publicProject(project) })
 }))
 
 router.get('/:projectId', asyncHandler(async (req, res) => {
@@ -143,12 +241,21 @@ router.get('/:projectId/source.zip', asyncHandler(async (req, res, next) => {
 
 router.put('/:projectId', asyncHandler(async (req, res) => {
   const input = cleanInput(req.body)
+  const expectedRevision = Number.isInteger(req.body?.revision)
+    ? req.body.revision
+    : Number.isInteger(Number(req.get('If-Match'))) ? Number(req.get('If-Match')) : null
+  const filter = { clientId: req.params.projectId, owner: req.user._id }
+  if (expectedRevision !== null) filter.revision = expectedRevision
   const project = await ResumeProject.findOneAndUpdate(
-    { clientId: req.params.projectId, owner: req.user._id },
-    { $set: { ...input, clientId: req.params.projectId } },
+    filter,
+    { $set: { ...input, clientId: req.params.projectId, lastEditedBy: req.user._id, lastEditedAt: new Date() }, $inc: { revision: 1 } },
     { new: true, runValidators: true },
   )
-  if (!project) return res.status(404).json({ message: 'Project not found.' })
+  if (!project) {
+    const exists = await ResumeProject.exists({ clientId: req.params.projectId, owner: req.user._id })
+    if (exists && expectedRevision !== null) return res.status(409).json({ message: 'Project changed on another device. Reload before saving.', code: 'REVISION_CONFLICT' })
+    return res.status(404).json({ message: 'Project not found.' })
+  }
   res.json({ project: publicProject(project) })
 }))
 
@@ -235,7 +342,7 @@ async function runNativeTectonicCompile(input, sourceDir, timeoutMs) {
     const pdfPath = path.join(outputDir, `${path.basename(input.mainFile, path.extname(input.mainFile))}.pdf`)
     const logFile = path.join(outputDir, `${path.basename(input.mainFile, path.extname(input.mainFile))}.log`)
     return new Promise((resolve, reject) => {
-      const child = spawn(tectonicPath, ['--untrusted', '--only-cached', '--keep-logs', '--outdir', outputDir, input.mainFile], { cwd: tmpdir() })
+      const child = spawn(tectonicPath, ['--untrusted', '--only-cached', '--keep-logs', '--outdir', outputDir, input.mainFile], { cwd: sourceDir })
       const chunks = []
       let bytes = 0
       const append = (chunk) => { bytes += chunk.length; if (bytes < 64_000) chunks.push(chunk) }

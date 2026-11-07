@@ -2,7 +2,7 @@ import express from 'express'
 import { protect, optionalAuth } from '../middleware/auth.js'
 import { validate, validateParams } from '../middleware/validate.js'
 import { asyncHandler } from '../middleware/error.js'
-import { objectIdSchema } from '../validation/assessmentSchemas.js'
+import { branchIdParamsSchema, testIdParamsSchema } from '../validation/assessmentSchemas.js'
 import Assessment from '../models/Assessment.js'
 import Attempt from '../models/Attempt.js'
 import Branch from '../models/Branch.js'
@@ -76,7 +76,12 @@ router.get(
   '/branches',
   asyncHandler(async (req, res) => {
     try {
-      const branches = await Branch.find({ isLive: true }).sort({ order: 1 }).lean()
+      const allBranches = await Branch.find({}).sort({ order: 1 }).lean()
+      if (allBranches.length === 0) {
+        const { branchesWithCounts } = seedAssessments()
+        return res.json({ success: true, data: branchesWithCounts })
+      }
+      const branches = allBranches.filter(branch => branch.isLive)
       const withCounts = await Promise.all(branches.map(async (b) => {
         const testCount = await Assessment.countDocuments({ branchId: b.id, isLive: true })
         return { ...b, testCount }
@@ -93,11 +98,19 @@ router.get(
 // GET /assessments/branches/:branchId — single branch
 router.get(
   '/branches/:branchId',
-  validateParams(objectIdSchema),
+  validateParams(branchIdParamsSchema),
   asyncHandler(async (req, res) => {
     try {
-      const branch = await Branch.findOne({ id: req.params.branchId, isLive: true }).lean()
-      if (!branch) return res.status(404).json({ success: false, message: 'Branch not found' })
+      const branch = await Branch.findOne({ id: req.params.branchId }).lean()
+      if (!branch) {
+        if (await Branch.countDocuments({}) !== 0) return res.status(404).json({ success: false, message: 'Branch not found' })
+        const { branches } = seedAssessments()
+        const seeded = branches.find(item => item.id === req.params.branchId)
+        if (!seeded) return res.status(404).json({ success: false, message: 'Branch not found' })
+        const testCount = seedAssessments().assessmentsByBranch(seeded.id)?.length || 0
+        return res.json({ success: true, data: { ...seeded, testCount } })
+      }
+      if (!branch.isLive) return res.status(404).json({ success: false, message: 'Branch not found' })
       const testCount = await Assessment.countDocuments({ branchId: branch.id, isLive: true })
       res.json({ success: true, data: { ...branch, testCount } })
     } catch {
@@ -113,9 +126,15 @@ router.get(
 // GET /assessments/branches/:branchId/tests — list tests for branch (no correct answers)
 router.get(
   '/branches/:branchId/tests',
-  validateParams(objectIdSchema),
+  validateParams(branchIdParamsSchema),
   asyncHandler(async (req, res) => {
     try {
+      if (await Assessment.countDocuments({}) === 0) {
+        const { assessmentsByBranch } = seedAssessments()
+        const branchTests = assessmentsByBranch(req.params.branchId)
+        if (!branchTests) return res.status(404).json({ success: false, message: 'Branch not found' })
+        return res.json({ success: true, data: branchTests.map(buildSafeAssessmentSummary) })
+      }
       const assessments = await Assessment.find({ branchId: req.params.branchId, isLive: true })
         .sort({ createdAt: -1 })
         .lean()
@@ -132,11 +151,18 @@ router.get(
 // GET /assessments/tests/:testId — test details with questions (no correct answers)
 router.get(
   '/tests/:testId',
-  validateParams(objectIdSchema),
+  validateParams(testIdParamsSchema),
   asyncHandler(async (req, res) => {
     try {
-      const assessment = await Assessment.findOne({ id: req.params.testId, isLive: true }).lean()
-      if (!assessment) return res.status(404).json({ success: false, message: 'Test not found' })
+      const assessment = await Assessment.findOne({ id: req.params.testId }).lean()
+      if (!assessment) {
+        if (await Assessment.countDocuments({}) !== 0) return res.status(404).json({ success: false, message: 'Test not found' })
+        const { assessments } = seedAssessments()
+        const seeded = assessments.find(item => item.id === req.params.testId)
+        if (!seeded) return res.status(404).json({ success: false, message: 'Test not found' })
+        return res.json({ success: true, data: buildSafeAssessment(seeded) })
+      }
+      if (!assessment.isLive) return res.status(404).json({ success: false, message: 'Test not found' })
       res.json({ success: true, data: buildSafeAssessment(assessment) })
     } catch {
       const { assessments } = seedAssessments()
@@ -150,11 +176,19 @@ router.get(
 // GET /assessments/tests/:testId/questions — questions only (no correct answers)
 router.get(
   '/tests/:testId/questions',
-  validateParams(objectIdSchema),
+  validateParams(testIdParamsSchema),
   asyncHandler(async (req, res) => {
     try {
-      const assessment = await Assessment.findOne({ id: req.params.testId, isLive: true }).lean()
-      if (!assessment) return res.status(404).json({ success: false, message: 'Test not found' })
+      const assessment = await Assessment.findOne({ id: req.params.testId }).lean()
+      if (!assessment) {
+        if (await Assessment.countDocuments({}) !== 0) return res.status(404).json({ success: false, message: 'Test not found' })
+        const { assessments } = seedAssessments()
+        const seeded = assessments.find(item => item.id === req.params.testId)
+        if (!seeded) return res.status(404).json({ success: false, message: 'Test not found' })
+        const safeQuestions = seeded.questions.map(({ correctAnswer, explanation, ...safe }) => safe)
+        return res.json({ success: true, data: safeQuestions })
+      }
+      if (!assessment.isLive) return res.status(404).json({ success: false, message: 'Test not found' })
       const safeQuestions = assessment.questions.map((q) => {
         const { correctAnswer, explanation, ...safe } = q
         return safe
@@ -182,12 +216,16 @@ router.post(
     if (!testId) return res.status(400).json({ success: false, message: 'testId is required' })
 
     let assessment
+    let databaseEmpty = false
     try {
-      assessment = await Assessment.findOne({ id: testId, isLive: true }).lean()
+      assessment = await Assessment.findOne({ id: testId }).lean()
+      databaseEmpty = !assessment && await Assessment.countDocuments({}) === 0
     } catch {
       // ignore, use fallback
+      databaseEmpty = true
     }
-    if (!assessment) {
+    if (assessment && !assessment.isLive) return res.status(404).json({ success: false, message: 'Test not found' })
+    if (!assessment && databaseEmpty) {
       const { assessments } = seedAssessments()
       assessment = assessments.find((a) => a.id === testId)
     }
@@ -239,12 +277,16 @@ router.post(
     }
 
     let assessment
+    let databaseEmpty = false
     try {
       assessment = await Assessment.findOne({ id: attempt.assessmentId }).lean()
+      databaseEmpty = !assessment && await Assessment.countDocuments({}) === 0
     } catch {
       // ignore
+      databaseEmpty = true
     }
-    if (!assessment) {
+    if (assessment && !assessment.isLive) return res.status(404).json({ success: false, message: 'Test not found' })
+    if (!assessment && databaseEmpty) {
       const { assessments } = seedAssessments()
       assessment = assessments.find((a) => a.id === attempt.assessmentId)
     }
@@ -283,11 +325,19 @@ router.post(
 // GET /assessments/tests/:testId/result — detailed review (with correct answers & explanations)
 router.get(
   '/tests/:testId/result',
-  validateParams(objectIdSchema),
+  validateParams(testIdParamsSchema),
   asyncHandler(async (req, res) => {
     try {
-      const assessment = await Assessment.findOne({ id: req.params.testId, isLive: true }).lean()
-      if (!assessment) return res.status(404).json({ success: false, message: 'Test not found' })
+      const assessment = await Assessment.findOne({ id: req.params.testId }).lean()
+      if (!assessment) {
+        if (await Assessment.countDocuments({}) !== 0) return res.status(404).json({ success: false, message: 'Test not found' })
+        const { assessments } = seedAssessments()
+        const seeded = assessments.find(item => item.id === req.params.testId)
+        if (!seeded) return res.status(404).json({ success: false, message: 'Test not found' })
+        const questionsWithAnswers = seeded.questions.map(q => ({ id: q.questionId ?? q.id, text: q.text, options: q.options, correctAnswer: q.correctAnswer, marks: q.marks, negativeMarks: q.negativeMarks, difficulty: q.difficulty, topic: q.topic, explanation: q.explanation }))
+        return res.json({ success: true, data: { testId: seeded.id, title: seeded.title, totalMarks: seeded.totalMarks, questionsCount: seeded.questionsCount, markingScheme: seeded.markingScheme, questions: questionsWithAnswers } })
+      }
+      if (!assessment.isLive) return res.status(404).json({ success: false, message: 'Test not found' })
 
       const questionsWithAnswers = assessment.questions.map((q) => ({
         id: q.questionId ?? q.id,

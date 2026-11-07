@@ -8,7 +8,7 @@
  */
 export const notFound = (req, res, next) => {
   res.status(404).json({
-    message: `Route not found: ${req.method} ${req.originalUrl}`,
+    message: `Route not found: ${req.method} ${req.path}`,
     code: 'NOT_FOUND',
   })
 }
@@ -61,7 +61,7 @@ export const errorHandler = (err, req, res, next) => {
   }
 
   if (status >= 500) {
-    console.error('[error]', req.method, req.originalUrl, '-', err.stack || err)
+    console.error('[error]', req.method, req.path, '-', err.stack || err)
     // Never leak internals to the client on a server fault.
     message = 'Something went wrong on our end. Please try again.'
   }

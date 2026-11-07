@@ -1,0 +1,221 @@
+.hackathon-portal-app {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.hackathon-portal-header {
+  position: sticky;
+  z-index: 20;
+  top: 0;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg) 94%, transparent);
+  backdrop-filter: blur(16px);
+}
+
+.hackathon-portal-back-row {
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.hackathon-portal-back-row .container {
+  max-width: 1320px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.hackathon-portal-back {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 10px 6px 7px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font-size: .8rem;
+  font-weight: 750;
+}
+
+.hackathon-portal-back:hover,
+.hackathon-portal-back:focus-visible {
+  border-color: var(--accent-border);
+  color: var(--accent);
+}
+
+.hackathon-portal-header-inner {
+  display: flex;
+  min-height: 76px;
+  max-width: 1320px;
+  align-items: center;
+  gap: 28px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.hackathon-portal-brand {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-h);
+}
+
+.hackathon-portal-brand:hover { color: var(--text-h); }
+
+.hackathon-portal-mark {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 1.15rem;
+  font-weight: 900;
+}
+
+.hackathon-portal-brand span:last-child {
+  display: grid;
+  gap: 1px;
+  line-height: 1;
+}
+
+.hackathon-portal-brand strong { font-size: 1rem; }
+.hackathon-portal-brand small { color: var(--accent); font-size: .67rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+
+.hackathon-portal-nav {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.hackathon-portal-nav a,
+.hackathon-portal-login {
+  padding: 9px 11px;
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: .8rem;
+  font-weight: 700;
+}
+
+.hackathon-portal-nav a:hover,
+.hackathon-portal-nav a.active,
+.hackathon-portal-login:hover { background: var(--accent-bg); color: var(--accent); }
+
+.hackathon-portal-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hackathon-portal-search,
+.hackathon-portal-account,
+.hackathon-main-website {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: .8rem;
+  font-weight: 750;
+}
+
+.hackathon-main-website {
+  border-color: var(--accent-border);
+  background: var(--accent-bg);
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.hackathon-main-website:hover {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+.hackathon-portal-search:hover,
+.hackathon-portal-account:hover { border-color: var(--accent-border); color: var(--accent); }
+.hackathon-portal-menu { display: none; border: 0; background: transparent; color: var(--text); }
+
+.hackathon-portal-breadcrumb {
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-alt);
+}
+
+.hackathon-portal-breadcrumb .container {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 46px;
+  max-width: 1320px;
+  color: var(--muted);
+  font-size: .78rem;
+}
+
+.hackathon-portal-breadcrumb a { color: var(--accent); font-weight: 700; }
+.hackathon-portal-breadcrumb strong { color: var(--text-h); font-weight: 750; }
+
+.hackathon-portal-footer {
+  border-top: 1px solid var(--border);
+  background: var(--bg-alt);
+}
+
+.hackathon-portal-footer-inner,
+.hackathon-portal-footer-bottom {
+  display: flex;
+  max-width: 1320px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin: 0 auto;
+  padding: 34px 24px;
+}
+
+.hackathon-portal-footer-inner p { margin: 12px 0 0; color: var(--muted); font-size: .82rem; }
+.hackathon-portal-footer-links { display: flex; flex-wrap: wrap; gap: 18px; }
+.hackathon-portal-footer-links a { color: var(--muted); font-size: .8rem; font-weight: 700; }
+.hackathon-portal-footer-links a:hover { color: var(--accent); }
+.hackathon-portal-footer-bottom { min-height: 42px; padding-top: 12px; padding-bottom: 20px; border-top: 1px solid var(--border); color: var(--faint); font-size: .72rem; }
+
+@media (max-width: 900px) {
+  .hackathon-portal-header-inner { gap: 14px; }
+  .hackathon-portal-menu { display: inline-grid; margin-left: auto; place-items: center; }
+  .hackathon-portal-nav {
+    position: absolute;
+    top: 76px;
+    right: 16px;
+    left: 16px;
+    display: none;
+    align-items: stretch;
+    flex-direction: column;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--bg-card);
+    box-shadow: var(--shadow-card);
+  }
+  .hackathon-portal-nav.is-open { display: flex; }
+  .hackathon-portal-nav a { padding: 12px; }
+  .hackathon-portal-actions { margin-left: 0; }
+  .hackathon-portal-account span { display: none; }
+}
+
+@media (max-width: 560px) {
+  .hackathon-portal-header-inner { min-height: 68px; padding: 0 16px; }
+  .hackathon-portal-back-row .container { padding-right: 16px; padding-left: 16px; }
+  .hackathon-portal-nav { top: 68px; }
+  .hackathon-portal-login { display: none; }
+  .hackathon-main-website span { display: none; }
+  .hackathon-main-website { min-width: 38px; padding: 7px; }
+  .hackathon-portal-footer-inner,
+  .hackathon-portal-footer-bottom { align-items: flex-start; flex-direction: column; padding-right: 16px; padding-left: 16px; }
+  .hackathon-portal-footer-bottom { gap: 7px; }
+}

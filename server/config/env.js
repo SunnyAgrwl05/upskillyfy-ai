@@ -30,6 +30,21 @@ const envSchema = z.object({
   // Optional mail transport for password reset emails.
   EMAIL_USER: z.string().optional(),
   EMAIL_PASS: z.string().optional(),
+  EMAIL_FROM: z.string().optional(),
+  EMAIL_SERVICE: z.string().optional(),
+  EMAIL_HOST: z.string().optional(),
+  EMAIL_PORT: z.coerce.number().int().positive().optional(),
+  EMAIL_SECURE: z.enum(['true', 'false']).default('false').transform((v) => v === 'true'),
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  R2_ENDPOINT: z.string().url().optional(),
+  R2_ACCESS_KEY_ID: z.string().optional(),
+  R2_SECRET_ACCESS_KEY: z.string().optional(),
+  R2_BUCKET_NAME: z.string().optional(),
+  OPENROUTER_API_KEY: z.string().optional(),
+  OPENROUTER_MODEL: z.string().default('openrouter/free'),
+  OLLAMA_BASE_URL: z.string().url().optional(),
+  OLLAMA_MODEL: z.string().default('llama3.2:3b'),
+  OLLAMA_TIMEOUT_MS: z.coerce.number().int().positive().max(180000).default(45000),
 })
 
 // Under test the real secrets are absent by design, so fall back to

@@ -9,11 +9,14 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
+    "seed:hackathons": "node scripts/seedHackathons.js",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --forceExit",
     "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch --runInBand",
     "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --forceExit --coverage"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1164.0",
+    "@aws-sdk/s3-request-presigner": "^3.1164.0",
     "adm-zip": "^0.5.18",
     "archiver": "^7.0.1",
     "bcryptjs": "^2.4.3",
@@ -27,6 +30,7 @@
     "mongoose": "^8.0.0",
     "multer": "^2.4.0",
     "nodemailer": "^6.9.7",
+    "pdfjs-dist": "^6.5.438",
     "zod": "^4.6.7"
   },
   "devDependencies": {

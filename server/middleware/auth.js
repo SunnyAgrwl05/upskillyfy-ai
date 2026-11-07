@@ -45,19 +45,20 @@ export const protect = async (req, res, next) => {
     if (!token) return res.status(401).json({ message: 'Not authorized', code: 'NO_TOKEN' })
 
     const decoded = jwt.verify(token, env.JWT_SECRET)
+    if (decoded.type !== 'access') return res.status(401).json({ message: 'Invalid token type.', code: 'INVALID_TOKEN' })
 
     const user = await User.findById(decoded.id).select('-password')
     if (!user) {
       return res.status(401).json({ message: 'User not found. Please sign in again.', code: 'USER_NOT_FOUND' })
     }
 
+    if (user.isActive === false) {
+      return res.status(401).json({ message: 'This account is deactivated. Contact support if you believe this is an error.', code: 'ACCOUNT_DEACTIVATED' })
+    }
+
     // If tokenVersion was bumped (e.g. after a password reset), previously
     // issued tokens are no longer valid.
-    if (
-      user.tokenVersion !== undefined &&
-      decoded.tokenVersion !== undefined &&
-      decoded.tokenVersion !== user.tokenVersion
-    ) {
+    if ((decoded.tokenVersion || 0) !== (user.tokenVersion || 0)) {
       return res.status(401).json({ message: 'Session invalidated. Please sign in again.', code: 'SESSION_INVALID' })
     }
 
@@ -97,8 +98,9 @@ export const optionalAuth = async (req, res, next) => {
     if (!token && req.cookies) token = req.cookies[ACCESS_COOKIE]
     if (token) {
       const decoded = jwt.verify(token, env.JWT_SECRET)
+      if (decoded.type !== 'access') return next()
       const user = await User.findById(decoded.id).select('-password')
-      if (user) req.user = user
+      if (user && user.isActive !== false && (decoded.tokenVersion || 0) === (user.tokenVersion || 0)) req.user = user
     }
   } catch {
     // Swallow — the request continues unauthenticated.

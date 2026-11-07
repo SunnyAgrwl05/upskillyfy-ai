@@ -13,6 +13,12 @@ const resumeProjectSchema = new mongoose.Schema({
   mainFile: { type: String, required: true, maxlength: 240 },
   templateId: { type: String, default: null, maxlength: 120 },
   files: { type: [projectFileSchema], required: true, validate: [(files) => files.length > 0 && files.length <= 100, 'A project must contain 1–100 files.'] },
+  archived: { type: Boolean, default: false },
+  trashed: { type: Boolean, default: false },
+  status: { type: String, enum: ['active', 'archived', 'trashed'], default: 'active' },
+  revision: { type: Number, default: 1, min: 1 },
+  lastEditedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+  lastEditedAt: { type: Date, default: null },
 }, { timestamps: true })
 
 resumeProjectSchema.index({ owner: 1, updatedAt: -1 })

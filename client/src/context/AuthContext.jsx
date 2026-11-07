@@ -48,8 +48,10 @@ export function AuthProvider({ children }) {
   }, [])
 
   const logout = useCallback(() => {
+    const request = authAPI.logout().catch(() => {})
     localStorage.removeItem('token')
     setUser(null)
+    return request
   }, [])
 
   return (

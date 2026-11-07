@@ -73,11 +73,28 @@ export default function OverleafDashboard() {
     trash: projects.filter((p) => p.trashed).length,
   }), [projects])
 
-  const patch = (ids, changes) => {
+  const patch = async (ids, changes) => {
     ids.forEach((id) => {
       const p = projects.find((x) => x.id === id)
       if (p) upsertProject({ ...p, ...changes })
     })
+    if (localStorage.getItem('token')) {
+      await Promise.all(ids.map(async (id) => {
+        const p = projects.find((x) => x.id === id)
+        if (!p || !p.cloudSaved) return
+        try {
+          if (Object.prototype.hasOwnProperty.call(changes, 'trashed')) {
+            const { data } = await resumeProjectAPI.trash(id, changes.trashed)
+            upsertProject({ ...p, ...changes, ...data.project, title: data.project.name, cloudSaved: true })
+          } else if (Object.prototype.hasOwnProperty.call(changes, 'archived')) {
+            const { data } = await resumeProjectAPI.archive(id, changes.archived)
+            upsertProject({ ...p, ...changes, ...data.project, title: data.project.name, cloudSaved: true })
+          }
+        } catch {
+          setNotice('The local change was saved, but the cloud project could not be updated.')
+        }
+      }))
+    }
     setSelected(new Set())
     refresh()
   }
@@ -91,6 +108,22 @@ export default function OverleafDashboard() {
   const toggleAll = () => setSelected(allChecked ? new Set() : new Set(rows.map((r) => r.id)))
 
   const open = (p) => navigate(`/career/resume/editor/${p.id}`)
+
+  const duplicate = async (project) => {
+    if (localStorage.getItem('token') && project.cloudSaved) {
+      try {
+        const { data } = await resumeProjectAPI.duplicate(project.id)
+        upsertProject({ ...project, ...data.project, id: data.project.id, title: data.project.name, cloudSaved: true, files: filesFromCloud(data.project.files) })
+        refresh()
+        return
+      } catch {
+        setNotice('Could not duplicate the cloud project.')
+        return
+      }
+    }
+    duplicateProject(project)
+    refresh()
+  }
 
   const createBlank = () => {
     const name = window.prompt('Project name', 'Untitled Project')
@@ -239,7 +272,7 @@ export default function OverleafDashboard() {
                 <td title={p.updatedAt ? new Date(p.updatedAt).toLocaleString() : ''}>{timeAgo(p.updatedAt)}</td>
                 <td className="act">
                   {!p.trashed && <>
-                    <button title="Copy" aria-label="Copy project" onClick={() => { duplicateProject(p); refresh() }}><Copy size={15} /></button>
+                    <button title="Copy" aria-label="Copy project" onClick={() => duplicate(p)}><Copy size={15} /></button>
                     <button title="Download source" aria-label="Download source" onClick={() => downloadSource(p)}><Download size={15} /></button>
                     <button title={p.archived ? 'Unarchive' : 'Archive'} aria-label="Archive" onClick={() => patch([p.id], { archived: !p.archived })}><Archive size={15} /></button>
                     <button title="Move to trash" aria-label="Trash" onClick={() => patch([p.id], { trashed: true })}><Trash2 size={15} /></button>

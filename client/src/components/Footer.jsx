@@ -35,6 +35,7 @@ const NAV = [
       { label: 'Placements', to: '/career/placements' },
       { label: 'Assessment', to: '/assessment' },
       { label: 'Resume Builder', to: '/career/resume' },
+      { label: 'Hackathons', to: '/community/hackathons' },
       { label: 'Courses', to: '/learning/courses' },
       { label: 'Roadmaps', to: '/learning/roadmaps' },
       { label: 'Resources', to: '/learning/resources' },

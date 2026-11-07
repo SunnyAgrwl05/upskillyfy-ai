@@ -6,4 +6,6 @@ const subscriberSchema = new mongoose.Schema({
   isActive: { type: Boolean, default: true },
 }, { timestamps: true })
 
+subscriberSchema.index({ isActive: 1, createdAt: -1 })
+
 export default mongoose.model('Subscriber', subscriberSchema)

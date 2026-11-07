@@ -17,6 +17,26 @@ describe('POST /api/auth/register', () => {
     expect(res.body.user).not.toHaveProperty('password')
   })
 
+  it('issues a short-lived access token and supports email verification', async () => {
+    const response = await request(app).post('/api/auth/register').send({
+      name: 'Verify Me',
+      email: 'verify-me@example.com',
+      password: 'StrongPass123',
+    })
+    expect(response.status).toBe(201)
+    expect(response.body.emailVerificationRequired).toBe(true)
+    expect(response.body.devVerificationCode).toMatch(/^\d{6}$/)
+
+    const verified = await request(app).post('/api/auth/verify-email')
+      .set('Authorization', `Bearer ${response.body.token}`)
+      .send({ code: response.body.devVerificationCode })
+    expect(verified.status).toBe(200)
+    expect(verified.body.emailVerified).toBe(true)
+
+    const user = await User.findOne({ email: 'verify-me@example.com' }).lean()
+    expect(user.emailVerifiedAt).toBeTruthy()
+  })
+
   it('rejects a duplicate email with 409', async () => {
     const payload = {
       name: 'Asha Verma',
@@ -138,6 +158,19 @@ describe('POST /api/auth/refresh', () => {
     expect(token).toBeTruthy()
   })
 
+  it('rotates refresh tokens and rejects replay of the old token', async () => {
+    const created = await registerUser()
+    const loginRes = await request(app).post('/api/auth/login').send({ email: created.credentials.email, password: created.credentials.password })
+    const refreshCookie = loginRes.headers['set-cookie']
+      ?.find((cookie) => cookie.startsWith('upskillyfy_refresh='))
+      ?.split(';')[0]
+    const first = await request(app).post('/api/auth/refresh').set('Cookie', refreshCookie || '')
+    expect(first.status).toBe(200)
+    const replay = await request(app).post('/api/auth/refresh').set('Cookie', refreshCookie || '')
+    expect(replay.status).toBe(401)
+    expect(replay.body.code).toBe('SESSION_INVALID')
+  })
+
   it('returns 401 when no refresh token is provided', async () => {
     const res = await request(app).post('/api/auth/refresh')
     expect(res.status).toBe(401)
@@ -151,6 +184,15 @@ describe('POST /api/auth/logout', () => {
     expect(res.status).toBe(200)
     const cookies = res.headers['set-cookie'] || []
     expect(cookies.some((c) => c.includes('upskillyfy_access='))).toBe(true)
+  })
+
+  it('invalidates the current token generation on logout', async () => {
+    const { token } = await registerUser()
+    const loggedOut = await request(app).post('/api/auth/logout').set('Authorization', `Bearer ${token}`)
+    expect(loggedOut.status).toBe(200)
+    const protectedRequest = await asUser(token).get('/api/auth/me')
+    expect(protectedRequest.status).toBe(401)
+    expect(protectedRequest.body.code).toBe('SESSION_INVALID')
   })
 })
 

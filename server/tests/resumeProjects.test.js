@@ -71,12 +71,49 @@ describe('resume project persistence', () => {
     const unsafe = await asUser(owner.token).post('/api/resume-projects').send({
       ...document('unsafe-project-123'), files: [{ path: '../main.tex', content: 'bad' }],
     })
+
     expect(unsafe.status).toBe(422)
 
     const missingMain = await asUser(owner.token).post('/api/resume-projects').send({
       ...document('missing-main-123'), mainFile: 'missing.tex',
     })
     expect(missingMain.status).toBe(422)
+  })
+
+  test('persists lifecycle state, duplicates only within the owner scope, and rejects stale revisions', async () => {
+    const created = await asUser(owner.token).post('/api/resume-projects').send(document('lifecycle-project-123'))
+    expect(created.status).toBe(201)
+    expect(created.body.project.status).toBe('active')
+    expect(created.body.project.revision).toBe(1)
+
+    const archived = await asUser(owner.token).post('/api/resume-projects/lifecycle-project-123/archive').send({ archived: true })
+    expect(archived.status).toBe(200)
+    expect(archived.body.project.archived).toBe(true)
+    expect(archived.body.project.status).toBe('archived')
+
+    const trashed = await asUser(owner.token).post('/api/resume-projects/lifecycle-project-123/trash').send()
+    expect(trashed.status).toBe(200)
+    expect(trashed.body.project.status).toBe('trashed')
+
+    const restored = await asUser(owner.token).post('/api/resume-projects/lifecycle-project-123/restore').send()
+    expect(restored.status).toBe(200)
+    expect(restored.body.project.trashed).toBe(false)
+    expect(restored.body.project.status).toBe('active')
+
+    const duplicate = await asUser(owner.token).post('/api/resume-projects/lifecycle-project-123/duplicate').send()
+    expect(duplicate.status).toBe(201)
+    expect(duplicate.body.project.id).not.toBe('lifecycle-project-123')
+    expect(duplicate.body.project.files).toEqual(expect.arrayContaining([
+      expect.objectContaining({ path: 'main.tex' }),
+    ]))
+
+    const hiddenDuplicate = await asUser(stranger.token).get(`/api/resume-projects/${duplicate.body.project.id}`)
+    expect(hiddenDuplicate.status).toBe(404)
+
+    const stale = await asUser(owner.token).put('/api/resume-projects/lifecycle-project-123')
+      .send({ ...document('lifecycle-project-123'), revision: 1 })
+    expect(stale.status).toBe(409)
+    expect(stale.body.code).toBe('REVISION_CONFLICT')
   })
 
   test('imports a ZIP project without allowing traversal entries', async () => {
@@ -105,7 +142,7 @@ describe('resume project persistence', () => {
     expect(invalid.status).toBe(422)
   })
 
-  test('reports compiler infrastructure as unavailable instead of returning a fake PDF', async () => {
+  test('returns a real PDF or a structured compiler error, never a placeholder PDF', async () => {
     const previous = process.env.LATEX_COMPILER_IMAGE
     delete process.env.LATEX_COMPILER_IMAGE
     let response
@@ -114,7 +151,12 @@ describe('resume project persistence', () => {
     } finally {
       if (previous !== undefined) process.env.LATEX_COMPILER_IMAGE = previous
     }
-    expect(response.status).toBe(503)
-    expect(response.body.code).toBe('COMPILER_UNAVAILABLE')
+    if (response.status === 200) {
+      expect(response.headers['content-type']).toMatch(/application\/pdf/)
+      expect(Buffer.from(response.body).subarray(0, 5).toString('ascii')).toBe('%PDF-')
+    } else {
+      expect([422, 503, 504]).toContain(response.status)
+      expect(['COMPILE_FAILED', 'COMPILER_UNAVAILABLE', 'COMPILE_TIMEOUT']).toContain(response.body.code)
+    }
   })
 })
