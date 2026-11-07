@@ -1,3 +1,4 @@
+import './config/dotenv.js'
 import express from 'express'
 import mongoose from 'mongoose'
 import cors from 'cors'
@@ -18,6 +19,7 @@ import certificateRoutes from './routes/certificates.js'
 import documentRoutes from './routes/documents.js'
 import verificationRoutes from './routes/verification.js'
 import adminCredentialRoutes from './routes/adminCredentials.js'
+import hackathonRoutes from './routes/hackathons.js'
 import { errorHandler, notFound } from './middleware/error.js'
 
 dotenv.config()
@@ -67,6 +69,7 @@ app.use('/api/certificates', certificateRoutes)
 app.use('/api/documents', documentRoutes)
 app.use('/api/verification', verificationRoutes)
 app.use('/api/admin/credentials', adminCredentialRoutes)
+app.use('/api/hackathons', hackathonRoutes)
 
 // Health check
 app.get('/api/health', (req, res) => {

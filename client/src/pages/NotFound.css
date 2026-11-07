@@ -1,0 +1,33 @@
+.not-found-page {
+  display: grid;
+  min-height: 60vh;
+  place-items: center;
+  padding: 64px 24px;
+  background: var(--bg);
+}
+
+.not-found-card {
+  width: min(100%, 520px);
+  padding: 48px 32px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--bg-card);
+  text-align: center;
+  box-shadow: var(--shadow-card);
+}
+
+.not-found-code {
+  color: var(--accent);
+  font-size: .85rem;
+  font-weight: 800;
+  letter-spacing: .16em;
+}
+
+.not-found-card h1 {
+  margin: 10px 0 8px;
+}
+
+.not-found-card p {
+  margin-bottom: 24px;
+  color: var(--muted);
+}
