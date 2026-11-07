@@ -47,6 +47,18 @@ import AdminDocuments from "./pages/Admin/AdminDocuments";
 
 import Events from "./pages/Community/Events/Events";
 import Ambassador from "./pages/Community/Ambassador/Ambassador";
+import Hackathons from "./pages/Community/Hackathons";
+import HackathonDetail from "./pages/Community/HackathonDetail";
+import AIHackathons from "./pages/Community/AIHackathons";
+import HackathonDashboard from "./pages/Community/HackathonDashboard";
+import MyHackathons from "./pages/Community/MyHackathons";
+import HackathonWorkspace from "./pages/Community/HackathonWorkspace";
+import HackathonPortalStatus from "./pages/Community/HackathonPortalStatus";
+import HackathonLayout from "./components/hackathons/HackathonLayout";
+import HackathonLogin from "./pages/Community/HackathonLogin";
+import HackathonRegister from "./pages/Community/HackathonRegister";
+import HackathonParticipantProfile from "./pages/Community/HackathonParticipantProfile";
+import NotFound from "./pages/NotFound";
 
 export default function App() {
   return (
@@ -59,6 +71,32 @@ export default function App() {
             element={<AssessmentTest />}
           />
 
+          <Route element={<HackathonLayout />}>
+            <Route path="/hackathons" element={<Hackathons />} />
+            <Route path="/hackathons/all" element={<Hackathons />} />
+            <Route path="/hackathons/login" element={<HackathonLogin />} />
+            <Route path="/hackathons/register" element={<HackathonRegister />} />
+            <Route path="/hackathons/profile" element={<HackathonParticipantProfile />} />
+            <Route path="/hackathons/my-registrations" element={<MyHackathons />} />
+            <Route path="/hackathons/dashboard" element={<HackathonDashboard />} />
+            <Route path="/hackathons/submissions" element={<HackathonPortalStatus title="My submissions" description="Submission activity across your hackathon workspaces." />} />
+            <Route path="/hackathons/:slug/register" element={<HackathonWorkspace />} />
+            <Route path="/hackathons/:slug/workspace" element={<HackathonWorkspace />} />
+            <Route path="/hackathons/:slug/workspace/:tab" element={<HackathonWorkspace />} />
+            <Route path="/hackathons/:slug" element={<HackathonDetail />} />
+            <Route path="/hackathons/*" element={<NotFound />} />
+            <Route path="/community/hackathons" element={<Hackathons />} />
+            <Route path="/community/hackathons/all" element={<Hackathons />} />
+            <Route path="/community/hackathons/dashboard" element={<HackathonDashboard />} />
+            <Route path="/community/hackathons/:slug" element={<HackathonDetail />} />
+            <Route path="/community/hackathon-dashboard" element={<HackathonDashboard />} />
+            <Route path="/community/my-hackathons" element={<MyHackathons />} />
+            <Route path="/community/hackathon-workspace/:slug" element={<HackathonWorkspace />} />
+            <Route path="/community/hackathon-workspace/:slug/:tab" element={<HackathonWorkspace />} />
+            <Route path="/community/hackathons/:slug/workspace" element={<HackathonWorkspace />} />
+            <Route path="/community/hackathons/:slug/workspace/:tab" element={<HackathonWorkspace />} />
+            <Route path="/community/ai-hackathons" element={<AIHackathons />} />
+          </Route>
           <Route element={<MainLayout />}>
             <Route path="/" element={<Home />} />
             <Route path="/about" element={<About />} />
@@ -182,10 +220,6 @@ export default function App() {
             <Route
               path="/community/ambassador"
               element={<Ambassador />}
-            />
-            <Route
-              path="/community/hackathons"
-              element={<Events />}
             />
             <Route
               path="/community/opensource"
