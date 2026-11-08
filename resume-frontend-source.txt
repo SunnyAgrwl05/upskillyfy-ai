@@ -1,0 +1,927 @@
+
+==========================================================================================
+FILE: ResumeBuilder.jsx
+SIZE: 3704 bytes
+import { Link } from 'react-router-dom'
+import { ArrowLeft } from 'lucide-react'
+
+const TIPS = [
+  'Use single-column ATS-friendly layout',
+  'Quantify achievements (e.g. 40% improvement)',
+  'Use action verbs (Built, Led, Developed)',
+  'Keep it to 1 page for students',
+  'Tailor keywords to each job description',
+  'Include GitHub, LinkedIn and portfolio links',
+  'List projects with tech stack and impact'
+]
+
+export default function ResumeBuilder() {
+  return (
+    <div>
+      <section className="ph">
+        <div className="container">
+          <Link to="/" className="btn-link" style={{ marginBottom: 12, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <ArrowLeft size={16}/> Home
+          </Link>
+          <div className="eyebrow" style={{ justifyContent: 'center', display: 'inline-flex' }}>Resume Builder</div>
+          <h1 className="h1" style={{ marginBottom: 12 }}>Build an <span className="grad">ATS-Friendly Resume</span></h1>
+          <p className="lead">Templates and tips for resumes that pass ATS filters and impress recruiters.</p>
+        </div>
+      </section>
+      <section className="section" style={{ paddingTop: 0 }}>
+        <div className="container">
+          <div className="g2" style={{ alignItems: 'start', gap: 48 }}>
+            <div>
+              <h2 className="h2" style={{ marginBottom: 24 }}>Resume <span className="grad">Templates</span></h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {[
+                  { e: '💼', t: 'SDE / Tech Intern Resume', tags: ['CSE', 'IT', 'AI/ML'], link: '/career/resume/create' },
+                  { e: '⚙️', t: 'Core Engineering Resume', tags: ['ECE', 'ME', 'EE', 'Civil'], link: '/career/resume/create' },
+                  { e: '🎨', t: 'Designer / Creative Resume', tags: ['UI/UX', 'Design'], link: '/career/resume/create' },
+                  { e: '📊', t: 'MBA / Management Resume', tags: ['MBA', 'Business'], link: '/career/resume/create' },
+                ].map((item, i) => (
+                  <div key={i} className="card" style={{ padding: '18px 22px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <span style={{ fontSize: '1.5rem' }}>{item.e}</span>
+                        <span style={{ fontWeight: 700 }}>{item.t}</span>
+                      </div>
+                      <div style={{ display: 'flex', gap: 6 }}>{item.tags.map((t, j) => <span key={j} className="bdg bdg-b">{t}</span>)}</div>
+                    </div>
+                    <Link to={item.link} className="btn-g btn-xs" style={{ marginTop: 12, display: 'inline-flex' }}>Build Resume →</Link>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div>
+              <h2 className="h2" style={{ marginBottom: 24 }}>Pro <span className="grad">Tips</span></h2>
+              <div className="card">
+                <ul className="slist">{TIPS.map((t, i) => <li key={i}>{t}</li>)}</ul>
+              </div>
+              <div className="hbox" style={{ marginTop: 20 }}>
+                <h3 className="h3" style={{ marginBottom: 10 }}>💡 Want a Custom Review?</h3>
+                <p>Share your resume and our team will give you personalized feedback.</p>
+                <Link to="/contact" className="btn-primary btn-sm" style={{ marginTop: 14, display: 'inline-flex' }}>Get Resume Review →</Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  )
+}
+==========================================================================================
+FILE: ATSResumeBuilder.jsx
+SIZE: 18949 bytes
+import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { ArrowLeft, FileText, Plus, Trash2, Upload } from 'lucide-react'
+import { createProject as createResumeProject } from './ResumeWorkspace'
+import * as pdfjsLib from 'pdfjs-dist'
+import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
+import './ATSResumeBuilder.css'
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl
+
+const emptyExperience = () => ({ role:'',company:'',dates:'',bullets:'' })
+const emptyEducation = () => ({ degree:'',institution:'',dates:'' })
+const draftKey = 'upskillyfy-ats-resume-draft-v1'
+const headingPattern = /^(summary|profile|objective|experience|employment|work history|education|skills|technical skills|projects|certifications|certificates|awards|achievements|leadership|extracurriculars|activities)\s*:?$/i
+const escapeLatex = (value='') => value.replace(/[\\{}$&#_%~^]/g, char => ({'\\':'\\textbackslash{}','{':'\\{','}':'\\}','$':'\\$','&':'\\&','#':'\\#','_':'\\_','%':'\\%','~':'\\textasciitilde{}','^':'\\textasciicircum{}'}[char]))
+const section = (title, body) => body.trim() ? `\\section*{${title}}\n${body.trim()}\n` : ''
+function parseResumeText(text) {
+ const lines=text.split(/\r?\n/).map(line=>line.replace(/[•▪◦]\s*/g,'').trim()).filter(Boolean)
+ const headingIndex=lines.findIndex(line=>headingPattern.test(line))
+ const nameLine=(headingIndex>0?lines.slice(0,headingIndex):lines.slice(0,5)).find(line=>line.length<80&&!/@|https?:\/\/|www\.|\+?\d[\d ()-]{7,}/i.test(line))||''
+ const email=text.match(/[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/)?.[0]||''
+ const phone=text.match(/\+?\d[\d ().-]{7,}\d/)?.[0]||''
+ const sections={}
+ let current='intro'
+ for(const line of lines){if(headingPattern.test(line)){current=line.toLowerCase().replace(/:$/,'');sections[current]=sections[current]||[];continue}(sections[current]||(sections[current]=[])).push(line)}
+ const findSection=(...terms)=>Object.entries(sections).find(([title])=>terms.some(term=>title.includes(term)))?.[1]||[]
+ const summary=findSection('summary','profile','objective').join(' ')
+ const experienceLines=findSection('experience','employment','work history')
+ const bulletLines=experienceLines.filter(line=>/^[-*•]/.test(line))
+ const experienceBody=(bulletLines.length?bulletLines:experienceLines.slice(1)).join('\n')
+ const experience=experienceLines.length?[{role:experienceLines[0].slice(0,100),company:'',dates:'',bullets:experienceBody}]:[emptyExperience()]
+ const educationLines=findSection('education')
+ const education=educationLines.length?[{degree:educationLines[0].slice(0,120),institution:educationLines.slice(1,3).join(' · '),dates:''}]:[emptyEducation()]
+ const leadership=findSection('leadership','extracurriculars','activities').join('\n')
+ const skills=findSection('technical skills','skills').join(', ').replace(/\s*,\s*/g,', ').slice(0,1200)
+ const projects=findSection('projects').join('\n').slice(0,3000)
+ const certifications=findSection('certifications','certificates','awards','achievements').join('\n').slice(0,1500)
+ const links=[...new Set(text.match(/(?:https?:\/\/|www\.)[^\s|,]+/g)||[])].join(', ')
+ return {name:nameLine,email,phone,location:'',links,summary,experience,education,leadership,projects,skills,certifications,jobDescription:''}
+}
+const linesToLatexItems = (value) => value.split(/\r?\n/).map(line=>line.replace(/^[-*•]\s*/, '').trim()).filter(Boolean).map(line=>`  \\item ${escapeLatex(line)}`).join('\n')
+function toLatex(data){
+ const contact=[data.email,data.phone,data.location].filter(Boolean).map(escapeLatex).join(' \\textbar{} ')
+ const links=data.links.split(',').map(item=>escapeLatex(item.trim())).filter(Boolean).join(' \\textbar{} ')
+ const experience=data.experience.filter(item=>item.role||item.company).map(item=>`\\textbf{${escapeLatex(item.role)}}${item.company?` — ${escapeLatex(item.company)}`:''}${item.dates?` \\hfill ${escapeLatex(item.dates)}`:''}\n\\begin{itemize}[leftmargin=1.2em]\n${item.bullets.split('\n').map(line=>line.trim()).filter(Boolean).map(line=>`  \\item ${escapeLatex(line.replace(/^[-•]\s*/,''))}`).join('\n')}\n\\end{itemize}`).join('\n\n')
+ const education=data.education.filter(item=>item.degree||item.institution).map(item=>`\\textbf{${escapeLatex(item.degree)}}${item.institution?` — ${escapeLatex(item.institution)}`:''}${item.dates?` \\hfill ${escapeLatex(item.dates)}`:''}`).join('\\\\\n')
+ const projects=data.projects.split('\n').map(line=>line.trim()).filter(Boolean).map(line=>`\\item ${escapeLatex(line)}`).join('\n')
+ const skills=data.skills.split(',').map(item=>escapeLatex(item.trim())).filter(Boolean).join(', ')
+ const leadership=data.leadership.trim()?`\\begin{itemize}[leftmargin=1.2em]\n${linesToLatexItems(data.leadership)}\n\\end{itemize}`:''
+ const certifications=data.certifications.split('\n').map(item=>item.trim()).filter(Boolean).map(escapeLatex).join('\\\\\n')
+ return String.raw`\documentclass[10pt,a4paper]{article}
+\usepackage[margin=1.6cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[hidelinks]{hyperref}
+\usepackage{enumitem}
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
+\setlist[itemize]{leftmargin=1.2em,itemsep=1pt,topsep=2pt}
+\begin{document}
+{\LARGE \textbf{${escapeLatex(data.name||'Your Name')}}}\\
+${data.headline?`{\\large ${escapeLatex(data.headline)}}\\\n`:''}${contact}${contact&&links?'\\\\\n':''}${links}
+${section('Summary',escapeLatex(data.summary))}${section('Experience',experience)}${section('Education',education)}${section('Leadership & Extracurriculars',leadership)}${section('Projects',projects?`\\begin{itemize}\n${projects}\n\\end{itemize}`:'')}${section('Skills',skills)}${section('Certifications',certifications)}
+\end{document}`
+}
+function analyze(data, source){
+ const text=[data.name,data.headline,data.email,data.phone,data.location,data.summary,...data.experience.map(item=>`${item.role} ${item.company} ${item.bullets}`),...data.education.map(item=>`${item.degree} ${item.institution}`),data.leadership,data.projects,data.skills,data.certifications].join(' ')
+ const stopWords=new Set(['about','after','also','from','have','into','more','must','our','role','team','that','their','this','with','will','work','years','your','ability','experience','skills','responsibilities','required','preferred'])
+ const normalizeTerm = (term) => term.toLowerCase().replace(/^[+#]+|[+#]+$/g,'')
+ const jobTerms=[...new Set((data.jobDescription.toLowerCase().match(/[a-z][a-z+#.]{2,}/g)||[]).map(normalizeTerm).filter(term=>term.length>2&&!stopWords.has(term)))]
+ const resumeText=` ${text.toLowerCase().replace(/[^a-z0-9+#.]+/g,' ')} `
+ const matchedTerms=jobTerms.filter(term=>new RegExp(`(^|[^a-z0-9])${term.replace(/[.+#]/g,'\\$&')}(?=$|[^a-z0-9])`,'i').test(resumeText))
+ const keywordCoverage=jobTerms.length?Math.round(matchedTerms.length/jobTerms.length*100):null
+ const checks=[
+  {label:'Contact email is present',ok:/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email.trim()),detail:'Add a working email address recruiters can use.'},
+  {label:'Professional summary is present',ok:data.summary.trim().length>=35,detail:'Add a short summary describing your role and strengths.'},
+  {label:'Experience or projects are included',ok:data.experience.some(item=>item.role||item.company)||data.projects.trim().length>0,detail:'Include experience, internships, or relevant projects.'},
+  {label:'Education is included',ok:data.education.some(item=>item.degree||item.institution),detail:'Add your degree or most relevant education.'},
+  {label:'Skills are listed',ok:data.skills.split(',').filter(item=>item.trim()).length>=3,detail:'List at least three relevant skills using job-posting terminology.'},
+  {label:'Impact numbers are present',ok:/\b\d+\s?(%|x|k\+?|m\+?|hours?|days?|users?|customers?|projects?)\b/i.test(text),detail:'Where accurate, quantify outcomes such as time saved, users reached, or error reduction.'},
+  {label:'Single-column source structure',ok:/\\documentclass/.test(source)&&!source.includes('multicol'),detail:'A single-column document is easier for many ATS parsers to read.'},
+  {label:'Job-description keywords are reflected',ok:!data.jobDescription.trim()||keywordCoverage>=50,detail:data.jobDescription.trim()?`${matchedTerms.length} of ${jobTerms.length} distinct terms match (${keywordCoverage}%). Matching is a writing aid, not a hiring prediction.`:'Paste a job description to see relevant terms to consider.'},
+ ]
+ const structuralChecks=checks.slice(0,-1)
+ const structureScore=Math.round(structuralChecks.filter(item=>item.ok).length/structuralChecks.length*100)
+ return {checks,score:structureScore,keywordCoverage,matchedTerms,jobTerms}
+}
+
+export default function ATSResumeBuilder(){
+ const navigate=useNavigate()
+ const [data,setData]=useState(()=>{
+  try{return {...{name:'',headline:'',email:'',phone:'',location:'',links:'',summary:'',experience:[emptyExperience()],education:[emptyEducation()],leadership:'',projects:'',skills:'',certifications:'',jobDescription:''},...JSON.parse(localStorage.getItem(draftKey)||'{}')}}catch{return {name:'',headline:'',email:'',phone:'',location:'',links:'',summary:'',experience:[emptyExperience()],education:[emptyEducation()],leadership:'',projects:'',skills:'',certifications:'',jobDescription:''}}
+ })
+ const [showAnalysis,setShowAnalysis]=useState(false)
+ const [pdfStatus,setPdfStatus]=useState('')
+ const source=useMemo(()=>toLatex(data),[data])
+ const analysis=useMemo(()=>analyze(data,source),[data,source])
+ useEffect(()=>{localStorage.setItem(draftKey,JSON.stringify(data))},[data])
+ const update=(key,value)=>setData(current=>({...current,[key]:value}))
+ const updateRow=(key,index,field,value)=>setData(current=>({...current,[key]:current[key].map((row,i)=>i===index?{...row,[field]:value}:row)}))
+ const addRow=key=>setData(current=>({...current,[key]:[...current[key],key==='experience'?emptyExperience():emptyEducation()]}))
+ const removeRow=(key,index)=>setData(current=>({...current,[key]:current[key].filter((_,i)=>i!==index)}))
+ const importPdf=async event=>{
+  const file=event.target.files?.[0]
+  event.target.value=''
+  if(!file)return
+  if(file.type!=='application/pdf'&& !file.name.toLowerCase().endsWith('.pdf')){setPdfStatus('Choose a PDF file.');return}
+  if(file.size>10*1024*1024){setPdfStatus('PDF files must be 10 MB or smaller.');return}
+  setPdfStatus('Extracting PDF text…')
+  try{
+   const pdf=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise
+   const pageTexts=[]
+   for(let pageNumber=1;pageNumber<=Math.min(pdf.numPages,20);pageNumber++){
+    const page=await pdf.getPage(pageNumber)
+    const content=await page.getTextContent()
+    pageTexts.push(content.items.map(item=>`${item.str}${item.hasEOL?'\n':' '}`).join('').replace(/ +\n/g,'\n'))
+   }
+   const text=pageTexts.join('\n')
+   if(!text.trim())throw new Error('No selectable text was found. This PDF may be scanned; OCR is not enabled yet.')
+   const extracted=parseResumeText(text)
+   setData(current=>({...current,...extracted,headline:current.headline||''}))
+   setPdfStatus(`Extracted text from ${Math.min(pdf.numPages,20)} page${pdf.numPages===1?'':'s'}. Review and edit the reconstructed fields below.`)
+  }catch(error){setPdfStatus(error.message||'Could not read this PDF. Try a text-based PDF instead.')}
+ }
+ const createProject=()=>{
+  const project=createResumeProject(data.name?`${data.name} Resume`:'ATS Resume',source,[{name:'main.tex',content:source}],'ats-guided-resume')
+  navigate(`/career/resume/editor/${project.id}`)
+ }
+ return <main className="ats-builder"><button className="ats-back" onClick={()=>navigate('/career/resume')}><ArrowLeft size={16}/> Resume Builder</button><header className="ats-heading"><span className="latex-eyebrow">{'{guided resume workspace}'}</span><h1>Create an ATS-friendly resume</h1><p>Fill in what applies, review the transparent checks, then open the generated LaTeX to customize every detail.</p></header><div className="ats-layout"><div className="ats-form">
+  <section className="ats-card"><h2>Personal details</h2><div className="ats-fields"><label>Full name<input value={data.name} onChange={e=>update('name',e.target.value)} placeholder="Alex Morgan"/></label><label>Target role<input value={data.headline} onChange={e=>update('headline',e.target.value)} placeholder="Software Engineer"/></label><label>Email<input type="email" value={data.email} onChange={e=>update('email',e.target.value)} placeholder="alex@example.com"/></label><label>Phone<input value={data.phone} onChange={e=>update('phone',e.target.value)} placeholder="+1 555 010 1234"/></label><label>Location<input value={data.location} onChange={e=>update('location',e.target.value)} placeholder="City, Country"/></label><label>Links, separated by commas<input value={data.links} onChange={e=>update('links',e.target.value)} placeholder="linkedin.com/in/alex, github.com/alex"/></label><label className="ats-full">Professional summary<textarea rows="4" value={data.summary} onChange={e=>update('summary',e.target.value)} placeholder="Summarize your focus, experience, and strongest outcomes."/></label><label className="ats-full">Target job description for keyword review<textarea rows="5" value={data.jobDescription} onChange={e=>update('jobDescription',e.target.value)} placeholder="Paste the job posting to compare its terms with your resume content. It stays in this browser."/></label></div></section>
+  <section className="ats-card"><div className="ats-card-heading"><h2>Experience</h2><button onClick={()=>addRow('experience')}><Plus size={15}/> Add experience</button></div>{data.experience.map((row,index)=><div className="ats-repeat" key={index}><div className="ats-fields"><label>Role<input value={row.role} onChange={e=>updateRow('experience',index,'role',e.target.value)}/></label><label>Company<input value={row.company} onChange={e=>updateRow('experience',index,'company',e.target.value)}/></label><label>Dates<input value={row.dates} onChange={e=>updateRow('experience',index,'dates',e.target.value)} placeholder="2023 – Present"/></label><label className="ats-full">Achievements, one per line<textarea rows="3" value={row.bullets} onChange={e=>updateRow('experience',index,'bullets',e.target.value)} placeholder="Built a reporting workflow that reduced weekly processing time by 30%."/></label></div>{data.experience.length>1&&<button className="ats-remove" onClick={()=>removeRow('experience',index)} aria-label="Remove experience"><Trash2 size={15}/></button>}</div>)}</section>
+  <section className="ats-card"><div className="ats-card-heading"><h2>Education</h2><button onClick={()=>addRow('education')}><Plus size={15}/> Add education</button></div>{data.education.map((row,index)=><div className="ats-fields ats-repeat" key={index}><label>Degree<input value={row.degree} onChange={e=>updateRow('education',index,'degree',e.target.value)} placeholder="B.S. Computer Science"/></label><label>Institution<input value={row.institution} onChange={e=>updateRow('education',index,'institution',e.target.value)}/></label><label>Dates<input value={row.dates} onChange={e=>updateRow('education',index,'dates',e.target.value)}/></label>{data.education.length>1&&<button className="ats-remove" onClick={()=>removeRow('education',index)} aria-label="Remove education"><Trash2 size={15}/></button>}</div>)}</section>
+  <section className="ats-card"><h2>Projects, skills, certifications, and extracurriculars</h2><div className="ats-fields"><label className="ats-full">Leadership &amp; extracurriculars, one per line<textarea rows="3" value={data.leadership} onChange={e=>update('leadership',e.target.value)} placeholder="Organized a volunteer team that raised $5K for school STEM club."/></label>
+<label className="ats-full">Projects, one per line<textarea rows="3" value={data.projects} onChange={e=>update('projects',e.target.value)} placeholder="Open-source contributor — improved build times by 20%."/></label><label className="ats-full">Skills, separated by commas<textarea rows="2" value={data.skills} onChange={e=>update('skills',e.target.value)} placeholder="JavaScript, React, Node.js, SQL"/></label><label className="ats-full">Certifications and achievements, one per line<textarea rows="2" value={data.certifications} onChange={e=>update('certifications',e.target.value)}/></label></div></section>
+  <div className="ats-actions"><button className="latex-button" onClick={()=>setShowAnalysis(value=>!value)}>{showAnalysis?'Hide':'Analyze'} resume</button><button className="latex-button" onClick={()=>{setShowAnalysis(false);window.setTimeout(()=>window.print(),100)}}>Print preview / Save as PDF</button><button className="latex-button primary" onClick={createProject}><FileText size={16}/> Open in LaTeX editor</button></div>
+  <section className="ats-pdf-note"><Upload size={18}/><div><b>Import an existing PDF resume</b><p>Text-based PDFs are parsed in this browser and mapped to editable fields. Scanned PDFs need OCR and are not supported.</p><label className="latex-button" htmlFor="resume-pdf-upload">Choose PDF</label><input id="resume-pdf-upload" type="file" accept="application/pdf,.pdf" onChange={importPdf}/>{pdfStatus&&<small role="status">{pdfStatus}</small>}</div></section>
+ </div><aside className="ats-preview"><div className="ats-preview-title"><div><b>ATS checks</b><small>Structure guidance, not a hiring guarantee</small></div><span>{analysis.score}%</span></div>{showAnalysis?<div className="ats-checks"><p className="ats-score-note">The score measures the completed structural checks below. Keyword coverage is shown separately and does not predict hiring outcomes.</p>{analysis.checks.map(check=><div key={check.label} className={check.ok?'pass':'todo'}><b>{check.ok?'✓':'○'} {check.label}</b>{!check.ok&&<small>{check.detail}</small>}</div>)}{analysis.keywordCoverage!==null&&<div className="ats-keyword-coverage"><b>Keyword coverage: {analysis.keywordCoverage}%</b><small>{analysis.matchedTerms.length} of {analysis.jobTerms.length} distinct job-description terms matched.</small></div>}</div>:<div className="ats-preview-content"><div>{data.name||'Your Name'}</div><small>{data.headline||'Target role'}{data.email?` · ${data.email}`:''}</small><hr/><b>Summary</b><p>{data.summary||'Your professional summary will appear here.'}</p><b>Experience</b>{data.experience.map((row,index)=><p key={index}>{row.role||'Role'}{row.company?` · ${row.company}`:''}<br/>{row.bullets||'Add achievement statements with clear outcomes.'}</p>)}<b>Education</b>{data.education.map((row,index)=><p key={index}>{row.degree||'Degree'}{row.institution?` · ${row.institution}`:''}</p>)}{data.leadership.trim()&&<><b>Leadership &amp; Extracurriculars</b><p>{data.leadership}</p></>}<b>Skills</b><p>{data.skills||'Your skills will appear here.'}</p>{data.projects.trim()&&<><b>Projects</b><p>{data.projects}</p></>}{data.certifications.trim()&&<><b>Certifications</b><p>{data.certifications}</p></>}</div>}</aside></div></main>
+}
+
+==========================================================================================
+FILE: ATSResumeBuilder.css
+SIZE: 4804 bytes
+.ats-builder{max-width:1240px;margin:auto;padding:34px 24px 80px;color:var(--text)}.ats-back{display:inline-flex;align-items:center;gap:7px;border:0;background:none;color:var(--accent);font-weight:650;margin-bottom:18px}.ats-heading{max-width:760px;margin:0 auto 30px;text-align:center}.ats-heading h1{font-size:clamp(2rem,4vw,3.1rem);letter-spacing:-.04em;line-height:1.08;margin:10px 0}.ats-heading p{color:var(--muted)}.ats-layout{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(270px,.8fr);gap:22px;align-items:start}.ats-form{display:grid;gap:16px}.ats-card{background:var(--bg-card);border:1px solid var(--border);border-radius:13px;padding:20px;box-shadow:var(--shadow)}.ats-card h2{font-size:17px;margin-bottom:15px}.ats-card-heading{display:flex;justify-content:space-between;align-items:center}.ats-card-heading button{border:0;background:var(--accent-bg);color:var(--accent);border-radius:8px;padding:8px 10px;display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:650}.ats-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.ats-fields label{display:grid;gap:5px;color:var(--muted);font-size:12px;font-weight:600}.ats-fields input,.ats-fields textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px 11px;background:var(--bg-input);color:var(--text);outline:none;font-size:14px}.ats-fields input:focus,.ats-fields textarea:focus{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 18%,transparent)}.ats-fields textarea{resize:vertical}.ats-full{grid-column:1/-1}.ats-repeat{position:relative;border-top:1px solid var(--border);padding-top:14px;margin-top:14px;padding-right:30px}.ats-remove{position:absolute;right:0;top:16px;border:0;background:none;color:#b42318}.ats-actions{display:flex;justify-content:end;gap:9px;flex-wrap:wrap}.ats-pdf-note{display:flex;gap:12px;padding:16px;border:1px solid var(--border);border-radius:11px;color:var(--muted);font-size:13px}.ats-pdf-note b{color:var(--text)}.ats-pdf-note p{margin-top:3px}.ats-preview{position:sticky;top:20px;background:var(--bg-card);border:1px solid var(--border);border-radius:13px;overflow:hidden;box-shadow:var(--shadow)}.ats-preview-title{display:flex;justify-content:space-between;align-items:center;padding:15px 17px;border-bottom:1px solid var(--border)}.ats-preview-title b,.ats-preview-title small{display:block}.ats-preview-title small{color:var(--muted);font-size:11px}.ats-preview-title>span{font-weight:750;color:var(--accent);font-size:22px}.ats-preview-content{margin:18px auto;width:calc(100% - 36px);min-height:480px;background:white;color:#202124;padding:26px 23px;box-shadow:0 3px 12px #0002;font-family:Arial,sans-serif;font-size:11px;line-height:1.5}.ats-preview-content>div:first-child{font-size:22px;font-weight:700}.ats-preview-content>small{color:#555}.ats-preview-content hr{border:0;border-top:1px solid #aaa;margin:12px 0}.ats-preview-content b{display:block;margin-top:13px;text-transform:uppercase;font-size:10px}.ats-preview-content p{margin:4px 0}.ats-checks{padding:14px 17px;display:grid;gap:12px}.ats-checks>div{border-bottom:1px solid var(--border);padding-bottom:10px}.ats-checks b,.ats-checks small{display:block}.ats-checks .pass b{color:#188038}.ats-checks .todo b{color:var(--text)}.ats-checks small{color:var(--muted);margin:3px 0 0 20px;font-size:11px}@media(max-width:850px){.ats-layout{grid-template-columns:1fr}.ats-preview{position:static;grid-row:1}}@media(max-width:560px){.ats-builder{padding:25px 15px 60px}.ats-fields{grid-template-columns:1fr}.ats-full{grid-column:1}.ats-card{padding:15px}.ats-actions>*{flex:1}.ats-repeat{padding-right:24px}}
+.ats-pdf-note>div{min-width:0}.ats-pdf-note input[type=file]{display:block;max-width:100%;margin-top:10px;font-size:12px}.ats-pdf-note label{margin-top:10px;cursor:pointer}.ats-pdf-note small[role=status]{display:block;margin-top:8px;line-height:1.4}.ats-score-note{margin:0;color:var(--muted);font-size:12px;line-height:1.45}.ats-keyword-coverage{border:1px solid var(--accent-border);background:var(--accent-bg);border-radius:8px;padding:10px}.ats-keyword-coverage b,.ats-keyword-coverage small{display:block}.ats-keyword-coverage small{color:var(--muted);margin-top:3px;font-size:11px}
+@media print{@page{margin:16mm}body *{visibility:hidden!important}.ats-preview,.ats-preview *{visibility:visible!important}.ats-builder{padding:0!important}.ats-preview{position:absolute!important;inset:0!important;width:100%!important;border:0!important;box-shadow:none!important;background:white!important}.ats-preview-title{display:none!important}.ats-preview-content{width:100%!important;min-height:0!important;margin:0!important;padding:0!important;box-shadow:none!important;font-size:10.5pt!important;line-height:1.45!important}}
+
+==========================================================================================
+FILE: ResumeWorkspace.jsx
+SIZE: 52047 bytes
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import CodeMirror from '@uiw/react-codemirror'
+import { StreamLanguage } from '@codemirror/language'
+import { EditorView, keymap } from '@codemirror/view'
+import { Prec } from '@codemirror/state'
+import { stex } from '@codemirror/legacy-modes/mode/stex'
+import { oneDark } from '@codemirror/theme-one-dark'
+import { Search, FileText, Plus, ArrowLeft, Download, Play, FolderOpen, Code2, Trash2, Upload, ChevronRight, ChevronDown, Folder, ExternalLink, Copy, History, PanelLeft, PanelRight, WrapText, Keyboard, SpellCheck } from 'lucide-react'
+import { latexTemplateAPI, resumeProjectAPI } from '../../api'
+import './ResumeWorkspace.css'
+
+const categories = ['Journal Articles','Bibliographies','Books','Calendars','CVs and Résumés','Formal Letters','Assignments','Newsletters','Posters','Presentations','Theses and Dissertations','Research Papers','Reports','Cover Letters']
+const starter = String.raw`\documentclass[11pt,a4paper]{article}
+\usepackage[margin=1.6cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[hidelinks]{hyperref}
+\usepackage{enumitem}
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
+\begin{document}
+{\Huge \textbf{Your Name}}
+\par
+Software Engineer \hfill \href{mailto:you@example.com}{you@example.com}
+\vspace{8pt}\hrule\vspace{8pt}
+\section*{Summary}
+Write a concise professional summary here.
+\section*{Experience}
+\textbf{Company Name} — Software Engineer \hfill 2023--Present
+\begin{itemize}[leftmargin=1.2em]
+  \item Describe a measurable achievement and the impact you made.
+\end{itemize}
+\section*{Education}
+\textbf{University Name} — B.Tech, Computer Science \hfill 2023
+\section*{Skills}
+JavaScript, React, Node.js, Python
+\end{document}`
+const templates = [
+ {id:'ats-resume',title:'ATS-Friendly Resume',category:'CVs and Résumés',kind:'Templates',author:'Upskillyfy AI',description:'A clean single-column resume starter designed to keep your experience easy to scan.',tags:['ATS','Resume','Single column'],source:starter},
+ {id:'software-engineer',title:'Software Engineer Resume',category:'CVs and Résumés',kind:'Templates',author:'Upskillyfy AI',description:'A technical resume with focused experience, skills, and project sections.',tags:['Engineering','Projects'],source:starter.replace('Your Name','Jordan Ellis')},
+ {id:'academic-cv',title:'Academic CV',category:'CVs and Résumés',kind:'Templates',author:'Upskillyfy AI',description:'An adaptable academic CV structure for education, research, and publications.',tags:['Academic','CV'],source:starter.replace('Software Engineer','Researcher')},
+ {id:'cover-letter',title:'Cover Letter',category:'Cover Letters',kind:'Templates',author:'Upskillyfy AI',description:'A minimal letter layout for a tailored application.',tags:['Letter','Career'],source:starter.replace('Your Name','Your Name')},
+ {id:'quick-guide',title:'A Quick Guide to LaTeX',category:'Examples',kind:'Examples',author:'Upskillyfy AI',description:'A compact example project showing the basic structure of a LaTeX document.',tags:['Guide','LaTeX'],source:starter},
+ {id:'research-report',title:'Scientific Research Report',category:'Reports',kind:'Examples',author:'Upskillyfy AI',description:'A sample report structure with abstract, methods, results, and references.',tags:['Research','Report'],source:starter},
+ {id:'thesis',title:'Mathematics Thesis',category:'Theses and Dissertations',kind:'Examples',author:'Upskillyfy AI',description:'An original thesis structure with chapter and bibliography placeholders.',tags:['Thesis','Mathematics'],source:starter},
+ {id:'journal',title:'Basic Academic Journal Article',category:'Journal Articles',kind:'Templates',author:'Upskillyfy AI',description:'A lightweight article starter for an abstract, sections, and references.',tags:['Article','Academic'],source:starter},
+ {id:'presentation',title:'University Presentation',category:'Presentations',kind:'Examples',author:'Upskillyfy AI',description:'A simple presentation project outline. Replace the article class with Beamer to extend it.',tags:['Slides','University'],source:starter},
+ {id:'conference-proceedings',title:'Conference Proceedings',category:'Research Papers',kind:'Examples',author:'Upskillyfy AI',description:'An original proceedings layout for paper titles, abstracts, and author details.',tags:['Conference','Proceedings'],source:starter},
+ {id:'undergraduate-thesis',title:'Undergraduate Thesis',category:'Theses and Dissertations',kind:'Examples',author:'Upskillyfy AI',description:'A starting outline for an undergraduate thesis with front matter and chapters.',tags:['Thesis','Undergraduate'],source:starter},
+ {id:'dissertation',title:'University Dissertation',category:'Theses and Dissertations',kind:'Examples',author:'Upskillyfy AI',description:'A long-form dissertation outline with chapter and reference placeholders.',tags:['Dissertation','University'],source:starter},
+ {id:'math-philosophy',title:'Mathematical Philosophy Journal',category:'Journal Articles',kind:'Examples',author:'Upskillyfy AI',description:'An original sample journal manuscript structure for mathematical philosophy.',tags:['Journal','Mathematics'],source:starter},
+ {id:'engineering-project',title:'Computer Engineering Project',category:'Reports',kind:'Examples',author:'Upskillyfy AI',description:'A project report layout for engineering objectives, implementation, and results.',tags:['Engineering','Project'],source:starter},
+ {id:'academic-article',title:'Academic Article',category:'Journal Articles',kind:'Templates',author:'Upskillyfy AI',description:'A concise scholarly article template with the common manuscript sections.',tags:['Article','Academic'],source:starter},
+ {id:'community-guide',title:'Preparing a Reproducible LaTeX Project',category:'Reports',kind:'Community',author:'Upskillyfy AI',description:'An original community guide to keeping source files and assets organized in a LaTeX project.',tags:['Community','Guide'],source:starter},
+]
+const localTemplateAliases = {
+ 'ats-friendly-resume':'ats-resume',
+ 'software-engineer-resume':'software-engineer',
+ 'fresher-resume':'ats-resume',
+ 'experienced-professional-resume':'software-engineer',
+ 'research-paper':'conference-proceedings',
+ 'journal-article':'journal',
+ 'technical-report':'research-report',
+ 'poster':'presentation',
+ 'assignment':'undergraduate-thesis',
+ 'formal-letter':'cover-letter',
+ 'newsletter':'community-guide',
+ 'calendar':'community-guide',
+ 'bibliography':'community-guide',
+ 'book':'thesis',
+}
+function findLocalTemplate(templateId){
+ const localId=localTemplateAliases[templateId]||templateId
+ return templates.find(template=>template.id===localId)
+}
+function normalizeTemplate(template){
+ const mainFile=template.mainFile||template.files?.[0]?.path||'main.tex'
+ const files=template.files?.map(file=>({name:file.path,content:file.content,isBinary:file.isBinary===true}))||[{name:'main.tex',content:template.source||''}]
+ return {...template,source:files.find(file=>file.name===mainFile)?.content||files[0]?.content||'',files}
+}
+function filterLocalTemplates(search,kind,category){
+ const normalizedSearch=search.trim().toLowerCase()
+ return templates.filter(template=>{
+  const searchable=`${template.title} ${template.description} ${template.author} ${template.category} ${(template.tags||[]).join(' ')}`.toLowerCase()
+  return (kind==='All'||template.kind===kind)&&(category==='All'||template.category===category)&&(!normalizedSearch||searchable.includes(normalizedSearch))
+ })
+}
+const key='upskillyfy-latex-projects-v1'
+function getProjects(){try{return JSON.parse(localStorage.getItem(key)||'[]')}catch{return []}}
+function writeProjectsLocal(items){localStorage.setItem(key,JSON.stringify(items))}
+function currentUserId(){try{const part=localStorage.getItem('token')?.split('.')[1];if(!part)return null;const base64=part.replace(/-/g,'+').replace(/_/g,'/');return JSON.parse(atob(base64.padEnd(Math.ceil(base64.length/4)*4,'='))).id||null}catch{return null}}
+function visibleProjects(){const owner=currentUserId();return getProjects().filter(project=>!project.cloudOwner||project.cloudOwner===owner)}
+const cloudTimers = new Map()
+const cloudBusy = new Set()
+function cloudPayload(project){return {id:project.id,name:project.title,mainFile:project.mainFile,templateId:project.templateId,files:project.files.map(file=>({path:file.name,content:file.content,isBinary:file.isBinary===true}))}}
+function scheduleCloudSave(project){
+ const owner=currentUserId()
+ if(!owner||project.cloudOwner&&project.cloudOwner!==owner)return
+ clearTimeout(cloudTimers.get(project.id))
+ cloudTimers.set(project.id,setTimeout(async()=>{
+  const latest=getProjects().find(item=>item.id===project.id)
+  if(!latest)return
+  if(cloudBusy.has(project.id)){scheduleCloudSave(latest);return}
+  cloudBusy.add(project.id)
+  const snapshot=JSON.stringify(cloudPayload(latest))
+  try{
+   const payload=cloudPayload(latest)
+   if(latest.cloudSaved&&latest.cloudOwner===owner)await resumeProjectAPI.update(latest.id,payload)
+   else await resumeProjectAPI.create(payload)
+   const current=getProjects()
+   writeProjectsLocal(current.map(item=>item.id===latest.id?{...item,cloudSaved:true,cloudOwner:owner}:item))
+   window.dispatchEvent(new CustomEvent('resume-project-cloud-saved',{detail:latest.id}))
+  }catch(error){
+   window.dispatchEvent(new CustomEvent('resume-project-cloud-save-failed',{detail:{id:project.id,message:error.response?.data?.message||'Cloud save failed. Your local draft is still safe.'}}))
+  }
+  cloudBusy.delete(project.id)
+  cloudTimers.delete(project.id)
+  const current=getProjects().find(item=>item.id===project.id)
+  if(current&&JSON.stringify(cloudPayload(current))!==snapshot)scheduleCloudSave(current)
+ },600))
+}
+function saveProjects(items){
+ const before=getProjects()
+ const normalized=items.map(item=>before.some(previous=>previous.id===item.id&&previous.cloudSaved)?{...item,cloudSaved:true}:item)
+ writeProjectsLocal(normalized)
+ for(const item of normalized){
+  const previous=before.find(old=>old.id===item.id)
+  if(!previous||JSON.stringify(previous)!==JSON.stringify(item))scheduleCloudSave(item)
+ }
+ for(const previous of before){
+  if(!normalized.some(item=>item.id===previous.id)&&previous.cloudSaved&&previous.cloudOwner===currentUserId())resumeProjectAPI.remove(previous.id).catch(()=>{})
+ }
+}
+export function createProject(title='Untitled Resume', source=starter, files=[{name:'main.tex',content:source}], templateId=null, mainFile='main.tex'){const projects=getProjects();const p={id:crypto.randomUUID(),title,mainFile,files,templateId,cloudOwner:currentUserId(),updatedAt:new Date().toISOString()};saveProjects([p,...projects]);return p}
+function localProject(remote,owner){return {id:remote.id,title:remote.name,mainFile:remote.mainFile,templateId:remote.templateId,files:remote.files.map(file=>({name:file.path,content:file.content,isBinary:file.isBinary===true})),updatedAt:remote.updatedAt,cloudSaved:true,cloudOwner:owner}}
+async function importProjectFile(file,navigate){
+ if(!file)return
+ const extension=file.name.split('.').pop().toLowerCase()
+ if(extension==='zip'){
+  if(!localStorage.getItem('token')){alert('Sign in to import a ZIP project.');return}
+  if(file.size>5*1024*1024){alert('ZIP archives must be 5 MB or smaller.');return}
+  try{
+   const {data}=await resumeProjectAPI.importZip(file)
+   const mainFile=data.mainFiles.length>1?prompt(`Choose the main .tex file:\n${data.mainFiles.join('\n')}`,data.mainFile):data.mainFile
+   if(!mainFile||!data.mainFiles.includes(mainFile))return
+   const files=data.files.map(entry=>({name:entry.path,content:entry.content,isBinary:entry.isBinary}))
+   const main=files.find(entry=>entry.name===mainFile)
+   const project=createProject(file.name.replace(/\.zip$/i,''),main.content,files,null,mainFile)
+   navigate(`/career/resume/editor/${project.id}`)
+  }catch(error){alert(error.response?.data?.message||'Could not import this ZIP project.')}
+  return
+ }
+ if(extension!=='tex'){alert('Import a .tex file or a ZIP project archive.');return}
+ if(file.size>2*1024*1024){alert('TeX files must be 2 MB or smaller.');return}
+ const reader=new FileReader()
+ reader.onload=()=>{const content=String(reader.result);const project=createProject(file.name.replace(/\.tex$/i,''),content,[{name:file.name,content}]);navigate(`/career/resume/editor/${project.id}`)}
+ reader.readAsText(file)
+}
+function download(name,content,type='text/plain'){const url=URL.createObjectURL(content instanceof Blob?content:new Blob([content],{type}));const a=document.createElement('a');a.href=url;a.download=name;a.click();window.setTimeout(()=>URL.revokeObjectURL(url),1000)}
+function Preview({title,category}){return <div className="latex-paper"><div className="paper-kicker">UPSKILLYFY AI · ORIGINAL DEMO</div><h3>{title}</h3><div className="paper-rule"/><div className="paper-meta">{category}</div><div className="paper-lines"><i/><i/><i/><i/><i/><i/><i/></div><b>Experience</b><div className="paper-lines"><i/><i/><i/><i/></div><b>Education</b><div className="paper-lines"><i/><i/><i/></div></div>}
+function createFrom(template){const normalized=normalizeTemplate(template);const p=createProject(normalized.title,normalized.source,normalized.files,normalized.id,normalized.mainFile||normalized.files[0]?.name||'main.tex');return p}
+
+export function ResumeGallery(){
+ const [q,setQ]=useState('')
+ const [kind,setKind]=useState('All')
+ const [category,setCategory]=useState('All')
+ const [page,setPage]=useState(1)
+ const [items,setItems]=useState([])
+ const [pagination,setPagination]=useState({page:1,pages:1,total:0})
+ const [catalogStatus,setCatalogStatus]=useState('Loading templates…')
+ const navigate=useNavigate()
+ useEffect(()=>{let active=true;latexTemplateAPI.list({search:q,kind,category,page,limit:6}).then(({data})=>{if(!active)return;setItems(data.templates.map(normalizeTemplate));setPagination(data.pagination);setCatalogStatus('')}).catch(()=>{if(active){const local=filterLocalTemplates(q,kind,category);setItems(local.map(normalizeTemplate).slice((page-1)*6,page*6));setPagination({page,pages:Math.max(1,Math.ceil(local.length/6)),total:local.length});setCatalogStatus('Offline template catalogue')}});return()=>{active=false}},[q,kind,category,page])
+ useEffect(()=>setPage(1),[q,kind,category])
+ return <main className="latex-wrap"><div className="latex-hero"><div className="latex-eyebrow">{'{upskillyfy template gallery}'}</div><h1>LaTeX templates</h1><p>LaTeX templates for journal articles, academic papers, CVs and résumés, presentations, and more.</p><form className="latex-search" onSubmit={e=>e.preventDefault()}><Search size={19}/><input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search templates, authors, categories…" aria-label="Search templates"/><button className="latex-button primary">Search</button></form><div className="latex-quick"><button onClick={()=>navigate('/career/resume/create')}><FileText size={16}/> Create Resume</button><button onClick={()=>navigate('/career/resume/projects')}><FolderOpen size={16}/> My Projects</button><button onClick={()=>navigate(`/career/resume/editor/${createProject().id}`)}><Plus size={16}/> Write Your Own LaTeX Code</button><label className="latex-button"><Upload size={16}/> Import Existing Project<input type="file" accept=".tex,.zip,text/plain,application/zip" hidden onChange={e=>{importProjectFile(e.target.files?.[0],navigate);e.target.value=''}}/></label></div></div>{catalogStatus&&<p role="status" className="latex-catalog-status">{catalogStatus}</p>}<section className="latex-section"><h2>Categories</h2><p>Browse a document type to get started.</p><div className="latex-categories">{categories.map((c,i)=><button className={`latex-category ${category===c?'selected':''}`} key={c} onClick={()=>setCategory(category===c?'All':c)}><span>{String(i+1).padStart(2,'0')}</span><b>{c}</b><small>{['Articles and submissions','Citations and references','Long-form documents','Planning and scheduling','Professional profiles','Formal correspondence','Coursework and classes','Editorial projects','Research communication','Talks and slides','Graduate research','Academic studies','Findings and analysis','Job applications'][i]}</small></button>)}</div></section><section className="latex-section"><div className="latex-section-head"><div><h2>Templates</h2><p>Original Upskillyfy AI document starters.</p></div><Link to="/career/resume/projects">My Projects <ChevronRight size={16}/></Link></div><div className="latex-filters">{['All','Templates','Examples','Community'].map(k=><button key={k} className={kind===k?'active':''} onClick={()=>setKind(k)}>{k==='Community'?'Community articles':k}</button>)}<select value={category} onChange={e=>setCategory(e.target.value)}><option>All</option>{categories.map(c=><option key={c}>{c}</option>)}</select></div>{items.length?<div className="latex-grid">{items.map(t=><article className="latex-card" key={t.id}><Link to={`/career/resume/templates/${t.id}`} className="latex-card-preview"><Preview title={t.title} category={t.category}/></Link><div className="latex-card-copy"><span>{t.category}</span><Link to={`/career/resume/templates/${t.id}`}><h3>{t.title}</h3></Link><p>{t.description}</p><small>{t.author} · {t.kind}</small></div><button className="latex-card-open" onClick={()=>{const p=createFrom(t);navigate(`/career/resume/editor/${p.id}`)}}>Open as template <ChevronRight size={15}/></button></article>)}</div>:<div className="latex-empty"><FileText/><h3>No matching documents</h3><p>Try another search or clear the selected category.</p></div>}<div className="latex-pagination"><span>{pagination.total} results</span><button disabled={page===1} onClick={()=>setPage(page-1)}>Previous</button><span>Page {page} of {pagination.pages}</span><button disabled={page>=pagination.pages} onClick={()=>setPage(page+1)}>Next</button></div></section></main>
+}
+export function ResumeTemplateDetail(){
+ const {templateId}=useParams()
+ const navigate=useNavigate()
+ const [showSource,setShowSource]=useState(false)
+ const [template,setTemplate]=useState(()=>normalizeTemplate(findLocalTemplate(templateId)||{}))
+ const [loading,setLoading]=useState(true)
+ const [catalogStatus,setCatalogStatus]=useState('')
+ useEffect(()=>{let active=true;setLoading(true);setCatalogStatus('');latexTemplateAPI.get(templateId).then(({data})=>{if(active)setTemplate(normalizeTemplate(data.template))}).catch(()=>{if(active&&findLocalTemplate(templateId))setCatalogStatus('Offline template catalogue')}).finally(()=>{if(active)setLoading(false)});return()=>{active=false}},[templateId])
+ if(loading&&!template.id)return <main className="latex-wrap"><div className="latex-empty"><h3>Loading template…</h3></div></main>
+ if(!template.id)return <main className="latex-wrap"><h1>Template not found</h1><Link to="/career/resume">Back to templates</Link></main>
+ return <main className="latex-wrap">
+  <Link className="latex-back" to="/career/resume"><ArrowLeft size={16}/> Back to all templates</Link>
+  {catalogStatus&&<p role="status" className="latex-catalog-status">{catalogStatus}</p>}
+  <div className="latex-detail-head"><div><span className="latex-eyebrow">{template.category}</span><h1>{template.title}</h1><p>{template.description}</p><div className="latex-detail-actions"><button className="latex-button primary" onClick={()=>{const project=createFrom(template);navigate(`/career/resume/editor/${project.id}`)}}><Code2 size={16}/> Open as Template</button><button className="latex-button" onClick={()=>setShowSource(true)}><Code2 size={16}/> View Source</button><button className="latex-button" onClick={()=>download('main.tex',template.source)}><Download size={16}/> Download Source</button><button className="latex-button" disabled title="No compiled PDF is available">PDF unavailable</button></div></div></div>
+  <div className="latex-detail-grid"><aside className="latex-metadata"><h3>About this project</h3><p>{template.description}</p><dl><dt>Author</dt><dd>{template.author}</dd><dt>License</dt><dd>Not provided · original demo</dd><dt>Last updated</dt><dd>Not provided</dd><dt>Compiler</dt><dd>Not provided</dd><dt>Source files</dt><dd>main.tex</dd></dl><div className="latex-tags">{template.tags.map(tag=><span key={tag}>{tag}</span>)}</div></aside><div className="latex-detail-preview"><div className="latex-no-pdf"><FileText size={34}/><b>PDF preview unavailable</b><p>No compiled PDF is available for this original demo template. Open it as a project to edit its source.</p></div></div></div>
+  {showSource&&<div className="latex-source-overlay" role="dialog" aria-modal="true" aria-label={`${template.title} source`}><section><header><div><b>main.tex</b><small>{template.title} · original demo source</small></div><button onClick={()=>setShowSource(false)} aria-label="Close source">Close</button></header><pre><code>{template.source}</code></pre><footer><button className="latex-button" onClick={()=>download('main.tex',template.source)}><Download size={15}/> Download source</button><button className="latex-button primary" onClick={()=>{const project=createFrom(template);navigate(`/career/resume/editor/${project.id}`)}}>Open as project</button></footer></section></div>}
+ </main>
+}
+export function ResumeProjects(){
+ const [items,setItems]=useState(visibleProjects)
+ const [loading,setLoading]=useState(Boolean(localStorage.getItem('token')))
+ const [query,setQuery]=useState('')
+ const [sort,setSort]=useState('recent')
+ const navigate=useNavigate()
+ useEffect(()=>{
+  let active=true
+  const owner=currentUserId()
+  if(!owner)return undefined
+  resumeProjectAPI.list().then(({data})=>{
+   if(!active)return
+   const remote=data.projects.map(project=>localProject(project,owner))
+   const hidden=getProjects().filter(project=>project.cloudOwner&&project.cloudOwner!==owner)
+   const local=visibleProjects()
+   const remoteById=new Map(remote.map(project=>[project.id,project]))
+   const merged=[...remote]
+   const pending=[]
+   for(const draft of local){
+    const saved=remoteById.get(draft.id)
+    if(!saved){merged.unshift(draft);pending.push(draft);continue}
+    if(new Date(draft.updatedAt)>new Date(saved.updatedAt)){
+     const newest={...draft,cloudSaved:true}
+     const index=merged.findIndex(project=>project.id===draft.id)
+     merged[index]=newest
+     pending.push(newest)
+    }
+   }
+   writeProjectsLocal([...merged,...hidden])
+   pending.forEach(scheduleCloudSave)
+   setItems(merged)
+  }).catch(()=>{}).finally(()=>{if(active)setLoading(false)})
+  return ()=>{active=false}
+ },[])
+ const duplicate=project=>{createProject(`${project.title} (copy)`,'',project.files.map(file=>({...file})),project.templateId,project.mainFile);setItems(visibleProjects())}
+ const shown=items.filter(p=>p.title.toLowerCase().includes(query.toLowerCase())).sort((a,b)=>sort==='name'?a.title.localeCompare(b.title):new Date(b.updatedAt)-new Date(a.updatedAt))
+ const remove=id=>{const next=items.filter(x=>x.id!==id);const hidden=getProjects().filter(project=>project.cloudOwner&&project.cloudOwner!==currentUserId());saveProjects([...next,...hidden]);setItems(next)}
+ return <main className="latex-wrap"><Link className="latex-back" to="/career/resume"><ArrowLeft size={16}/> Resume Builder</Link><div className="latex-section-head"><div><div className="latex-eyebrow">{'{your workspace}'}</div><h1>My Projects</h1><p>{loading?'Syncing projects…':localStorage.getItem('token')?'Projects sync with your account and remain available on this device.':'Saved on this device in this browser.'}</p></div><button className="latex-button primary" onClick={()=>{const p=createProject();navigate(`/career/resume/editor/${p.id}`)}}><Plus size={16}/> New project</button></div>{items.length>0&&<div className="latex-search latex-project-search"><Search size={16}/><input value={query} onChange={event=>setQuery(event.target.value)} placeholder="Search projects" aria-label="Search projects"/><select value={sort} onChange={event=>setSort(event.target.value)} aria-label="Sort projects"><option value="recent">Last modified</option><option value="name">Name</option></select></div>}{shown.length?<div className="latex-project-list">{shown.map(p=><article key={p.id}><FileText/><div><b>{p.title}</b><small>{p.cloudSaved?'Synced · ': 'Local draft · '}{new Date(p.updatedAt).toLocaleString()}</small></div><button onClick={()=>navigate(`/career/resume/editor/${p.id}`)}>Continue editing</button><button aria-label="Duplicate project" title="Duplicate" onClick={()=>duplicate(p)}><Copy size={16}/></button><button aria-label="Delete project" onClick={()=>remove(p.id)}><Trash2 size={16}/></button></article>)}</div>:<div className="latex-empty"><FileText/><h3>{loading?'Loading projects…':items.length?'No matching projects':'No projects yet'}</h3><p>Create a resume from a template or start with a blank document.</p><button onClick={()=>{const p=createProject();navigate(`/career/resume/editor/${p.id}`)}}>Start blank project</button></div>}</main>
+}
+const historyKey=id=>`latex-history:${id}`
+function readVersions(id){try{const list=JSON.parse(localStorage.getItem(historyKey(id))||'[]');return Array.isArray(list)?list:[]}catch{return[]}}
+function writeVersions(id,list){let next=list;while(next.length){try{localStorage.setItem(historyKey(id),JSON.stringify(next));return next}catch{next=next.slice(0,-1)}}return next}
+function countWords(text){return (text.replace(/%.*$/gm,'').replace(/\\[a-zA-Z]+\*?/g,' ').match(/[\p{L}\p{N}][\p{L}\p{N}'’-]*/gu)||[]).length}
+export function ResumeEditor(){
+ const {projectId}=useParams()
+ const navigate=useNavigate()
+ const [project,setProject]=useState(()=>visibleProjects().find(item=>item.id===projectId))
+ const [loadingProject,setLoadingProject]=useState(!visibleProjects().some(item=>item.id===projectId))
+ const [active,setActive]=useState(()=>visibleProjects().find(item=>item.id===projectId)?.mainFile||'main.tex')
+ const [openFiles,setOpenFiles]=useState(()=>[visibleProjects().find(item=>item.id===projectId)?.mainFile||'main.tex'])
+ const [fileSearch,setFileSearch]=useState('')
+ const [editorFontSize,setEditorFontSize]=useState(()=>Math.min(24,Math.max(11,Number(localStorage.getItem('latex-editor-font-size'))||14)))
+ const [status,setStatus]=useState('Saved locally')
+ const [pdfUrl,setPdfUrl]=useState('')
+ const [compileError,setCompileError]=useState('')
+ const [compilerLog,setCompilerLog]=useState('')
+ const [compiling,setCompiling]=useState(false)
+ const [collapsed,setCollapsed]=useState(()=>new Set())
+ const [autoCompile,setAutoCompile]=useState(()=>localStorage.getItem('latex-auto-compile')==='1')
+ const compileRef=useRef(null)
+ const [showFiles,setShowFiles]=useState(true)
+ const [showPdf,setShowPdf]=useState(true)
+ const [wrap,setWrap]=useState(()=>localStorage.getItem('latex-wrap')==='1')
+ const [historyOpen,setHistoryOpen]=useState(false)
+ const [versions,setVersions]=useState(()=>readVersions(projectId))
+ const saveVersionRef=useRef(null)
+ const toolRef=useRef({})
+ const [spell,setSpell]=useState(()=>localStorage.getItem('latex-spell')==='1')
+ const [helpOpen,setHelpOpen]=useState(false)
+ const [searchOpen,setSearchOpen]=useState(false)
+ const [globalQuery,setGlobalQuery]=useState('')
+ const [searchCase,setSearchCase]=useState(false)
+ const editorRef=useRef(null)
+ const file=project?.files.find(item=>item.name===active)||project?.files[0]
+ const outline=useMemo(()=>file&&!file.isBinary?[...file.content.matchAll(/\\(?:chapter|section|subsection|subsubsection)\*?\{([^}]+)\}/g)].map(match=>({label:match[1],index:match.index})):[],[file])
+ useEffect(()=>{
+  let active=true
+  if(project){setLoadingProject(false);return undefined}
+  if(!localStorage.getItem('token')){setLoadingProject(false);return undefined}
+  resumeProjectAPI.get(projectId).then(({data})=>{
+   if(!active)return
+   const restored=localProject(data.project,currentUserId())
+   writeProjectsLocal([restored,...getProjects().filter(item=>item.id!==restored.id)])
+   setProject(restored)
+   setActive(restored.mainFile)
+   setOpenFiles([restored.mainFile])
+  }).catch(()=>{}).finally(()=>{if(active)setLoadingProject(false)})
+  return ()=>{active=false}
+ },[project,projectId])
+ useEffect(()=>{if(!loadingProject&&!project)navigate('/career/resume/projects',{replace:true})},[loadingProject,project,navigate])
+ useEffect(()=>()=>{if(pdfUrl)URL.revokeObjectURL(pdfUrl)},[pdfUrl])
+ useEffect(()=>{const synced=event=>{if(event.detail!==projectId)return;setProject(current=>current?{...current,cloudSaved:true}:current);setStatus('Saved to your account')};window.addEventListener('resume-project-cloud-saved',synced);return()=>window.removeEventListener('resume-project-cloud-saved',synced)},[projectId])
+ useEffect(()=>{const failed=event=>{if(event.detail?.id===projectId)setStatus(event.detail.message)};window.addEventListener('resume-project-cloud-save-failed',failed);return()=>window.removeEventListener('resume-project-cloud-save-failed',failed)},[projectId])
+ useEffect(()=>{const onKey=event=>{if((event.metaKey||event.ctrlKey)&&event.key==='Enter'){event.preventDefault();compileRef.current?.()}};window.addEventListener('keydown',onKey);return()=>window.removeEventListener('keydown',onKey)},[])
+ useEffect(()=>{if(!autoCompile||!project||!localStorage.getItem('token'))return undefined;const timer=setTimeout(()=>compileRef.current?.(),3500);return()=>clearTimeout(timer)},[autoCompile,project?.updatedAt])
+ useEffect(()=>{const onKey=event=>{if((event.metaKey||event.ctrlKey)&&event.key.toLowerCase()==='s'){event.preventDefault();saveVersionRef.current?.('Manual save')}};window.addEventListener('keydown',onKey);return()=>window.removeEventListener('keydown',onKey)},[])
+ useEffect(()=>{const onKey=event=>{if((event.metaKey||event.ctrlKey)&&event.shiftKey&&event.key.toLowerCase()==='f'){event.preventDefault();setSearchOpen(true)}if(event.key==='Escape'){setSearchOpen(false);setHelpOpen(false);setHistoryOpen(false)}};window.addEventListener('keydown',onKey);return()=>window.removeEventListener('keydown',onKey)},[])
+ const editorExtensions=useMemo(()=>[StreamLanguage.define(stex),Prec.highest(keymap.of([
+  {key:'Mod-b',run:()=>{toolRef.current.wrapSelection?.('\\textbf{','}');return true}},
+  {key:'Mod-i',run:()=>{toolRef.current.wrapSelection?.('\\textit{','}');return true}},
+  {key:'Mod-u',run:()=>{toolRef.current.wrapSelection?.('\\underline{','}');return true}},
+  {key:'Mod-/',run:()=>{toolRef.current.toggleComment?.();return true}},
+  {key:'Mod-Enter',run:()=>{compileRef.current?.();return true}}
+ ])),...(wrap?[EditorView.lineWrapping]:[]),...(spell?[EditorView.contentAttributes.of({spellcheck:'true'})]:[])],[wrap,spell])
+ if(loadingProject)return <main className="latex-wrap"><div className="latex-empty"><h3>Loading project…</h3><p>Restoring the latest saved workspace.</p></div></main>
+ if(!project)return null
+ const persist=(next,message='Saved locally')=>{
+  const updated={...next,updatedAt:new Date().toISOString()}
+  setProject(updated)
+  saveProjects(getProjects().map(item=>item.id===updated.id?updated:item))
+  setStatus(localStorage.getItem('token')?'Saved locally · syncing':'Saved locally')
+  window.setTimeout(()=>setStatus(message),700)
+ }
+ const saveVersion=(label,auto=false)=>{
+  const files=project.files.map(item=>({...item}))
+  const list=readVersions(project.id)
+  if(list[0]&&JSON.stringify(list[0].files)===JSON.stringify(files)){if(!auto)setStatus('No changes since the last version');return}
+  setVersions(writeVersions(project.id,[{id:String(Date.now()),at:new Date().toISOString(),label,mainFile:project.mainFile,files},...list].slice(0,20)))
+  if(!auto)setStatus('Version saved')
+ }
+ saveVersionRef.current=saveVersion
+ const restoreVersion=version=>{
+  if(!confirm(`Restore the version from ${new Date(version.at).toLocaleString()}? Your current files are saved as a version first.`))return
+  saveVersion('Before restore',true)
+  const mainFile=version.files.some(item=>item.name===version.mainFile)?version.mainFile:version.files[0]?.name||project.mainFile
+  persist({...project,mainFile,files:version.files.map(item=>({...item}))},'Version restored')
+  setOpenFiles([mainFile]);setActive(mainFile);setHistoryOpen(false)
+ }
+ const openFile=name=>{setOpenFiles(current=>current.includes(name)?current:[...current,name]);setActive(name)}
+ const updateSource=value=>persist({...project,files:project.files.map(item=>item.name===file.name?{...item,content:value}:item)},'Saved locally')
+ const addFile=()=>{
+  const name=prompt('File path (for example references.bib)')
+  if(!name)return
+  if(!/^[\w .()/-]+\.(tex|bib|sty|cls|txt|md)$/i.test(name)||name.split('/').some(part=>!part||part==='.'||part==='..')){alert('Use a relative path ending in .tex, .bib, .sty, .cls, .txt, or .md.');return}
+  if(project.files.some(item=>item.name===name)){alert('A file with that name already exists.');return}
+  const next={...project,files:[...project.files,{name,content:''}]}
+  persist(next);openFile(name)
+ }
+ const importFile=event=>{
+  const uploaded=event.target.files?.[0]
+  event.target.value=''
+  if(!uploaded)return
+  if(uploaded.size>2*1024*1024){alert('Files must be 2 MB or smaller.');return}
+  if(project.files.length>=100){alert('A project can contain at most 100 files.');return}
+  if(!/\.(tex|bib|sty|cls|txt|md|png|jpe?g|pdf)$/i.test(uploaded.name)){alert('Unsupported file. Use .tex, .bib, .sty, .cls, .txt, .md, .png, .jpg, .jpeg, or .pdf.');return}
+  if(project.files.some(item=>item.name===uploaded.name)){alert('A file with that name already exists.');return}
+  const binary=/\.(png|jpe?g|pdf)$/i.test(uploaded.name)
+  const reader=new FileReader()
+  reader.onload=()=>{
+   const result=String(reader.result)
+   const content=binary?result.slice(result.indexOf(',')+1):result
+   const next={...project,files:[...project.files,{name:uploaded.name,content,isBinary:binary}]}
+   persist(next);openFile(uploaded.name)
+  }
+  if(binary) reader.readAsDataURL(uploaded)
+  else reader.readAsText(uploaded)
+ }
+ const removeFile=name=>{
+  if(name===project.mainFile){alert('Choose another main .tex file before removing this one.');return}
+  if(!confirm(`Remove ${name} from this project?`))return
+  const next={...project,files:project.files.filter(item=>item.name!==name)}
+  persist(next)
+  setOpenFiles(current=>{const remaining=current.filter(item=>item!==name);if(active===name)setActive(remaining[0]||next.mainFile);return remaining.length?remaining:[next.mainFile]})
+ }
+ const renameFile=name=>{
+  const nextName=prompt('New relative file path',name)
+  if(!nextName||nextName===name)return
+  if(!/^[\w .()/-]+\.(tex|bib|sty|cls|txt|md|png|jpe?g|pdf)$/i.test(nextName)||nextName.split('/').some(part=>!part||part==='.'||part==='..')||project.files.some(item=>item.name===nextName)){alert('Choose a unique supported relative file path.');return}
+  const next={...project,mainFile:project.mainFile===name?nextName:project.mainFile,files:project.files.map(item=>item.name===name?{...item,name:nextName}:item)}
+  persist(next);setOpenFiles(current=>current.map(item=>item===name?nextName:item));if(active===name)setActive(nextName)
+ }
+ const setMain=name=>{if(!/\.tex$/i.test(name))return;persist({...project,mainFile:name},'Main document saved')}
+ const insertSnippet=snippet=>{
+  const view=editorRef.current
+  if(!view||!file||file.isBinary)return
+  const {from,to}=view.state.selection.main
+  view.dispatch({changes:{from,to,insert:snippet},selection:{anchor:from+snippet.length},scrollIntoView:true})
+  view.focus()
+ }
+ const wrapSelection=(before,after,placeholder='text')=>{
+  const view=editorRef.current
+  if(!view||!file||file.isBinary)return
+  const {from,to}=view.state.selection.main
+  const selected=view.state.sliceDoc(from,to)||placeholder
+  view.dispatch({changes:{from,to,insert:before+selected+after},selection:{anchor:from+before.length,head:from+before.length+selected.length},scrollIntoView:true})
+  view.focus()
+ }
+ const toggleComment=()=>{
+  const view=editorRef.current
+  if(!view||!file||file.isBinary)return
+  const {from,to}=view.state.selection.main
+  const lines=[];for(let n=view.state.doc.lineAt(from).number;n<=view.state.doc.lineAt(to).number;n++)lines.push(view.state.doc.line(n))
+  const filled=lines.filter(line=>line.text.trim())
+  const uncomment=filled.length>0&&filled.every(line=>/^\s*%/.test(line.text))
+  const changes=filled.map(line=>{if(uncomment){const match=line.text.match(/^(\s*)%\s?/);return {from:line.from+match[1].length,to:line.from+match[0].length,insert:''}}return {from:line.from,insert:'% '}})
+  if(changes.length)view.dispatch({changes})
+  view.focus()
+ }
+ toolRef.current={wrapSelection,toggleComment}
+ const searchResults=searchOpen&&globalQuery.trim().length>1?project.files.filter(item=>!item.isBinary).flatMap(item=>item.content.split('\n').flatMap((text,index)=>{const hay=searchCase?text:text.toLowerCase();const needle=searchCase?globalQuery:globalQuery.toLowerCase();return hay.includes(needle)?[{file:item.name,line:index+1,text:text.trim().slice(0,160)}]:[]})).slice(0,200):[]
+ const navigateOutline=index=>{
+  const view=editorRef.current
+  if(!view)return
+  view.dispatch({selection:{anchor:index},scrollIntoView:true})
+  view.focus()
+ }
+ const compile=async()=>{
+  if(!localStorage.getItem('token')){setCompileError('Sign in to compile this project with the isolated compiler service.');return}
+  if(compiling)return
+  saveVersion('Compiled',true)
+  setCompiling(true);setCompileError('');setCompilerLog('');setStatus('Compiling…')
+  try{
+   const {data,headers}=await resumeProjectAPI.compile(cloudPayload(project))
+   if(pdfUrl)URL.revokeObjectURL(pdfUrl)
+   setPdfUrl(URL.createObjectURL(data))
+   const encodedLog=headers['x-compiler-log']
+   if(encodedLog){try{setCompilerLog(atob(encodedLog))}catch{setCompilerLog('Compilation finished.')}}
+   setStatus('PDF compiled')
+  }catch(error){
+   const response=error.response?.data
+   let message=error.message
+   if(response instanceof Blob){try{const body=JSON.parse(await response.text());message=body.message||message;setCompilerLog(body.log||'')}catch{}}
+   else if(response?.message)message=response.message
+   setCompileError(message||'Compilation failed.');setStatus('Compilation failed')
+  }finally{setCompiling(false)}
+ }
+ compileRef.current=compile
+ const problems=[...compilerLog.matchAll(/^(error|warning):\s*(?:([^\s:]+\.(?:tex|sty|cls|bib)):(\d+):\s*)?(.+)$/gim)].map(match=>({level:match[1].toLowerCase(),file:match[2]||'',line:Number(match[3]||0),message:match[4].trim()}))
+ const jumpTo=problem=>{
+  if(problem.file&&project.files.some(item=>item.name===problem.file))openFile(problem.file)
+  if(!problem.line)return
+  window.setTimeout(()=>{const view=editorRef.current;if(!view)return;const line=view.state.doc.line(Math.min(problem.line,view.state.doc.lines));view.dispatch({selection:{anchor:line.from},scrollIntoView:true});view.focus()},80)
+ }
+ const toggleFolder=dir=>setCollapsed(current=>{const next=new Set(current);if(next.has(dir))next.delete(dir);else next.add(dir);return next})
+ const treeRows=(()=>{
+  const query=fileSearch.toLowerCase()
+  const list=project.files.filter(item=>item.name.toLowerCase().includes(query)).sort((a,b)=>{const ap=a.name.split('/'),bp=b.name.split('/');for(let i=0;i<Math.min(ap.length,bp.length);i++){if(ap[i]!==bp[i]){const ad=i<ap.length-1,bd=i<bp.length-1;if(ad!==bd)return ad?-1:1;return ap[i].localeCompare(bp[i])}}return ap.length-bp.length})
+  const rows=[];const seen=new Set()
+  for(const item of list){const parts=item.name.split('/');let hidden=false
+   for(let i=0;i<parts.length-1;i++){const dir=parts.slice(0,i+1).join('/');if(!seen.has(dir)){seen.add(dir);if(!hidden)rows.push({folder:dir,depth:i})}if(collapsed.has(dir))hidden=true}
+   if(!hidden)rows.push({item,depth:parts.length-1})}
+  return rows
+ })()
+ const downloadPdf=()=>{if(!pdfUrl)return;const link=document.createElement('a');link.href=pdfUrl;link.download=`${project.title.replace(/[^\w-]/g,'-')}.pdf`;link.click()}
+ const downloadZip=async()=>{if(!localStorage.getItem('token')){setCompileError('Sign in to download the project ZIP.');return}try{const {data}=await resumeProjectAPI.sourceZip(project.id);download(`${project.title.replace(/[^\w-]/g,'-')}.zip`,data,'application/zip')}catch(error){setCompileError(error.response?.data?.message||'Could not download the source ZIP. Save the project to your account and try again.')}}
+ const downloadSource=()=>download(`${file.name.split('/').pop()||'source.tex'}`,file.isBinary?Uint8Array.from(atob(file.content),char=>char.charCodeAt(0)):file.content,file.isBinary?'application/octet-stream':'text/plain')
+ const closeTab=(name,event)=>{event.stopPropagation();const remaining=openFiles.filter(item=>item!==name);setOpenFiles(remaining.length?remaining:[project.mainFile]);if(active===name)setActive(remaining[remaining.length-1]||project.mainFile)}
+ return <div className="latex-editor">
+  <header className="latex-editor-top"><Link to="/career/resume/projects"><ArrowLeft size={17}/></Link><input value={project.title} aria-label="Project name" onChange={event=>persist({...project,title:event.target.value})}/><span>{status}</span><button onClick={compile} disabled={compiling} title="Recompile (Ctrl/Cmd + Enter)"><Play size={15}/> {compiling?'Compiling…':'Recompile'}</button><label className="latex-autocompile" title="Recompile automatically after you stop typing"><input type="checkbox" checked={autoCompile} onChange={event=>{setAutoCompile(event.target.checked);localStorage.setItem('latex-auto-compile',event.target.checked?'1':'0')}}/> Auto</label><button onClick={()=>setSearchOpen(true)} title="Search in project (Ctrl/Cmd + Shift + F)"><Search size={15}/> Search</button><button onClick={()=>setHelpOpen(true)} title="Keyboard shortcuts"><Keyboard size={15}/></button><button onClick={()=>{setVersions(readVersions(project.id));setHistoryOpen(true)}} title="Version history (Ctrl/Cmd + S saves a version)"><History size={15}/> History</button><button onClick={()=>{const next=!wrap;setWrap(next);localStorage.setItem('latex-wrap',next?'1':'0')}} title="Toggle line wrapping" aria-pressed={wrap}><WrapText size={15}/> Wrap</button><button onClick={()=>setShowFiles(value=>!value)} title="Show or hide the file panel" aria-pressed={showFiles}><PanelLeft size={15}/></button><button onClick={()=>setShowPdf(value=>!value)} title="Show or hide the PDF panel" aria-pressed={showPdf}><PanelRight size={15}/></button>{pdfUrl&&<button onClick={downloadPdf}><Download size={15}/> PDF</button>}<button onClick={downloadZip}><Download size={15}/> Source ZIP</button><button onClick={downloadSource}><Download size={15}/> File</button></header>
+  <div className={`latex-editor-body${showFiles?'':' hide-files'}${showPdf?'':' hide-pdf'}`}>
+   {showFiles&&<aside className="latex-filepane"><div className="latex-pane-title">PROJECT FILES <button onClick={addFile} title="New file"><Plus size={15}/></button></div>
+    <input className="latex-file-search" value={fileSearch} onChange={event=>setFileSearch(event.target.value)} placeholder="Search files" aria-label="Search project files"/>
+    {treeRows.map(row=>{const item=row.item;return row.folder?<button className="latex-folder-row" key={'dir:'+row.folder} style={{paddingLeft:12+row.depth*12}} onClick={()=>toggleFolder(row.folder)}>{collapsed.has(row.folder)?<ChevronRight size={14}/>:<ChevronDown size={14}/>}<Folder size={14}/>{row.folder.split('/').pop()}</button>:<div className="latex-file-row" key={item.name} style={{paddingLeft:row.depth*12}}><button className={item.name===active?'active':''} onClick={()=>openFile(item.name)} title={item.name}><FileText size={15}/>{item.name.split('/').pop()}{item.name===project.mainFile&&<small>main</small>}</button>{/\.tex$/i.test(item.name)&&<button title="Set main document" aria-label={`Set ${item.name} as the main document`} onClick={()=>setMain(item.name)}>{item.name===project.mainFile?'●':'○'}</button>}<button title="Rename file" aria-label={`Rename ${item.name}`} onClick={()=>renameFile(item.name)}>✎</button><button title="Delete file" aria-label={`Delete ${item.name}`} onClick={()=>removeFile(item.name)}>×</button></div>})}
+    <label className="latex-upload">Upload source or asset<input type="file" accept=".tex,.bib,.sty,.cls,.txt,.md,.png,.jpg,.jpeg,.pdf" hidden onChange={importFile}/></label>
+    <div className="latex-outline"><b>OUTLINE</b>{outline.length?outline.map(item=><button key={`${item.index}-${item.label}`} onClick={()=>navigateOutline(item.index)}>{item.label}</button>):<small>No sections in this file</small>}</div>
+    <div className="latex-editor-note">{project.cloudSaved?'Account-synced project':'Local draft'} · source autosaves as you edit.</div>
+   </aside>}
+   <section className="latex-codepane"><div className="latex-open-tabs">{openFiles.map(name=><button className={name===active?'active':''} key={name} onClick={()=>setActive(name)}>{name.split('/').pop()}<span onClick={event=>closeTab(name,event)}>×</span></button>)}</div><div className="latex-insert-tools"><label className="latex-font-size">Editor text<select aria-label="Editor font size" value={editorFontSize} onChange={event=>{const size=Number(event.target.value);setEditorFontSize(size);localStorage.setItem('latex-editor-font-size',String(size))}}>{[12,13,14,15,16,18,20,22,24].map(size=><option key={size} value={size}>{size}px</option>)}</select></label><button onClick={()=>wrapSelection('\\textbf{','}')} title="Bold (Ctrl/Cmd + B)"><b>B</b></button><button onClick={()=>wrapSelection('\\textit{','}')} title="Italic (Ctrl/Cmd + I)"><i>I</i></button><button onClick={()=>wrapSelection('\\underline{','}')} title="Underline (Ctrl/Cmd + U)"><u>U</u></button><button onClick={()=>wrapSelection('$','$','x')} title="Inline math">$ x $</button><button onClick={()=>wrapSelection('\\href{https://example.com}{','}','link text')} title="Link">Link</button><button onClick={()=>insertSnippet('\\begin{enumerate}\n  \\item First\n  \\item Second\n\\end{enumerate}\n')}>1. List</button><button onClick={()=>insertSnippet('\\begin{tabular}{ll}\n  \\hline\n  A & B \\\\\n  \\hline\n  1 & 2 \\\\\n  \\hline\n\\end{tabular}\n')}>Table</button><button onClick={toggleComment} title="Comment or uncomment (Ctrl/Cmd + /)">%</button><button onClick={()=>insertSnippet('\\section*{New section}\n')}>Section</button><button onClick={()=>insertSnippet('\\begin{itemize}\n  \\item New item\n\\end{itemize}\n')}>List</button><button onClick={()=>insertSnippet('\\begin{figure}[ht]\n  \\centering\n  \\includegraphics[width=0.8\\linewidth]{image.png}\n  \\caption{Caption}\n\\end{figure}\n')}>Figure</button><button onClick={()=>insertSnippet('\\cite{citation-key}')}>Citation</button><button onClick={()=>insertSnippet('\\ref{section-label}')}>Reference</button><button onClick={()=>{const next=!spell;setSpell(next);localStorage.setItem('latex-spell',next?'1':'0')}} title="Browser spell check" aria-pressed={spell}><SpellCheck size={13}/> Spell</button></div>{file?.isBinary?<div className="latex-binary-file"><FileText size={30}/><b>{file.name}</b><p>Binary asset · {Math.round(atob(file.content).length/1024)} KB</p></div>:<CodeMirror value={file?.content||''} height="calc(100vh - 205px)" style={{fontSize:`${editorFontSize}px`}} extensions={editorExtensions} theme={document.documentElement.dataset.theme==='dark'?oneDark:undefined} onChange={updateSource} onCreateEditor={view=>{editorRef.current=view}} basicSetup={{lineNumbers:true,foldGutter:true,highlightActiveLine:true,indentOnInput:true,tabSize:2}}/>}{file&&!file.isBinary&&<div className="latex-statusbar"><span>{countWords(file.content)} words</span><span>{file.content.length} chars</span><span>{file.content.split('\n').length} lines</span><span>{file.name}</span></div>}{compileError&&<div className="latex-compile-error" role="alert">{compileError}</div>}{compilerLog&&<details className="latex-compiler-log"><summary>Compiler log</summary><pre>{compilerLog}</pre></details>}</section>
+   {showPdf&&<aside className="latex-pdfpane"><div className="latex-pane-title">PDF PREVIEW{pdfUrl&&<a className="latex-pdf-open" href={pdfUrl} target="_blank" rel="noreferrer" title="Open PDF in new tab"><ExternalLink size={14}/></a>}</div>{pdfUrl?<iframe title="Compiled PDF" src={`${pdfUrl}#view=FitH`}/>:<div className="latex-no-pdf"><FileText size={34}/><b>Compile to preview your PDF</b><p>Successful compilation creates the real document preview here.</p><button onClick={compile} disabled={compiling}>{compiling?'Compiling…':'Recompile'}</button></div>}{problems.length>0&&<div className="latex-problems"><b>Problems ({problems.length})</b>{problems.slice(0,50).map((item,index)=><button key={index} className={`latex-problem ${item.level}`} onClick={()=>jumpTo(item)}>{item.file&&<span>{item.file}{item.line?`:${item.line}`:''}</span>}{item.message}</button>)}</div>}</aside>}
+  </div>
+  {searchOpen&&<div className="latex-source-overlay" role="dialog" aria-modal="true" aria-label="Search in project" onClick={event=>{if(event.target===event.currentTarget)setSearchOpen(false)}}><section><header><div><b>Search in project</b><small>All text files · Ctrl/Cmd + Shift + F · Esc closes</small></div><button onClick={()=>setSearchOpen(false)}>Close</button></header><div className="latex-gsearch"><input autoFocus value={globalQuery} onChange={event=>setGlobalQuery(event.target.value)} placeholder="Search text (2+ characters)" aria-label="Search text"/><label><input type="checkbox" checked={searchCase} onChange={event=>setSearchCase(event.target.checked)}/> Match case</label></div><div className="latex-history-list">{searchResults.length?searchResults.map((result,index)=><article key={`${result.file}:${result.line}:${index}`}><div><b>{result.file}:{result.line}</b><small>{result.text}</small></div><button onClick={()=>{setSearchOpen(false);jumpTo({file:result.file,line:result.line})}}>Go</button></article>):<p>{globalQuery.trim().length>1?'No matches.':'Type at least 2 characters.'}</p>}</div></section></div>}
+  {helpOpen&&<div className="latex-source-overlay" role="dialog" aria-modal="true" aria-label="Keyboard shortcuts" onClick={event=>{if(event.target===event.currentTarget)setHelpOpen(false)}}><section><header><div><b>Keyboard shortcuts</b><small>Use Ctrl instead of Cmd on Windows and Linux</small></div><button onClick={()=>setHelpOpen(false)}>Close</button></header><dl className="latex-shortcuts">{[['Cmd + Enter','Recompile'],['Cmd + S','Save a version'],['Cmd + B','Bold'],['Cmd + I','Italic'],['Cmd + U','Underline'],['Cmd + /','Comment or uncomment lines'],['Cmd + F','Find and replace in this file'],['Cmd + Shift + F','Search in project'],['Cmd + Z / Cmd + Shift + Z','Undo / redo'],['Esc','Close dialogs']].map(([keys,label])=><div key={keys}><dt>{keys}</dt><dd>{label}</dd></div>)}</dl></section></div>}
+  {historyOpen&&<div className="latex-source-overlay" role="dialog" aria-modal="true" aria-label="Version history"><section><header><div><b>Version history</b><small>Saved in this browser · up to 20 versions · Ctrl/Cmd + S saves one</small></div><button onClick={()=>setHistoryOpen(false)}>Close</button></header><div className="latex-history-list">{versions.length?versions.map(version=><article key={version.id}><div><b>{version.label}</b><small>{new Date(version.at).toLocaleString()} · {version.files.length} file{version.files.length===1?'':'s'}</small></div><button onClick={()=>restoreVersion(version)}>Restore</button></article>):<p>No versions yet. Press Ctrl/Cmd + S or compile to save one.</p>}</div><footer><button className="latex-button primary" onClick={()=>saveVersion('Manual save')}>Save version now</button></footer></section></div>}
+  <div className="latex-editor-mobilebar"><Link to="/career/resume/projects">Projects</Link><label>Upload<input type="file" accept=".tex,.bib,.sty,.cls,.txt,.md,.png,.jpg,.jpeg,.pdf" hidden onChange={importFile}/></label><button onClick={compile}>Recompile</button>{pdfUrl&&<button onClick={downloadPdf}>PDF</button>}</div>
+ </div>
+}
+==========================================================================================
+FILE: ResumeWorkspace.css
+SIZE: 14588 bytes
+.latex-wrap{max-width:1240px;margin:auto;padding:52px 24px 88px;color:var(--text)}.latex-hero{text-align:center;padding:42px 0 58px}.latex-eyebrow{font:600 12px/1.4 ui-monospace,SFMono-Regular,monospace;letter-spacing:.06em;color:var(--accent)}.latex-hero h1,.latex-wrap h1{font-size:clamp(2rem,5vw,3.5rem);line-height:1.1;letter-spacing:-.04em;margin:12px 0}.latex-hero>p,.latex-wrap p{color:var(--muted)}.latex-search{max-width:740px;margin:28px auto 16px;display:flex;align-items:center;gap:10px;padding:8px 10px 8px 16px;border:1px solid var(--border);background:var(--bg-card);border-radius:12px;box-shadow:var(--shadow)}.latex-search input{border:0;outline:0;min-width:0;flex:1;background:transparent;color:var(--text)}.latex-button,.latex-search button{border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text);padding:10px 14px;display:inline-flex;gap:8px;align-items:center;justify-content:center;font-weight:650;font-size:13px}.latex-button.primary,.latex-search button.primary{background:var(--accent);border-color:var(--accent);color:white}.latex-quick{display:flex;justify-content:center;gap:12px;flex-wrap:wrap}.latex-quick>button,.latex-quick>.latex-button{border:0;background:none;color:var(--text);font-weight:600;display:inline-flex;align-items:center;gap:7px;padding:9px;cursor:pointer}.latex-section{padding:28px 0 38px}.latex-section h2{font-size:1.6rem;letter-spacing:-.025em}.latex-section>p{margin:4px 0 20px}.latex-categories{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.latex-category{text-align:left;border:1px solid var(--border);border-radius:12px;background:var(--bg-card);padding:15px;min-height:112px;color:var(--text);transition:.16s}.latex-category:hover,.latex-category.selected{border-color:var(--accent);transform:translateY(-2px);box-shadow:var(--shadow)}.latex-category span{display:block;font:12px ui-monospace,monospace;color:var(--accent);margin-bottom:8px}.latex-category b,.latex-category small{display:block}.latex-category small{color:var(--muted);margin-top:3px;font-size:11px}.latex-section-head{display:flex;justify-content:space-between;align-items:end;gap:20px;margin-bottom:18px}.latex-section-head>a{display:flex;align-items:center;gap:3px;color:var(--accent);font-weight:600}.latex-filters{display:flex;align-items:center;gap:8px;margin-bottom:18px;flex-wrap:wrap}.latex-filters button,.latex-pagination button{background:transparent;color:var(--text);border:1px solid var(--border);border-radius:999px;padding:7px 13px}.latex-filters button.active{background:var(--accent-bg);color:var(--accent);border-color:var(--accent-border)}.latex-filters select{margin-left:auto;background:var(--bg-card);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px}.latex-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}.latex-card{overflow:hidden;border:1px solid var(--border);border-radius:13px;background:var(--bg-card);display:flex;flex-direction:column}.latex-card-preview{background:#edf2f8;padding:18px;display:flex;justify-content:center;height:210px;overflow:hidden}.latex-paper{width:152px;height:196px;flex:0 0 auto;background:white;color:#222;box-shadow:0 4px 18px #172b4d26;padding:17px 14px;font-family:Georgia,serif;overflow:hidden}.paper-kicker{font:7px ui-monospace,monospace;color:#5275a1}.latex-paper h3{font-size:11px;line-height:1.3;margin:14px 0 8px}.paper-rule{border-top:1px solid #5275a1}.paper-meta{font:7px Arial;color:#566}.paper-lines{display:grid;gap:5px;margin:8px 0}.paper-lines i{height:3px;background:#dfe4e9;display:block}.paper-lines i:nth-child(3n){width:72%}.latex-paper b{font-size:8px}.latex-card-copy{padding:14px 16px 10px;flex:1}.latex-card-copy>span{color:var(--accent);font-size:11px;font-weight:700}.latex-card-copy h3{font-size:17px;margin:3px 0}.latex-card-copy p{font-size:13px;line-height:1.45}.latex-card-copy small{display:block;color:var(--muted);font-size:11px;margin-top:10px}.latex-card-open{display:flex;gap:5px;align-items:center;justify-content:space-between;border:0;border-top:1px solid var(--border);background:transparent;color:var(--accent);padding:12px 16px;font-weight:700}.latex-empty{text-align:center;padding:50px 18px;border:1px dashed var(--border);border-radius:14px;color:var(--muted)}.latex-empty h3{color:var(--text);margin:10px}.latex-empty button{margin-top:12px;border:0;color:white;background:var(--accent);padding:10px 15px;border-radius:8px}.latex-pagination{display:flex;justify-content:center;align-items:center;gap:12px;padding:24px 0;color:var(--muted);font-size:13px}.latex-pagination button:disabled{opacity:.4;cursor:default}.latex-back{display:inline-flex;align-items:center;gap:7px;color:var(--accent);margin:0 0 20px}.latex-detail-head{padding:10px 0 30px;border-bottom:1px solid var(--border)}.latex-detail-head p{max-width:700px}.latex-detail-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:20px}.latex-detail-grid{display:grid;grid-template-columns:minmax(240px, .75fr) 1.5fr;gap:42px;padding-top:30px}.latex-metadata h3{margin-bottom:10px}.latex-metadata dl{margin-top:20px;display:grid;grid-template-columns:110px 1fr;gap:10px;font-size:13px}.latex-metadata dt{color:var(--muted)}.latex-metadata dd{font-weight:600}.latex-tags{display:flex;gap:7px;flex-wrap:wrap;margin-top:20px}.latex-tags span{background:var(--accent-bg);color:var(--accent);padding:4px 8px;border-radius:20px;font-size:11px}.latex-detail-preview{background:#edf2f8;border-radius:14px;min-height:500px;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:28px}.latex-detail-preview .latex-paper{width:min(100%,380px);height:490px;padding:40px 36px}.latex-detail-preview .latex-paper h3{font-size:22px}.latex-detail-preview .paper-kicker{font-size:10px}.latex-detail-preview .paper-meta{font-size:11px}.latex-detail-preview .paper-lines i{height:6px}.latex-detail-preview .latex-paper b{font-size:13px}.latex-detail-preview p{font-size:12px;margin-top:15px}.latex-project-list{display:grid;gap:10px}.latex-project-list article{display:flex;align-items:center;gap:14px;border:1px solid var(--border);background:var(--bg-card);border-radius:11px;padding:14px}.latex-project-list article>div{flex:1;display:flex;flex-direction:column}.latex-project-list small{color:var(--muted);font-size:11px}.latex-project-list button{border:1px solid var(--border);background:var(--bg-card);color:var(--text);border-radius:7px;padding:8px 11px}.latex-project-list button:last-child{color:#b42318}.latex-editor{height:calc(100vh - 180px);min-height:580px;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--bg-card);margin:20px auto;max-width:1600px}.latex-editor-top{height:52px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;padding:0 14px}.latex-editor-top>a{display:flex}.latex-editor-top input{border:0;background:transparent;color:var(--text);font-weight:700;max-width:320px}.latex-editor-top span{color:var(--muted);font-size:12px;margin-left:auto}.latex-editor-top button{border:1px solid var(--border);background:var(--bg-card);color:var(--text);border-radius:7px;padding:7px 10px;display:flex;align-items:center;gap:5px;font-size:12px}.latex-editor-body{display:grid;grid-template-columns:205px minmax(300px,1fr) minmax(250px,35%);height:calc(100% - 52px)}.latex-filepane,.latex-pdfpane{background:var(--bg-alt);border-right:1px solid var(--border);overflow:auto}.latex-pane-title{height:42px;padding:12px 12px 8px;font:700 10px ui-monospace,monospace;letter-spacing:.06em;display:flex;justify-content:space-between}.latex-pane-title button{border:0;background:transparent;color:var(--text)}.latex-filepane>button{width:100%;display:flex;align-items:center;gap:7px;text-align:left;padding:9px 12px;background:transparent;border:0;color:var(--text);font-size:12px}.latex-filepane>button.active{background:var(--accent-bg);color:var(--accent)}.latex-upload{display:block;margin:12px;color:var(--accent);font-size:12px;cursor:pointer}.latex-editor-note{margin:16px 12px;color:var(--muted);font-size:11px;line-height:1.45}.latex-codepane{min-width:0;overflow:auto}.latex-tab{height:42px;
+.latex-file-row{display:flex;align-items:stretch;border-bottom:1px solid var(--border)}.latex-file-row>button:first-child{flex:1;min-width:0;display:flex;align-items:center;gap:6px;text-align:left;padding:8px 9px;background:transparent;border:0;color:var(--text);font-size:11px;overflow:hidden}.latex-file-row>button:first-child svg{flex:none}.latex-file-row>button:first-child small{margin-left:auto;color:var(--accent);font-size:9px}.latex-file-row>button:first-child.active{background:var(--accent-bg);color:var(--accent)}.latex-file-row>button:last-child{border:0;background:transparent;padding:0 7px;color:var(--muted);font-size:11px}.latex-open-tabs{height:38px;display:flex;overflow-x:auto;border-bottom:1px solid var(--border);background:var(--bg-alt)}.latex-open-tabs>button{display:flex;align-items:center;gap:9px;white-space:nowrap;background:transparent;color:var(--muted);border:0;border-right:1px solid var(--border);padding:0 12px;font-size:11px}.latex-open-tabs>button.active{background:var(--bg-card);color:var(--text);border-top:2px solid var(--accent)}.latex-open-tabs>button span{font-size:16px;line-height:1}.latex-insert-tools{height:34px;display:flex;gap:3px;align-items:center;padding:0 8px;border-bottom:1px solid var(--border);overflow-x:auto}.latex-insert-tools button{white-space:nowrap;border:0;border-radius:4px;background:transparent;color:var(--muted);padding:4px 7px;font-size:10px}.latex-insert-tools button:hover{background:var(--accent-bg);color:var(--accent)}.latex-binary-file{height:55vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:9px;color:var(--muted);font-size:12px}.latex-binary-file b{color:var(--text)}.latex-compile-error{margin:8px;padding:11px 13px;border-left:3px solid #b42318;background:#fef3f2;color:#8a1c13;border-radius:4px;font-size:12px}.latex-compiler-log{margin:8px;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:11px}.latex-compiler-log pre{max-height:180px;overflow:auto;white-space:pre-wrap;color:var(--muted);margin-top:8px}@media(max-width:900px){.latex-editor-body{grid-template-columns:155px minmax(0,1fr)}.latex-pdfpane{grid-column:1/-1}.latex-insert-tools{height:36px}}
+.resume-editor-page{position:fixed;inset:0;z-index:60;height:100dvh;overflow:hidden;background:var(--bg)}.resume-editor-page .latex-editor{height:100dvh;min-height:0;max-width:none;margin:0;border:0;border-radius:0}.resume-editor-page .latex-editor-body{height:calc(100% - 52px)}.resume-editor-page .latex-codepane .cm-editor{height:calc(100dvh - 128px)!important}@media(max-width:900px){.resume-editor-page .latex-editor{height:100dvh}.resume-editor-page .latex-editor-body{height:calc(100% - 96px)}}
+.latex-file-search{display:block;width:calc(100% - 18px);margin:2px 9px 7px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);font-size:11px}.latex-file-row>button:not(:first-child){flex:none;padding:0 4px!important;font-size:10px;color:var(--muted)}.latex-file-row>button:not(:first-child):hover{color:var(--accent)}
+.latex-source-overlay{position:fixed;inset:0;z-index:80;background:#111827aa;display:grid;place-items:center;padding:18px}.latex-source-overlay>section{width:min(900px,100%);max-height:min(85vh,900px);display:flex;flex-direction:column;background:var(--bg-card);color:var(--text);border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 18px 60px #0005}.latex-source-overlay header,.latex-source-overlay footer{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border)}.latex-source-overlay header small{display:block;color:var(--muted);font-size:11px}.latex-source-overlay header button{border:1px solid var(--border);background:var(--bg-card);color:var(--text);border-radius:7px;padding:7px 10px}.latex-source-overlay pre{overflow:auto;padding:18px;font:12px/1.6 ui-monospace,SFMono-Regular,monospace;white-space:pre}.latex-source-overlay footer{border-top:1px solid var(--border);border-bottom:0;justify-content:end;gap:8px}
+.latex-font-size{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-size:12px;font-weight:600}.latex-font-size select{border:1px solid var(--border);border-radius:6px;padding:5px 7px;background:var(--bg-card);color:var(--text);font:inherit}
+.latex-catalog-status{margin:0 auto 18px;max-width:740px;text-align:center;color:var(--muted);font-size:12px}border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 14px;font-size:12px}.latex-tab span:last-child{color:var(--muted)}.latex-codepane .cm-editor{font-size:13px}.latex-codepane .cm-editor.cm-focused{outline:none}.latex-pdfpane{border-left:1px solid var(--border);border-right:0;display:flex;flex-direction:column}.latex-no-pdf{margin:auto;padding:22px;text-align:center;display:flex;align-items:center;flex-direction:column;gap:10px;color:var(--muted);max-width:270px}.latex-no-pdf b{color:var(--text)}.latex-no-pdf p{font-size:12px}.latex-no-pdf button{background:var(--accent);border:0;color:#fff;padding:8px 12px;border-radius:7px}.latex-pdfpane iframe{width:100%;height:100%;border:0}.latex-editor-mobilebar{display:none}@media(max-width:900px){.latex-categories{grid-template-columns:repeat(2,minmax(0,1fr))}.latex-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.latex-detail-grid{grid-template-columns:1fr}.latex-editor{height:auto;min-height:0}.latex-editor-body{height:auto;grid-template-columns:150px minmax(0,1fr)}.latex-pdfpane{grid-column:1/-1;min-height:300px}.latex-codepane .cm-editor{height:65vh!important}.latex-editor-mobilebar{display:flex;justify-content:space-around;padding:9px;border-top:1px solid var(--border)}}@media(max-width:600px){.latex-wrap{padding:30px 16px 60px}.latex-grid{grid-template-columns:1fr}.latex-section-head{align-items:start;flex-direction:column}.latex-pagination{gap:6px;font-size:11px}.latex-project-list article{flex-wrap:wrap}.latex-project-list article>div{min-width:65%}.latex-editor-top{gap:6px;padding:0 8px}.latex-editor-top input{min-width:40px;max-width:100px}.latex-editor-top span{font-size:10px}.latex-editor-top button{font-size:0;padding:7px}.latex-editor-body{grid-template-columns:105px minmax(0,1fr)}.latex-detail-actions .latex-button{font-size:11px;padding:8px}.latex-category{min-height:102px;padding:11px}}
+
+==========================================================================================
+FILE: VisualResumeEditor.jsx
+SIZE: 9879 bytes
+import { Plus, Trash2, GripVertical } from 'lucide-react'
+import './VisualResumeEditor.css'
+
+const defaultEntry = () => ({ name: '', description: '', details: '', status: '' })
+
+function FieldInput({ field, value, onChange }) {
+  switch (field.type) {
+    case 'textarea':
+      return <textarea rows={2} placeholder={field.placeholder} value={value || ''} onChange={e => onChange(e.target.value)} />
+    case 'bullets':
+      return <>
+        <input type="text" placeholder={field.placeholder} value={value || ''} onChange={e => onChange(e.target.value)} />
+        <textarea rows={2} placeholder={field.placeholder} value={value || ''} onChange={e => onChange(e.target.value)} />
+      </>
+    case 'toggle':
+      return <label className="toggle-label"><input type="checkbox" checked={!!field.value} onChange={e => onChange(e.target.checked)}/> {field.label}</label>
+    default:
+      return <input type={field.type} placeholder={field.placeholder} value={value || ''} onChange={e => onChange(e.target.value)} />
+  }
+}
+
+function SectionEditor({ title, icon, children }) {
+  return (
+    <div className="visual-section">
+      <div className="visual-section-header">
+        <span className="visual-section-title">
+          {icon && <span className="visual-section-icon">{icon}</span>}
+          {title}
+        </span>
+        {children}
+      </div>
+    </div>
+  )
+}
+
+export default function VisualResumeEditor({ data, onChange, title = 'Visual Editor' }) {
+  const updateList = (key, index, field, value) => {
+    onChange(current => {
+      const list = current[key] || []
+      if (!Array.isArray(list)) return current
+      const next = list.map((row, i) => i === index ? { ...row, [field]: value } : row)
+      return { ...current, [key]: next }
+    })
+  }
+
+  const addItem = key => {
+    onChange(current => {
+      const base = defaultEntry()
+      const next = [...(current[key] || []), base]
+      return { ...current, [key]: next }
+    })
+  }
+
+  const removeItem = (key, index) => {
+    onChange(current => {
+      const list = current[key] || []
+      if (!Array.isArray(list)) return current
+      if (list.length === 1) return current // keep at least one entry so visual mode always shows something
+      return { ...current, [key]: list.filter((_, i) => i !== index) }
+    })
+  }
+  const moveSection = (index, dir) => {
+    const sections = ['personal', 'summary', 'experience', 'education', 'projects', 'skills', 'certifications', 'achievements', 'leadership', 'languages', 'optionalSections']
+    const target = index + dir
+    if (target < 0 || target >= sections.length) return
+    onChange(current => {
+      const order = [...(data.order || sections)]
+      const aIdx = order.indexOf(sections[index])
+      const bIdx = order.indexOf(sections[target])
+      if (bIdx < 0 || aIdx < 0 || bIdx === aIdx) return current
+      const nextOrder = [...order]
+      if (dir === -1) {
+        nextOrder.splice(aIdx, 1); nextOrder.splice(bIdx, 0, sections[index])
+      } else {
+        nextOrder.splice(bIdx, 1); nextOrder.splice(aIdx, 0, sections[target])
+      }
+      return { ...current, order: nextOrder }
+    })
+  }
+
+  const sections = [
+    { key: 'personal', title: 'Personal Information', icon: '👤',
+      fields: [
+        { type: 'text', label: 'Full Name', placeholder: 'Jane Doe' },
+        { type: 'text', label: 'Target Role / Title', placeholder: 'Software Engineer' },
+        { type: 'email', label: 'Email', placeholder: 'jane@example.com' },
+        { type: 'tel', label: 'Phone', placeholder: '+1 555 123 4567' },
+        { type: 'text', label: 'Location / City', placeholder: 'San Francisco, CA' },
+        { type: 'text', label: 'Links (LinkedIn, GitHub, portfolio, etc.)', placeholder: 'linkedin.com/in/jane, github.com/jane' },
+      ]},
+    { key: 'summary', title: 'Professional Summary', icon: '📝',
+      fields: [{ type: 'textarea', label: 'Summary', placeholder: 'Summarize your role, experience, and strongest outcomes.' }] },
+    { key: 'experience', title: 'Work Experience & Internships', icon: '💼',
+      fields: [
+        { type: 'text', label: 'Role', placeholder: 'Software Engineer' },
+        { type: 'text', label: 'Company / Organization', placeholder: 'Acme Corp' },
+        { type: 'text', label: 'Dates', placeholder: '2023 – Present' },
+        { type: 'bullets', label: 'Achievements, one per line', placeholder: 'Built a reporting workflow that reduced weekly processing time by 30%' },
+      ]},
+    { key: 'education', title: 'Education', icon: '🎓',
+      fields: [
+        { type: 'text', label: 'Degree', placeholder: 'B.S. Computer Science' },
+        { type: 'text', label: 'Institution', placeholder: 'University of California' },
+        { type: 'text', label: 'Dates', placeholder: '2020 – 2024' },
+        { type: 'toggle', label: 'Include GPA?', value: true },
+        { type: 'text', label: 'GPA (optional)', placeholder: '3.8' },
+      ]},
+    { key: 'projects', title: 'Projects', icon: '🚀',
+      fields: [
+        { type: 'text', label: 'Project Name', placeholder: 'Open Source Auth Library' },
+        { type: 'text', label: 'Link (GitHub, portfolio)', placeholder: 'github.com/example/auth' },
+        { type: 'bullets', label: 'Description & impact, one per line', placeholder: 'Improved authentication response time by 40%' },
+      ]},
+    { key: 'skills', title: 'Technical Skills', icon: '⚙️',
+      fields: [{ type: 'text', label: 'Skills (comma-separated)', placeholder: 'JavaScript, React, Node.js, SQL' }] },
+    { key: 'certifications', title: 'Certifications', icon: '🏅',
+      fields: [
+        { type: 'text', label: 'Certification Name', placeholder: 'AWS Solutions Architect' },
+        { type: 'text', label: 'Issuing Organization', placeholder: 'Amazon Web Services' },
+        { type: 'text', label: 'Date Earned', placeholder: '2024' },
+      ]},
+    { key: 'achievements', title: 'Achievements & Competitive Programming', icon: '🏆',
+      fields: [{ type: 'bullets', label: 'Achievements, one per line', placeholder: 'Won 1st place in HackerRank Category Coding Challenge' }] },
+    { key: 'leadership', title: 'Leadership, Volunteering & Extracurriculars', icon: '🤝',
+      fields: [{ type: 'bullets', label: 'Activities, one per line', placeholder: 'Organized a volunteer team that raised $5K for school STEM club' }] },
+    { key: 'languages', title: 'Languages', icon: '🌐',
+      fields: [{ type: 'text', label: 'Languages (comma-separated)', placeholder: 'English, Spanish, Mandarin' }] },
+    { key: 'optionalSections', title: 'Optional Sections', icon: '🔌',
+      fields: [
+        { type: 'toggle', label: 'Include hobbies section?', value: true },
+        { type: 'bullets', label: 'Hobbies, one per line (if included)', placeholder: 'Running, hiking, reading' },
+        { type: 'toggle', label: 'Include hobbies label?', value: true },
+      ]},
+  ]
+
+  return (
+    <div className="visual-resume-editor">
+      <h2 className="visual-resume-title">{title}</h2>
+      <div className="visual-resume-sections">
+        {sections.map((section, sIndex) => {
+          const items = Array.isArray(data[section.key]) ? data[section.key] : []
+          const hasItems = items.length > 0
+          return (
+            <div className="visual-section-wrap" key={section.key}>
+              <SectionEditor title={section.title} icon={section.icon}>
+                <div className="visual-section-actions">
+                  <button className="visual-move-up" disabled={!hasItems || sIndex === 0} title="Move section up" onClick={() => moveSection(sIndex, -1)}>↑</button>
+                  <span className="visual-grip"><GripVertical size={13}/></span>
+                  <button className="visual-move-down" disabled={!hasItems || sIndex === sections.length - 1} title="Move section down" onClick={() => moveSection(sIndex, 1)}>↓</button>
+                  <button className="visual-add-item" disabled={false} title="Add entry" onClick={() => addItem(section.key)}>
+                    <Plus size={14}/> Add {section.title.toLowerCase()}
+                  </button>
+                </div>
+                {hasItems ? items.map((entry, eIndex) => (
+                  <div className="visual-entry" key={`${section.key}-${eIndex}`}>
+                    <div className="visual-entry-tools">
+                      <button className="visual-remove-item" title="Remove this entry" onClick={() => removeItem(section.key, eIndex)}><Trash2 size={13}/></button>
+                    </div>
+                    {Array.isArray(section.fields) && section.fields.map((field, fIndex) => (
+                      field.type === 'bullets' ?
+                        <>
+                          <label className="visual-field-label">{field.label}</label>
+                          <input type="text" placeholder={field.placeholder} value={entry.name || entry.description || ''} onChange={e => updateList(section.key, eIndex, fIndex === 0 ? 'name' : fIndex, e.target.value)} />
+                          <textarea rows={2} placeholder={field.placeholder} value={entry.details || ''} onChange={e => updateList(section.key, eIndex, fIndex === 0 ? 'details' : fIndex + 1, e.target.value)} />
+                        </> :
+                        <>
+                          <label className="visual-field-label">{field.label}</label>
+                          <FieldInput field={field} value={entry.name || entry.description || entry.details || ''} onChange={v => updateList(section.key, eIndex, fIndex, v)} />
+                        </>
+                    ))}
+                  </div>
+                )) : (
+                  <p className="visual-empty-hint">No entries yet. Click "Add {section.title.toLowerCase()}" to start.</p>
+                )}
+              </SectionEditor>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+==========================================================================================
+FILE: VisualResumeEditor.css
+SIZE: 2608 bytes
+.visual-resume-editor{max-width:880px;margin:32px auto;padding:0 16px;color:var(--text)}.visual-resume-title{font-size:clamp(1.4rem,3vw,2rem);letter-spacing:-.02em;text-align:center;margin:0 0 20px}.visual-resume-sections{display:grid;gap:14px}.visual-section{background:var(--bg-card);border:1px solid var(--border);border-radius:13px;box-shadow:var(--shadow)}.visual-section-wrap{display:flex;flex-direction:column}.visual-section-header{padding:18px 20px 8px;display:flex;align-items:center;gap:10px;background:transparent;border:0;justify-content:space-between}.visual-section-title{display:flex;align-items:center;gap:8px;font-size:1.05rem;font-weight:700}.visual-section-icon{font-size:1.25rem}.visual-section-actions{display:flex;align-items:center;gap:8px}.visual-move-up,.visual-move-down,.visual-add-item,.visual-remove-item{border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--accent);cursor:pointer;font-size:0.72rem;font-weight:650;padding:7px 9px;white-space:nowrap}.visual-move-up:hover,.visual-move-down:hover{border-color:var(--accent);background:var(--accent-bg)}.visual-move-up:disabled,.visual-move-down:disabled,.visual-add-item:disabled,.visual-remove-item:disabled{opacity:.35;cursor:not-allowed}.visual-grip{color:var(--muted);font-size:.7rem}.visual-entry{position:relative}.visual-field{padding:14px 16px 14px 42px}.visual-field label{display:block;font-size:.78rem;font-weight:600;color:var(--muted);margin-bottom:5px}.visual-field input,.visual-field textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 11px;background:var(--bg-input);color:var(--text);outline:none;font-size:14px;font-family:inherit}.visual-field input:focus,.visual-field textarea:focus{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 18%,transparent)}.visual-field textarea{resize:vertical}.visual-empty-hint{color:var(--muted);text-align:center;font-size:.88rem;padding:26px 12px;border:1px dashed var(--border);border-radius:10px}.visual-entry-tools{position:absolute;top:-7px;right:6px;display:flex;gap:6px;z-index:2}.visual-entry-tools button{border:1px solid var(--border);border-radius:6px;background:rgba(24,255,107,.1);color:#188038;cursor:pointer;font-size:.72rem;padding:5px 8px}.visual-entry-tools button:hover{background:rgba(24,255,107,.18)}.visual-field-label{display:block;font-size:.78rem;font-weight:600;color:var(--muted);margin-bottom:4px}@media(max-width:900px){.visual-resume-sections{grid-template-columns:1fr}.visual-field{padding:12px 14px 12px 38px}.visual-section-actions{flex-wrap:wrap}}
+
+==========================================================================================
+FILE: ResumeTemplateDetail.jsx
+FILE NOT FOUND
+
+==========================================================================================
+CLIENT PACKAGE.JSON
+{
+  "name": "client",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "oxlint",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@codemirror/commands": "^6.11.1",
+    "@codemirror/language": "^6.13.1",
+    "@codemirror/legacy-modes": "^6.5.5",
+    "@codemirror/search": "^6.7.2",
+    "@codemirror/state": "^6.7.6",
+    "@codemirror/theme-one-dark": "^6.1.3",
+    "@codemirror/view": "^6.43.15",
+    "@uiw/react-codemirror": "^4.25.12",
+    "axios": "^1.19.0",
+    "codemirror": "^6.0.2",
+    "jszip": "^3.10.2",
+    "lucide-react": "^1.41.0",
+    "pdfjs-dist": "^5.4.394",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "react-router-dom": "^7.18.2"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.4",
+    "oxlint": "^1.75.0",
+    "vite": "^8.2.0"
+  }
+}

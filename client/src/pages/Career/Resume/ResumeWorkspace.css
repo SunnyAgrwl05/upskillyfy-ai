@@ -50,3 +50,6 @@
 .latex-shortcuts dt{font:600 12px ui-monospace,monospace}
 .latex-shortcuts dd{color:var(--muted)}
 .latex-project-search select{background:transparent;color:var(--text);border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-size:12px}
+.latex-template-pdf{display:block;width:100%;height:clamp(520px,72vh,920px);border:1px solid var(--border);border-radius:12px;background:#f2f4f7}
+.latex-detail-preview{min-width:0}
+@media(max-width:760px){.latex-template-pdf{height:70vh;min-height:480px}}

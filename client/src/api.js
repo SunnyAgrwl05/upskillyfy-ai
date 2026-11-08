@@ -15,6 +15,60 @@ const API = axios.create({
   baseURL: getBaseURL(),
 })
 
+const templateListCache = new Map()
+const templateDetailCache = new Map()
+const acceptsCachedStatus = (status) => (status >= 200 && status < 300) || status === 304
+
+function stableQueryKey(params = {}) {
+  return JSON.stringify(Object.entries(params)
+    .filter(([, value]) => value !== undefined && value !== null && value !== '')
+    .sort(([left], [right]) => left.localeCompare(right)))
+}
+
+function validateTemplateList(data) {
+  if (!data || !Array.isArray(data.templates) || !data.pagination
+    || !Number.isFinite(data.pagination.page) || !Number.isFinite(data.pagination.pages)
+    || !Number.isFinite(data.pagination.total)) {
+    throw Object.assign(new Error('The template catalogue returned an invalid response.'), { code: 'INVALID_TEMPLATE_RESPONSE' })
+  }
+  return data
+}
+
+function validateTemplateDetail(data) {
+  if (!data?.template || typeof data.template.id !== 'string') {
+    throw Object.assign(new Error('The template detail response was empty or invalid.'), { code: 'INVALID_TEMPLATE_RESPONSE' })
+  }
+  return data
+}
+
+async function getTemplateData(url, key, cache, validate, params, signal) {
+  const config = {
+    params,
+    signal,
+    headers: { 'Cache-Control': 'no-cache, no-store' },
+    validateStatus: acceptsCachedStatus,
+  }
+  let response = await API.get(url, config)
+  if (response.status === 304) {
+    const cached = cache.get(key)
+    if (cached) return { ...response, status: 200, data: cached }
+
+    // A fresh page can receive a conditional 304 without a JS cache to supply
+    // the body. One cache-busting retry forces an unconditional JSON response.
+    response = await API.get(url, {
+      ...config,
+      params: { ...(params || {}), _resumeRefresh: Date.now() },
+      headers: { ...config.headers, Pragma: 'no-cache' },
+    })
+    if (response.status === 304) {
+      throw Object.assign(new Error('The template server returned 304 without a cached response.'), { code: 'TEMPLATE_CACHE_MISS' })
+    }
+  }
+  const data = validate(response.data)
+  cache.set(key, data)
+  return { ...response, data }
+}
+
 API.interceptors.request.use((config) => {
   const token = localStorage.getItem('token')
   if (token) config.headers.Authorization = `Bearer ${token}`
@@ -92,10 +146,10 @@ export const assessmentAPI = {
 export const resumeProjectAPI = {
   list: () => API.get('/resume-projects'),
   get: (id) => API.get(`/resume-projects/${encodeURIComponent(id)}`),
-  create: (project) => API.post('/resume-projects', project),
-  update: (id, project) => API.put(`/resume-projects/${encodeURIComponent(id)}`, project),
+  create: (project) => API.post('/resume-projects', serializeResumeProject(project)),
+  update: (id, project) => API.put(`/resume-projects/${encodeURIComponent(id)}`, serializeResumeProject({ ...project, id })),
   remove: (id) => API.delete(`/resume-projects/${encodeURIComponent(id)}`),
-  compile: (project) => API.post('/resume-projects/compile', project, { responseType: 'blob' }),
+  compile: (project) => API.post('/resume-projects/compile', serializeResumeProject(project), { responseType: 'blob' }),
   sourceZip: (id) => API.get(`/resume-projects/${encodeURIComponent(id)}/source.zip`, { responseType: 'blob' }),
   importZip: (archive) => {
     const form = new FormData()
@@ -104,9 +158,49 @@ export const resumeProjectAPI = {
   },
 }
 
+function serializeResumeProject(project = {}) {
+  return {
+    id: project.id,
+    name: project.name ?? project.title,
+    mainFile: project.mainFile,
+    templateId: project.templateId || null,
+    tags: Array.isArray(project.tags) ? project.tags : [],
+    archived: project.archived === true,
+    trashed: project.trashed === true,
+    files: (Array.isArray(project.files) ? project.files : []).map((file) => ({
+      path: file.path ?? file.name,
+      content: file.content,
+      isBinary: file.isBinary === true,
+    })),
+  }
+}
+
 export const latexTemplateAPI = {
-  list: (params) => API.get('/latex-templates', { params }),
-  get: (id) => API.get(`/latex-templates/${encodeURIComponent(id)}`),
+  list: (params, { signal } = {}) => getTemplateData(
+    '/latex-templates', stableQueryKey(params), templateListCache, validateTemplateList, params, signal,
+  ),
+  get: (id, { signal } = {}) => {
+    const key = String(id)
+    return getTemplateData(
+      `/latex-templates/${encodeURIComponent(key)}`, key, templateDetailCache, validateTemplateDetail, undefined, signal,
+    )
+  },
+  previewPdf: (id, { signal } = {}) => API.get(
+    `/latex-templates/${encodeURIComponent(id)}/preview.pdf`, { responseType: 'blob', signal },
+  ),
+}
+
+export const resumeAnalysisAPI = {
+  analyze: (file, jobDescription = '', onUploadProgress) => {
+    const form = new FormData()
+    form.append('resume', file)
+    if (jobDescription.trim()) form.append('jobDescription', jobDescription.trim())
+    return API.post('/resume-analysis', form, { onUploadProgress })
+  },
+  list: (params) => API.get('/resume-analysis', { params }),
+  get: (id) => API.get(`/resume-analysis/${encodeURIComponent(id)}`),
+  saveReview: (id, payload) => API.patch(`/resume-analysis/${encodeURIComponent(id)}/review`, payload),
+  remove: (id) => API.delete(`/resume-analysis/${encodeURIComponent(id)}`),
 }
 
 export const certificateAPI = {

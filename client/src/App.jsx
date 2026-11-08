@@ -31,6 +31,7 @@ import Placements from "./pages/Career/Placements/Placements";
 import DSAHub from "./pages/Career/DSA/DSAHub";
 import { ResumeGallery, ResumeTemplateDetail } from "./pages/Career/Resume/ResumeWorkspace";
 import ATSResumeBuilder from "./pages/Career/Resume/ATSResumeBuilder";
+import ResumeAnalyzer from "./pages/Career/Resume/ResumeAnalyzer";
 import OverleafDashboard from "./pages/Career/Resume/OverleafDashboard";
 import OverleafEditor from "./pages/Career/Resume/OverleafEditor";
 
@@ -162,6 +163,7 @@ export default function App() {
               path="/career/resume"
               element={<ResumeGallery />}
             />
+            <Route path="/career/resume-analyzer" element={<ResumeAnalyzer />} />
             <Route path="/career/resume/templates/:templateId" element={<ResumeTemplateDetail />} />
             <Route path="/career/resume/create" element={<ATSResumeBuilder />} />
             <Route path="/career/resume/projects" element={<OverleafDashboard />} />

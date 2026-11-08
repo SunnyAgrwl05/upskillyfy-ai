@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { resumeProjectAPI } from '../../../api'
 import { readProjects, upsertProject, downloadBlob } from './ovStore'
+import { fromResumeProjectPayload, getCurrentUserId } from './resumeWorkspaceUtils'
 import './OverleafEditor.css'
 
 const HIDDEN = '.gitkeep'
@@ -40,6 +41,7 @@ export default function OverleafEditor() {
   const { projectId } = useParams()
   const navigate = useNavigate()
   const [project, setProject] = useState(() => readProjects().find((p) => p.id === projectId))
+  const [loadingProject, setLoadingProject] = useState(() => !readProjects().some((p) => p.id === projectId))
   const [active, setActive] = useState(null)
   const [tabs, setTabs] = useState([])
   const [collapsed, setCollapsed] = useState(new Set())
@@ -64,14 +66,38 @@ export default function OverleafEditor() {
   projectRef.current = project
 
   useEffect(() => {
-    if (!project) { navigate('/career/resume/projects', { replace: true }); return }
+    if (!project) {
+      if (!localStorage.getItem('token')) {
+        setLoadingProject(false)
+        navigate('/career/resume/projects', { replace: true })
+        return undefined
+      }
+      let activeRequest = true
+      resumeProjectAPI.get(projectId).then(({ data }) => {
+        if (!activeRequest) return
+        const restored = fromResumeProjectPayload(data.project, getCurrentUserId())
+        if (!restored) throw new Error('The saved project response is invalid.')
+        const saved = upsertProject(restored)
+        setProject(saved)
+        setActive(saved.mainFile || saved.files[0]?.name || null)
+        setTabs([saved.mainFile || saved.files[0]?.name].filter(Boolean))
+        setHistory(readHistory(saved.id))
+        setLoadingProject(false)
+      }).catch(() => {
+        if (!activeRequest) return
+        setLoadingProject(false)
+        navigate('/career/resume/projects', { replace: true })
+      })
+      return () => { activeRequest = false }
+    }
+    setLoadingProject(false)
     if (!active) {
       const first = project.mainFile || project.files[0]?.name
       setActive(first)
       setTabs([first])
       setHistory(readHistory(project.id))
     }
-  }, [project, active, navigate])
+  }, [project, projectId, active, navigate])
 
   useEffect(() => () => { if (pdfRef.current) URL.revokeObjectURL(pdfRef.current) }, [])
 
@@ -95,16 +121,22 @@ export default function OverleafEditor() {
     clearTimeout(cloudTimer.current)
     cloudTimer.current = setTimeout(async () => {
       try {
-        await resumeProjectAPI.update(p.id, p)
+        await resumeProjectAPI.create(p)
+        const owner = getCurrentUserId()
+        const current = readProjects().find((item) => item.id === p.id) || p
+        upsertProject({ ...current, cloudSaved: true, cloudOwner: owner || current.cloudOwner })
         setStatus('Saved to your account')
-      } catch (e) {
-        if (e.response?.status === 404) {
-          try { await resumeProjectAPI.create(p); setStatus('Saved to your account'); return } catch { /* fall through */ }
-        }
+      } catch {
         setStatus('Saved locally (cloud save failed)')
       }
     }, 1500)
   }, [])
+
+  useEffect(() => {
+    const owner = getCurrentUserId()
+    if (!project || !owner || (project.cloudSaved && project.cloudOwner === owner)) return
+    scheduleCloud(project)
+  }, [project?.id, project?.cloudSaved, project?.cloudOwner, scheduleCloud])
 
   const persist = useCallback((next, msg = 'Saved locally') => {
     const saved = upsertProject(next)
@@ -314,6 +346,7 @@ export default function OverleafEditor() {
     </>
   )
 
+  if (loadingProject) return <div className="ove-loading" role="status">Restoring your saved project…</div>
   if (!project) return null
 
   const isImage = file?.isBinary && /^data:image\//.test(file.content)

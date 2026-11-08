@@ -28,7 +28,7 @@
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) (v18.0.0 or later)
+- [Node.js](https://nodejs.org/) (v20.0.0 or later; Node 22+ is recommended)
 - [MongoDB](https://www.mongodb.com/) (local instance or free MongoDB Atlas cluster)
 
 ---
@@ -142,6 +142,36 @@ upskillyfy-ai/
 - **Instagram**: [@upskillyfy](https://www.instagram.com/upskillyfy/)
 
 ---
+
+### ATS Resume PDFs and AI Resume Analyzer
+
+The Resume Builder includes compiled PDF previews for the five ATS templates. The PDFs are generated from the catalog's checked-in `main.tex` files with Tectonic and are stored in `client/public/resume-templates/`. `manifest.json` records source and PDF SHA-256 hashes. The public preview API checks those hashes against the current server template source before serving a PDF.
+
+Regenerate the template assets after editing one of these template sources:
+
+```bash
+cd server
+npm run resume:build-template-pdfs
+```
+
+Tectonic must be installed. It may download LaTeX bundle resources the first time. The compiler runs with `--untrusted`; generated PDFs are checked in, so production preview does not require a compiler.
+
+The AI Resume Analyzer is available at `/career/resume-analyzer`. It accepts a PDF up to 10 MB and 30 pages, extracts selectable text in a bounded worker with memory, time, and concurrency limits, and does not retain the uploaded PDF or raw extracted text. Scanned PDFs need OCR and are rejected with an explicit message. Extracted text is sent to the configured server-side OpenAI-compatible provider. The `OPENAI_API_KEY` is never sent to the browser. Set `OPENAI_API_KEY`, `OPENAI_MODEL`, and optionally `OPENAI_BASE_URL` in `server/.env`; without a key, analysis returns an explicit unavailable response.
+
+For signed-in users, structured extracted resume details and feedback are saved in MongoDB until the user deletes the analysis. Guest results remain in page memory. Target job description text is used for in-request keyword matching and is not stored. No resume claims are externally verified. Users must review all nine extracted sections before the application transfers the data to the existing ATS Resume Builder. The transfer creates a new editable project and does not replace existing projects.
+
+Resume analysis endpoints:
+
+- `POST /api/resume-analysis` — upload `resume` as multipart PDF; optionally include `jobDescription`.
+- `GET /api/resume-analysis?page=1&limit=10` — signed-in user's paginated history.
+- `GET /api/resume-analysis/:analysisId` — read an owned analysis.
+- `PATCH /api/resume-analysis/:analysisId/review` — save corrected fields and section confirmations.
+- `DELETE /api/resume-analysis/:analysisId` — delete an owned analysis.
+- `GET /api/latex-templates/:templateId/preview.pdf` — source-hash checked PDF preview/download.
+
+Run the local PDF and analyzer service tests with `cd server && npm run test:resume`. The Mongo-backed route integration tests require an explicitly isolated local `TEST_MONGODB_URI` whose database name includes `resume_builder_test`; never point it at the application database. `npm test` includes the existing project tests as well.
+
+The deterministic ATS score reports document completeness and text readability checks only; it is not a hiring prediction. AI feedback and user confirmation do not verify degrees, employment, certificates, awards, or achievements.
 
 ## 📄 License
 

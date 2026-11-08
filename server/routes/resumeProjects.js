@@ -30,16 +30,16 @@ const compileLimiter = rateLimit({
 
 function cleanInput(body) {
   if (!body || typeof body !== 'object' || Array.isArray(body)) throw Object.assign(new Error('A project object is required.'), { status: 422 })
-  const name = typeof body.name === 'string' ? body.name.trim().slice(0, 120) : ''
+  const name = typeof body.name === 'string' ? body.name.trim() : ''
   const mainFile = typeof body.mainFile === 'string' ? body.mainFile : ''
   const clientId = typeof body.id === 'string' && /^[a-z0-9-]{10,64}$/i.test(body.id) ? body.id : ''
   if (!clientId) throw Object.assign(new Error('A valid project id is required.'), { status: 422 })
-  if (!name) throw Object.assign(new Error('Project name is required.'), { status: 422 })
+  if (!name || name.length > 120) throw Object.assign(new Error('Project name is required and must be at most 120 characters.'), { status: 422 })
   if (!Array.isArray(body.files) || body.files.length < 1 || body.files.length > MAX_FILES) throw Object.assign(new Error(`Projects must contain 1–${MAX_FILES} files.`), { status: 422 })
   let total = 0
   const paths = new Set()
   const files = body.files.map((file) => {
-    if (!file || typeof file.path !== 'string' || !VALID_FILE.test(file.path) || file.path.includes('\\') || file.path.split('/').some((part) => !part || part === '.' || part === '..')) {
+    if (!file || typeof file.path !== 'string' || file.path.length > 240 || !VALID_FILE.test(file.path) || file.path.includes('\\') || file.path.split('/').some((part) => !part || part === '.' || part === '..')) {
       throw Object.assign(new Error('A file path is invalid. Use a relative path with a supported LaTeX source or asset extension.'), { status: 422 })
     }
     if (paths.has(file.path)) throw Object.assign(new Error(`Duplicate file path: ${file.path}`), { status: 422 })
@@ -53,11 +53,29 @@ function cleanInput(body) {
     return { path: file.path, content: file.content, isBinary }
   })
   if (!paths.has(mainFile) || !/\.tex$/i.test(mainFile) || files.find((file) => file.path === mainFile)?.isBinary) throw Object.assign(new Error('The main file must point to a text .tex file in this project.'), { status: 422 })
-  return { clientId, name, mainFile, files, templateId: typeof body.templateId === 'string' ? body.templateId.slice(0, 120) : null }
+  const tags = body.tags === undefined ? [] : body.tags
+  if (!Array.isArray(tags) || tags.length > 30 || tags.some(tag => typeof tag !== 'string' || !tag.trim() || tag.trim().length > 40 || /[\u0000-\u001f\u007f]/.test(tag))) {
+    throw Object.assign(new Error('Project tags must contain at most 30 non-empty values of 40 characters or fewer.'), { status: 422 })
+  }
+  if (body.archived !== undefined && typeof body.archived !== 'boolean') throw Object.assign(new Error('Project archived state must be a boolean.'), { status: 422 })
+  if (body.trashed !== undefined && typeof body.trashed !== 'boolean') throw Object.assign(new Error('Project trashed state must be a boolean.'), { status: 422 })
+  const result = {
+    clientId, name, mainFile, files,
+    templateId: typeof body.templateId === 'string' ? body.templateId.slice(0, 120) : null,
+  }
+  if (body.tags !== undefined) result.tags = [...new Set(tags.map(tag => tag.trim()))]
+  if (body.archived !== undefined) result.archived = body.archived
+  if (body.trashed !== undefined) result.trashed = body.trashed
+  return result
 }
 
 function publicProject(project) {
-  return { id: project.clientId || String(project._id), name: project.name, mainFile: project.mainFile, templateId: project.templateId, files: project.files, createdAt: project.createdAt, updatedAt: project.updatedAt }
+  return {
+    id: project.clientId || String(project._id), name: project.name, mainFile: project.mainFile,
+    templateId: project.templateId, files: project.files, tags: project.tags || [],
+    archived: project.archived === true, trashed: project.trashed === true,
+    createdAt: project.createdAt, updatedAt: project.updatedAt,
+  }
 }
 
 router.use(protect)
@@ -100,6 +118,7 @@ router.get('/:projectId/source.zip', asyncHandler(async (req, res, next) => {
 
 router.put('/:projectId', asyncHandler(async (req, res) => {
   const input = cleanInput(req.body)
+  if (input.clientId !== req.params.projectId) return res.status(422).json({ message: 'Project id must match the URL.', code: 'PROJECT_ID_MISMATCH' })
   const project = await ResumeProject.findOneAndUpdate(
     { clientId: req.params.projectId, owner: req.user._id },
     { $set: { ...input, clientId: req.params.projectId } },
@@ -128,7 +147,7 @@ router.post('/import-zip', zipUpload.single('archive'), asyncHandler(async (req,
     const entryPath = entry.entryName.replaceAll('\\', '/')
     const normalized = path.posix.normalize(entryPath)
     const mode = (entry.header.attr >>> 16) & 0xf000
-    if (entryPath.startsWith('/') || entryPath.includes('\0') || normalized === '..' || normalized.startsWith('../') || normalized !== entryPath || mode === 0xa000) {
+    if (entryPath.length > 240 || entryPath.startsWith('/') || entryPath.includes('\0') || normalized === '..' || normalized.startsWith('../') || normalized !== entryPath || mode === 0xa000) {
       return res.status(422).json({ message: `Unsafe archive entry: ${entry.entryName}` })
     }
     if (!VALID_FILE.test(entryPath)) return res.status(422).json({ message: `Unsupported project file: ${entryPath}` })
@@ -150,55 +169,15 @@ router.post('/import-zip', zipUpload.single('archive'), asyncHandler(async (req,
   res.json({ files, mainFile, mainFiles })
 }))
 
-/**
- * Universal Cloud LaTeX Compilation Engine
- * Works universally on Windows local development, Vercel serverless, Render, and Linux VPS.
- */
-async function compileWithCloud(input) {
-  const resources = input.files.map((file) => {
-    const item = { path: file.path, content: file.content }
-    if (file.path === input.mainFile) item.main = true
-    return item
-  })
-
-  const response = await fetch('https://latex.ytotech.com/builds/sync', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      compiler: 'pdflatex',
-      resources,
-    }),
-  })
-
-  if (response.ok) {
-    const arrayBuffer = await response.arrayBuffer()
-    return {
-      success: true,
-      pdf: Buffer.from(arrayBuffer),
-      log: 'Compiled successfully via universal cloud engine.',
-    }
-  }
-
-  let errorLog = ''
-  try {
-    const errData = await response.json()
-    errorLog = errData.logs || (errData.log_files && Object.values(errData.log_files).join('\n')) || errData.error || 'Compilation failed.'
-  } catch {
-    errorLog = await response.text()
-  }
-
-  return {
-    success: false,
-    log: errorLog || 'LaTeX compilation failed.',
-  }
-}
-
 router.post('/compile', compileLimiter, asyncHandler(async (req, res) => {
   const input = cleanInput(req.body)
   const image = process.env.LATEX_COMPILER_IMAGE
+  if (!image || !/^[\w./:-]+$/.test(image)) {
+    return res.status(503).json({ message: 'The isolated LaTeX compiler is not configured.', code: 'COMPILER_UNAVAILABLE' })
+  }
 
-  // 1. If isolated Docker compiler image is configured and available, try local container
-  if (image && /^[\w./:-]+$/.test(image)) {
+  // User-authored source runs only in the network-disabled Docker sandbox.
+  {
     const root = await mkdtemp(path.join(tmpdir(), 'upskillyfy-latex-'))
     const sourceDir = path.join(root, 'source')
     const outputDir = path.join(root, 'output')
@@ -241,33 +220,18 @@ router.post('/compile', compileLimiter, asyncHandler(async (req, res) => {
       if (result.code !== 0) return res.status(422).json({ message: 'LaTeX compilation failed.', code: 'COMPILE_FAILED', log })
       const pdfPath = path.join(outputDir, `${path.basename(input.mainFile, path.extname(input.mainFile))}.pdf`)
       const pdf = await readFile(pdfPath)
+      if (!pdf.subarray(0, 5).equals(Buffer.from('%PDF-'))) return res.status(422).json({ message: 'Compiler output is not a valid PDF.', code: 'INVALID_COMPILER_OUTPUT' })
       if (pdf.length > MAX_PDF_BYTES) return res.status(413).json({ message: 'Generated PDF exceeds the 20 MB limit.' })
       res.set({ 'Content-Type': 'application/pdf', 'Content-Length': String(pdf.length), 'Cache-Control': 'no-store', 'X-Compiler-Log': Buffer.from(log.slice(0, 4000)).toString('base64') })
       return res.send(pdf)
     } catch (dockerErr) {
-      console.warn('Docker compiler unavailable, falling back to universal engine:', dockerErr.message)
+      if (dockerErr.status === 504) return res.status(504).json({ message: 'LaTeX compilation timed out.', code: 'COMPILE_TIMEOUT' })
+      console.error('[resume-compiler] isolated compiler failed:', dockerErr.message)
+      return res.status(503).json({ message: 'The isolated LaTeX compiler is temporarily unavailable.', code: 'COMPILER_UNAVAILABLE' })
     } finally {
       if (child?.exitCode === null) child.kill('SIGKILL')
       await rm(root, { recursive: true, force: true }).catch(() => {})
     }
-  }
-
-  // 2. Universal compilation engine (works on Windows without Docker, Render, Vercel, and anywhere)
-  try {
-    const cloudRes = await compileWithCloud(input)
-    if (!cloudRes.success) {
-      return res.status(422).json({ message: 'LaTeX compilation failed.', code: 'COMPILE_FAILED', log: cloudRes.log })
-    }
-    res.set({
-      'Content-Type': 'application/pdf',
-      'Content-Length': String(cloudRes.pdf.length),
-      'Cache-Control': 'no-store',
-      'X-Compiler-Log': Buffer.from((cloudRes.log || '').slice(0, 4000)).toString('base64'),
-    })
-    return res.send(cloudRes.pdf)
-  } catch (err) {
-    console.error('Universal compilation error:', err)
-    return res.status(502).json({ message: 'Compilation service temporarily unavailable. Please try again.', code: 'COMPILER_UNAVAILABLE', details: err.message })
   }
 }))
 

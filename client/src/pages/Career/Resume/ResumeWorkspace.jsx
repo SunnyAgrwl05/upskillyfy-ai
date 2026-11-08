@@ -8,112 +8,97 @@ import { stex } from '@codemirror/legacy-modes/mode/stex'
 import { oneDark } from '@codemirror/theme-one-dark'
 import { Search, FileText, Plus, ArrowLeft, Download, Play, FolderOpen, Code2, Trash2, Upload, ChevronRight, ChevronDown, Folder, ExternalLink, Copy, History, PanelLeft, PanelRight, WrapText, Keyboard, SpellCheck } from 'lucide-react'
 import { latexTemplateAPI, resumeProjectAPI } from '../../../api'
+import { readProjects, writeProjects, uid } from './ovStore'
+import {
+  RESUME_CATEGORIES, RESUME_STARTER, filterLocalTemplates, findLocalTemplate,
+  fromResumeProjectPayload, getCurrentUserId, isValidTexUpload, normalizeTemplate,
+  toResumeProjectPayload,
+} from './resumeWorkspaceUtils'
 import './ResumeWorkspace.css'
 
-const categories = ['Journal Articles', 'Bibliographies', 'Books', 'Calendars', 'CVs and Résumés', 'Formal Letters', 'Assignments', 'Newsletters', 'Posters', 'Presentations', 'Theses and Dissertations', 'Research Papers', 'Reports', 'Cover Letters']
-const starter = String.raw`\documentclass[11pt,a4paper]{article}
-\usepackage[margin=1.6cm]{geometry}
-\usepackage[T1]{fontenc}
-\usepackage[hidelinks]{hyperref}
-\usepackage{enumitem}
-\pagestyle{empty}
-\setlength{\parindent}{0pt}
-\begin{document}
-{\Huge \textbf{Your Name}}
-\par
-Software Engineer \hfill \href{mailto:you@example.com}{you@example.com}
-\vspace{8pt}\hrule\vspace{8pt}
-\section*{Summary}
-Write a concise professional summary here.
-\section*{Experience}
-\textbf{Company Name} — Software Engineer \hfill 2023--Present
-\begin{itemize}[leftmargin=1.2em]
-  \item Describe a measurable achievement and the impact you made.
-\end{itemize}
-\section*{Education}
-\textbf{University Name} — B.Tech, Computer Science \hfill 2023
-\section*{Skills}
-JavaScript, React, Node.js, Python
-\end{document}`
-const templates = [
-  { id: 'ats-resume', title: 'ATS-Friendly Resume', category: 'CVs and Résumés', kind: 'Templates', author: 'Upskillyfy AI', description: 'A clean single-column resume starter designed to keep your experience easy to scan.', tags: ['ATS', 'Resume', 'Single column'], source: starter },
-  { id: 'software-engineer', title: 'Software Engineer Resume', category: 'CVs and Résumés', kind: 'Templates', author: 'Upskillyfy AI', description: 'A technical resume with focused experience, skills, and project sections.', tags: ['Engineering', 'Projects'], source: starter.replace('Your Name', 'Jordan Ellis') },
-  { id: 'academic-cv', title: 'Academic CV', category: 'CVs and Résumés', kind: 'Templates', author: 'Upskillyfy AI', description: 'An adaptable academic CV structure for education, research, and publications.', tags: ['Academic', 'CV'], source: starter.replace('Software Engineer', 'Researcher') },
-  { id: 'cover-letter', title: 'Cover Letter', category: 'Cover Letters', kind: 'Templates', author: 'Upskillyfy AI', description: 'A minimal letter layout for a tailored application.', tags: ['Letter', 'Career'], source: starter.replace('Your Name', 'Your Name') },
-  { id: 'quick-guide', title: 'A Quick Guide to LaTeX', category: 'Examples', kind: 'Examples', author: 'Upskillyfy AI', description: 'A compact example project showing the basic structure of a LaTeX document.', tags: ['Guide', 'LaTeX'], source: starter },
-  { id: 'research-report', title: 'Scientific Research Report', category: 'Reports', kind: 'Examples', author: 'Upskillyfy AI', description: 'A sample report structure with abstract, methods, results, and references.', tags: ['Research', 'Report'], source: starter },
-  { id: 'thesis', title: 'Mathematics Thesis', category: 'Theses and Dissertations', kind: 'Examples', author: 'Upskillyfy AI', description: 'An original thesis structure with chapter and bibliography placeholders.', tags: ['Thesis', 'Mathematics'], source: starter },
-  { id: 'journal', title: 'Basic Academic Journal Article', category: 'Journal Articles', kind: 'Templates', author: 'Upskillyfy AI', description: 'A lightweight article starter for an abstract, sections, and references.', tags: ['Article', 'Academic'], source: starter },
-  { id: 'presentation', title: 'University Presentation', category: 'Presentations', kind: 'Examples', author: 'Upskillyfy AI', description: 'A simple presentation project outline. Replace the article class with Beamer to extend it.', tags: ['Slides', 'University'], source: starter },
-  { id: 'conference-proceedings', title: 'Conference Proceedings', category: 'Research Papers', kind: 'Examples', author: 'Upskillyfy AI', description: 'An original proceedings layout for paper titles, abstracts, and author details.', tags: ['Conference', 'Proceedings'], source: starter },
-  { id: 'undergraduate-thesis', title: 'Undergraduate Thesis', category: 'Theses and Dissertations', kind: 'Examples', author: 'Upskillyfy AI', description: 'A starting outline for an undergraduate thesis with front matter and chapters.', tags: ['Thesis', 'Undergraduate'], source: starter },
-  { id: 'dissertation', title: 'University Dissertation', category: 'Theses and Dissertations', kind: 'Examples', author: 'Upskillyfy AI', description: 'A long-form dissertation outline with chapter and reference placeholders.', tags: ['Dissertation', 'University'], source: starter },
-  { id: 'math-philosophy', title: 'Mathematical Philosophy Journal', category: 'Journal Articles', kind: 'Examples', author: 'Upskillyfy AI', description: 'An original sample journal manuscript structure for mathematical philosophy.', tags: ['Journal', 'Mathematics'], source: starter },
-  { id: 'engineering-project', title: 'Computer Engineering Project', category: 'Reports', kind: 'Examples', author: 'Upskillyfy AI', description: 'A project report layout for engineering objectives, implementation, and results.', tags: ['Engineering', 'Project'], source: starter },
-  { id: 'academic-article', title: 'Academic Article', category: 'Journal Articles', kind: 'Templates', author: 'Upskillyfy AI', description: 'A concise scholarly article template with the common manuscript sections.', tags: ['Article', 'Academic'], source: starter },
-  { id: 'community-guide', title: 'Preparing a Reproducible LaTeX Project', category: 'Reports', kind: 'Community', author: 'Upskillyfy AI', description: 'An original community guide to keeping source files and assets organized in a LaTeX project.', tags: ['Community', 'Guide'], source: starter },
-]
-const localTemplateAliases = {
-  'ats-friendly-resume': 'ats-resume',
-  'software-engineer-resume': 'software-engineer',
-  'fresher-resume': 'ats-resume',
-  'experienced-professional-resume': 'software-engineer',
+const categories = RESUME_CATEGORIES
+const starter = RESUME_STARTER
 
+const getProjects = () => readProjects()
+const currentUserId = () => getCurrentUserId()
+const visibleProjects = () => {
+  const owner = currentUserId()
+  return getProjects().filter(project => !project.cloudOwner || project.cloudOwner === owner)
 }
-
-// Keep the gallery usable when the template API is temporarily unavailable.
-function filterLocalTemplates(search = '', kind = 'All', category = 'All') {
-  const query = String(search).trim().toLowerCase()
-  return templates.filter((template) => {
-    const searchable = [
-      template.title,
-      template.description,
-      template.author,
-      template.category,
-      ...(Array.isArray(template.tags) ? template.tags : []),
-    ].join(' ').toLowerCase()
-    return (!query || searchable.includes(query))
-      && (kind === 'All' || template.kind === kind)
-      && (category === 'All' || template.category === category)
-  })
+const writeProjectsLocal = items => {
+  try { writeProjects(items); return true } catch { return false }
+}
+const cloudSaveTimers = new Map()
+function scheduleCloudSave(project) {
+  const owner = currentUserId()
+  if (!owner || project.cloudOwner !== owner) return
+  clearTimeout(cloudSaveTimers.get(project.id))
+  const timer = window.setTimeout(async () => {
+    cloudSaveTimers.delete(project.id)
+    try {
+      await resumeProjectAPI.create(toResumeProjectPayload(project))
+      window.dispatchEvent(new CustomEvent('resume-project-cloud-saved', { detail: project.id }))
+    } catch {
+      window.dispatchEvent(new CustomEvent('resume-project-cloud-save-failed', {
+        detail: { id: project.id, message: 'Saved locally · cloud sync failed' },
+      }))
+    }
+  }, 700)
+  cloudSaveTimers.set(project.id, timer)
 }
 
 function saveProjects(items) {
   const before = getProjects()
-  const normalized = items.map(item => before.some(previous => previous.id === item.id && previous.cloudSaved) ? { ...item, cloudSaved: true } : item)
-  writeProjectsLocal(normalized)
-  for (const item of normalized) {
-    const previous = before.find(old => old.id === item.id)
-    if (!previous || JSON.stringify(previous) !== JSON.stringify(item)) scheduleCloudSave(item)
-  }
-  for (const previous of before) {
-    if (!normalized.some(item => item.id === previous.id) && previous.cloudSaved && previous.cloudOwner === currentUserId()) resumeProjectAPI.remove(previous.id).catch(() => { })
-  }
+  const owner = currentUserId()
+  const normalized = items.map(item => {
+    const previous = before.find(value => value.id === item.id)
+    return {
+      ...item,
+      cloudOwner: item.cloudOwner || previous?.cloudOwner || owner || null,
+      cloudSaved: item.cloudSaved === true || previous?.cloudSaved === true,
+    }
+  })
+  const foreign = before.filter(item => item.cloudOwner && item.cloudOwner !== owner && !normalized.some(value => value.id === item.id))
+  const allProjects = [...normalized, ...foreign]
+  writeProjectsLocal(allProjects)
+  return normalized
 }
-export function createProject(title = 'Untitled Resume', source = starter, files = [{ name: 'main.tex', content: source }], templateId = null, mainFile = 'main.tex') { const projects = getProjects(); const p = { id: crypto.randomUUID(), title, mainFile, files, templateId, cloudOwner: currentUserId(), updatedAt: new Date().toISOString() }; saveProjects([p, ...projects]); return p }
-function localProject(remote, owner) { return { id: remote.id, title: remote.name, mainFile: remote.mainFile, templateId: remote.templateId, files: remote.files.map(file => ({ name: file.path, content: file.content, isBinary: file.isBinary === true })), updatedAt: remote.updatedAt, cloudSaved: true, cloudOwner: owner } }
+export function createProject(title = 'Untitled Resume', source = starter, files = [{ name: 'main.tex', content: source }], templateId = null, mainFile = 'main.tex') {
+  const project = {
+    id: uid(), title, mainFile, files, templateId,
+    cloudOwner: currentUserId(), updatedAt: new Date().toISOString(),
+  }
+  saveProjects([project, ...getProjects()])
+  return project
+}
+function localProject(remote, owner) { return fromResumeProjectPayload(remote, owner) }
 async function importProjectFile(file, navigate) {
   if (!file) return
-  const extension = file.name.split('.').pop().toLowerCase()
-  if (extension === 'zip') {
-    if (!localStorage.getItem('token')) { alert('Sign in to import a ZIP project.'); return }
-    if (file.size > 5 * 1024 * 1024) { alert('ZIP archives must be 5 MB or smaller.'); return }
-    try {
+  const extension = file.name.split('.').pop()?.toLowerCase()
+  try {
+    if (extension === 'zip') {
+      if (!localStorage.getItem('token')) { alert('Sign in to import a ZIP project.'); return }
+      if (!Number.isFinite(file.size) || file.size > 5 * 1024 * 1024) { alert('ZIP archives must be 5 MB or smaller.'); return }
       const { data } = await resumeProjectAPI.importZip(file)
+      if (!Array.isArray(data?.files) || !Array.isArray(data?.mainFiles) || !data.mainFiles.length) throw new Error('The archive did not contain a usable LaTeX project.')
       const mainFile = data.mainFiles.length > 1 ? prompt(`Choose the main .tex file:\n${data.mainFiles.join('\n')}`, data.mainFile) : data.mainFile
       if (!mainFile || !data.mainFiles.includes(mainFile)) return
-      const files = data.files.map(entry => ({ name: entry.path, content: entry.content, isBinary: entry.isBinary }))
-      const main = files.find(entry => entry.name === mainFile)
-      const project = createProject(file.name.replace(/\.zip$/i, ''), main.content, files, null, mainFile)
+      const projectFiles = data.files.map(entry => ({ name: entry.path, content: entry.content, isBinary: entry.isBinary === true }))
+      const main = projectFiles.find(entry => entry.name === mainFile)
+      if (!main || main.isBinary) throw new Error('The selected main document is invalid.')
+      const project = createProject(file.name.replace(/\.zip$/i, ''), main.content, projectFiles, null, mainFile)
       navigate(`/career/resume/editor/${project.id}`)
-    } catch (error) { alert(error.response?.data?.message || 'Could not import this ZIP project.') }
-    return
+      return
+    }
+    if (!isValidTexUpload(file)) { alert('Import a .tex file that is no larger than 2 MB.'); return }
+    const content = await file.text()
+    if (!content.trim()) { alert('The selected .tex file is empty.'); return }
+    const name = file.name.replace(/\.tex$/i, '')
+    const project = createProject(name, content, [{ name: file.name, content }])
+    navigate(`/career/resume/editor/${project.id}`)
+  } catch (error) {
+    alert(error.response?.data?.message || error.message || 'Could not import this project.')
   }
-  if (extension !== 'tex') { alert('Import a .tex file or a ZIP project archive.'); return }
-  if (file.size > 2 * 1024 * 1024) { alert('TeX files must be 2 MB or smaller.'); return }
-  const reader = new FileReader()
-  reader.onload = () => { const content = String(reader.result); const project = createProject(file.name.replace(/\.tex$/i, ''), content, [{ name: file.name, content }]); navigate(`/career/resume/editor/${project.id}`) }
-  reader.readAsText(file)
 }
 function download(name, content, type = 'text/plain') { const url = URL.createObjectURL(content instanceof Blob ? content : new Blob([content], { type })); const a = document.createElement('a'); a.href = url; a.download = name; a.click(); window.setTimeout(() => URL.revokeObjectURL(url), 1000) }
 function Preview({ title, category }) { return <div className="latex-paper"><div className="paper-kicker">UPSKILLYFY AI · ORIGINAL DEMO</div><h3>{title}</h3><div className="paper-rule" /><div className="paper-meta">{category}</div><div className="paper-lines"><i /><i /><i /><i /><i /><i /><i /></div><b>Experience</b><div className="paper-lines"><i /><i /><i /><i /></div><b>Education</b><div className="paper-lines"><i /><i /><i /></div></div> }
@@ -121,33 +106,181 @@ function createFrom(template) { const normalized = normalizeTemplate(template); 
 
 export function ResumeGallery() {
   const [q, setQ] = useState('')
+  const [search, setSearch] = useState('')
   const [kind, setKind] = useState('All')
   const [category, setCategory] = useState('All')
   const [page, setPage] = useState(1)
   const [items, setItems] = useState([])
   const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 })
-  const [catalogStatus, setCatalogStatus] = useState('Loading templates…')
+  const [loading, setLoading] = useState(true)
+  const [catalogStatus, setCatalogStatus] = useState('')
   const navigate = useNavigate()
-  useEffect(() => { let active = true; latexTemplateAPI.list({ search: q, kind, category, page, limit: 6 }).then(({ data }) => { if (!active) return; setItems(data.templates.map(normalizeTemplate)); setPagination(data.pagination); setCatalogStatus('') }).catch(() => { if (active) { const local = filterLocalTemplates(q, kind, category); setItems(local.map(normalizeTemplate).slice((page - 1) * 6, page * 6)); setPagination({ page, pages: Math.max(1, Math.ceil(local.length / 6)), total: local.length }); setCatalogStatus('Offline template catalogue') } }); return () => { active = false } }, [q, kind, category, page])
-  useEffect(() => setPage(1), [q, kind, category])
-  return <main className="latex-wrap"><div className="latex-hero"><div className="latex-eyebrow">{'{upskillyfy template gallery}'}</div><h1>LaTeX templates</h1><p>LaTeX templates for journal articles, academic papers, CVs and résumés, presentations, and more.</p><form className="latex-search" onSubmit={e => e.preventDefault()}><Search size={19} /><input value={q} onChange={e => setQ(e.target.value)} placeholder="Search templates, authors, categories…" aria-label="Search templates" /><button className="latex-button primary">Search</button></form><div className="latex-quick"><button onClick={() => navigate('/career/resume/create')}><FileText size={16} /> Create Resume</button><button onClick={() => navigate('/career/resume/projects')}><FolderOpen size={16} /> My Projects</button><button onClick={() => navigate(`/career/resume/editor/${createProject().id}`)}><Plus size={16} /> Write Your Own LaTeX Code</button><label className="latex-button"><Upload size={16} /> Import Existing Project<input type="file" accept=".tex,.zip,text/plain,application/zip" hidden onChange={e => { importProjectFile(e.target.files?.[0], navigate); e.target.value = '' }} /></label></div></div>{catalogStatus && <p role="status" className="latex-catalog-status">{catalogStatus}</p>}<section className="latex-section"><h2>Categories</h2><p>Browse a document type to get started.</p><div className="latex-categories">{categories.map((c, i) => <button className={`latex-category ${category === c ? 'selected' : ''}`} key={c} onClick={() => setCategory(category === c ? 'All' : c)}><span>{String(i + 1).padStart(2, '0')}</span><b>{c}</b><small>{['Articles and submissions', 'Citations and references', 'Long-form documents', 'Planning and scheduling', 'Professional profiles', 'Formal correspondence', 'Coursework and classes', 'Editorial projects', 'Research communication', 'Talks and slides', 'Graduate research', 'Academic studies', 'Findings and analysis', 'Job applications'][i]}</small></button>)}</div></section><section className="latex-section"><div className="latex-section-head"><div><h2>Templates</h2><p>Original Upskillyfy AI document starters.</p></div><Link to="/career/resume/projects">My Projects <ChevronRight size={16} /></Link></div><div className="latex-filters">{['All', 'Templates', 'Examples', 'Community'].map(k => <button key={k} className={kind === k ? 'active' : ''} onClick={() => setKind(k)}>{k === 'Community' ? 'Community articles' : k}</button>)}<select value={category} onChange={e => setCategory(e.target.value)}><option>All</option>{categories.map(c => <option key={c}>{c}</option>)}</select></div>{items.length ? <div className="latex-grid">{items.map(t => <article className="latex-card" key={t.id}><Link to={`/career/resume/templates/${t.id}`} className="latex-card-preview"><Preview title={t.title} category={t.category} /></Link><div className="latex-card-copy"><span>{t.category}</span><Link to={`/career/resume/templates/${t.id}`}><h3>{t.title}</h3></Link><p>{t.description}</p><small>{t.author} · {t.kind}</small></div><button className="latex-card-open" onClick={() => { const p = createFrom(t); navigate(`/career/resume/editor/${p.id}`) }}>Open as template <ChevronRight size={15} /></button></article>)}</div> : <div className="latex-empty"><FileText /><h3>No matching documents</h3><p>Try another search or clear the selected category.</p></div>}<div className="latex-pagination"><span>{pagination.total} results</span><button disabled={page === 1} onClick={() => setPage(page - 1)}>Previous</button><span>Page {page} of {pagination.pages}</span><button disabled={page >= pagination.pages} onClick={() => setPage(page + 1)}>Next</button></div></section></main>
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setSearch(q.trim())
+      setPage(1)
+    }, 250)
+    return () => window.clearTimeout(timer)
+  }, [q])
+
+  useEffect(() => {
+    const controller = new AbortController()
+    const loadTemplates = async () => {
+      setLoading(true)
+      try {
+        const { data } = await latexTemplateAPI.list({ search, kind, category, page, limit: 6 }, { signal: controller.signal })
+        if (controller.signal.aborted) return
+        const normalized = data.templates.map(normalizeTemplate).filter(Boolean)
+        setItems(normalized)
+        setPagination(data.pagination)
+        setCatalogStatus('')
+      } catch (error) {
+        if (controller.signal.aborted) return
+        const local = filterLocalTemplates(search, kind, category)
+        const pages = Math.max(1, Math.ceil(local.length / 6))
+        const safePage = Math.min(page, pages)
+        if (safePage !== page) setPage(safePage)
+        setItems(local.slice((safePage - 1) * 6, safePage * 6))
+        setPagination({ page: safePage, pages, total: local.length })
+        setCatalogStatus('Using the offline template catalogue')
+        if (!local.length && error.code !== 'ERR_CANCELED') {
+          console.warn('Template catalogue request failed; offline filters returned no matches.')
+        }
+      } finally {
+        if (!controller.signal.aborted) setLoading(false)
+      }
+    }
+    loadTemplates()
+    return () => controller.abort()
+  }, [search, kind, category, page])
+
+  const changeKind = value => { setKind(value); setPage(1) }
+  const changeCategory = value => { setCategory(value); setPage(1) }
+
+  return <main className="latex-wrap">
+    <div className="latex-hero">
+      <div className="latex-eyebrow">{'{upskillyfy template gallery}'}</div>
+      <h1>LaTeX templates</h1>
+      <p>LaTeX templates for journal articles, academic papers, CVs and résumés, presentations, and more.</p>
+      <form className="latex-search" onSubmit={event => { event.preventDefault(); setSearch(q.trim()); setPage(1) }}>
+        <Search size={19} />
+        <input value={q} onChange={event => setQ(event.target.value)} placeholder="Search templates, authors, categories…" aria-label="Search templates" />
+        <button className="latex-button primary" type="submit">Search</button>
+      </form>
+      <div className="latex-quick">
+        <button onClick={() => navigate('/career/resume/create')}><FileText size={16} /> Create Resume</button>
+        <button onClick={() => navigate('/career/resume/projects')}><FolderOpen size={16} /> My Projects</button>
+        <button onClick={() => navigate(`/career/resume/editor/${createProject().id}`)}><Plus size={16} /> Write Your Own LaTeX Code</button>
+        <label className="latex-button"> <Upload size={16} /> Import Existing Project
+          <input type="file" accept=".tex,.zip,text/plain,application/zip" hidden onChange={event => { importProjectFile(event.target.files?.[0], navigate); event.target.value = '' }} />
+        </label>
+      </div>
+    </div>
+    {catalogStatus && <p role="status" className="latex-catalog-status">{catalogStatus}</p>}
+    <section className="latex-section">
+      <h2>Categories</h2>
+      <p>Browse a document type to get started.</p>
+      <div className="latex-categories">
+        {categories.map((item, index) => <button className={`latex-category ${category === item ? 'selected' : ''}`} key={item} onClick={() => changeCategory(category === item ? 'All' : item)}>
+          <span>{String(index + 1).padStart(2, '0')}</span><b>{item}</b>
+          <small>{['Articles and submissions', 'Citations and references', 'Long-form documents', 'Planning and scheduling', 'Professional profiles', 'Formal correspondence', 'Coursework and classes', 'Editorial projects', 'Research communication', 'Talks and slides', 'Graduate research', 'Academic studies', 'Findings and analysis', 'Job applications'][index]}</small>
+        </button>)}
+      </div>
+    </section>
+    <section className="latex-section">
+      <div className="latex-section-head"><div><h2>Templates</h2><p>Original Upskillyfy AI document starters.</p></div><Link to="/career/resume/projects">My Projects <ChevronRight size={16} /></Link></div>
+      <div className="latex-filters">
+        {['All', 'Templates', 'Examples', 'Community'].map(value => <button key={value} className={kind === value ? 'active' : ''} onClick={() => changeKind(value)}>{value === 'Community' ? 'Community articles' : value}</button>)}
+        <select value={category} onChange={event => changeCategory(event.target.value)} aria-label="Filter by category"><option>All</option>{categories.map(item => <option key={item}>{item}</option>)}</select>
+      </div>
+      {loading && !items.length ? <div className="latex-empty" role="status"><h3>Loading templates…</h3><p>Loading the template catalogue.</p></div> : items.length ? <div className="latex-grid">
+        {items.map(template => <article className="latex-card" key={template.id}>
+          <Link to={`/career/resume/templates/${template.id}`} className="latex-card-preview"><Preview title={template.title} category={template.category} /></Link>
+          <div className="latex-card-copy"><span>{template.category}</span><Link to={`/career/resume/templates/${template.id}`}><h3>{template.title}</h3></Link><p>{template.description}</p><small>{template.author} · {template.kind}</small></div>
+          <button className="latex-card-open" onClick={() => { const project = createFrom(template); navigate(`/career/resume/editor/${project.id}`) }}>Open as template <ChevronRight size={15} /></button>
+        </article>)}
+      </div> : <div className="latex-empty"><FileText /><h3>No matching documents</h3><p>Try another search or clear the selected category.</p></div>}
+      <div className="latex-pagination"><span>{pagination.total} results</span>
+        <button disabled={loading || page === 1} onClick={() => setPage(value => Math.max(1, value - 1))}>Previous</button>
+        <span>Page {pagination.page} of {pagination.pages}</span>
+        <button disabled={loading || page >= pagination.pages} onClick={() => setPage(value => Math.min(pagination.pages, value + 1))}>Next</button>
+      </div>
+    </section>
+  </main>
 }
 export function ResumeTemplateDetail() {
   const { templateId } = useParams()
   const navigate = useNavigate()
+  const localTemplate = useMemo(() => findLocalTemplate(templateId), [templateId])
   const [showSource, setShowSource] = useState(false)
-  const [template, setTemplate] = useState(() => normalizeTemplate(findLocalTemplate(templateId) || {}))
+  const [template, setTemplate] = useState(localTemplate)
   const [loading, setLoading] = useState(true)
   const [catalogStatus, setCatalogStatus] = useState('')
-  useEffect(() => { let active = true; setLoading(true); setCatalogStatus(''); latexTemplateAPI.get(templateId).then(({ data }) => { if (active) setTemplate(normalizeTemplate(data.template)) }).catch(() => { if (active && findLocalTemplate(templateId)) setCatalogStatus('Offline template catalogue') }).finally(() => { if (active) setLoading(false) }); return () => { active = false } }, [templateId])
-  if (loading && !template.id) return <main className="latex-wrap"><div className="latex-empty"><h3>Loading template…</h3></div></main>
-  if (!template.id) return <main className="latex-wrap"><h1>Template not found</h1><Link to="/career/resume">Back to templates</Link></main>
+  const [loadError, setLoadError] = useState('')
+  const [previewUrl, setPreviewUrl] = useState('')
+  const [previewStatus, setPreviewStatus] = useState('Loading compiled PDF…')
+  useEffect(() => {
+    const controller = new AbortController()
+    setLoading(true)
+    setTemplate(localTemplate)
+    setCatalogStatus('')
+    setLoadError('')
+    latexTemplateAPI.get(templateId, { signal: controller.signal })
+      .then(({ data }) => {
+        if (controller.signal.aborted) return
+        const normalized = normalizeTemplate(data.template)
+        if (!normalized) throw new Error('The template response was empty or invalid.')
+        setTemplate(normalized)
+      })
+      .catch(error => {
+        if (controller.signal.aborted) return
+        if (localTemplate) setCatalogStatus('Using the offline template catalogue')
+        else setLoadError(error.response?.data?.message || 'This template could not be loaded. Please try again.')
+      })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false) })
+    return () => controller.abort()
+  }, [templateId, localTemplate])
+  useEffect(() => {
+    let objectUrl = ''
+    let active = true
+    setPreviewUrl('')
+    if (!template?.previewPdf) {
+      setPreviewStatus('A compiled PDF preview is not available for this template.')
+      return undefined
+    }
+    setPreviewStatus('Loading compiled PDF…')
+    latexTemplateAPI.previewPdf(template.id).then(({ data }) => {
+      if (!active) return
+      if (!(data instanceof Blob) || data.type !== 'application/pdf' || data.size < 1000) {
+        throw new Error('The PDF preview response was invalid.')
+      }
+      objectUrl = URL.createObjectURL(data)
+      setPreviewUrl(objectUrl)
+      setPreviewStatus('')
+    }).catch(async error => {
+      if (!active) return
+      let message = 'The compiled PDF preview could not be loaded.'
+      try {
+        const blob = error.response?.data
+        if (blob instanceof Blob) message = JSON.parse(await blob.text()).message || message
+        else message = error.response?.data?.message || message
+      } catch { /* retain the safe fallback */ }
+      if (active) setPreviewStatus(message)
+    })
+    return () => {
+      active = false
+      if (objectUrl) URL.revokeObjectURL(objectUrl)
+    }
+  }, [template?.id, template?.previewPdf])
+  if (loading && !template?.id) return <main className="latex-wrap"><div className="latex-empty"><h3>Loading template…</h3></div></main>
+  if (!template?.id) return <main className="latex-wrap"><h1>Template unavailable</h1><p role="alert">{loadError || 'This template could not be found.'}</p><Link to="/career/resume">Back to templates</Link></main>
   return <main className="latex-wrap">
     <Link className="latex-back" to="/career/resume"><ArrowLeft size={16} /> Back to all templates</Link>
     {catalogStatus && <p role="status" className="latex-catalog-status">{catalogStatus}</p>}
-    <div className="latex-detail-head"><div><span className="latex-eyebrow">{template.category}</span><h1>{template.title}</h1><p>{template.description}</p><div className="latex-detail-actions"><button className="latex-button primary" onClick={() => { const project = createFrom(template); navigate(`/career/resume/editor/${project.id}`) }}><Code2 size={16} /> Open as Template</button><button className="latex-button" onClick={() => setShowSource(true)}><Code2 size={16} /> View Source</button><button className="latex-button" onClick={() => download('main.tex', template.source)}><Download size={16} /> Download Source</button><button className="latex-button" disabled title="No compiled PDF is available">PDF unavailable</button></div></div></div>
-    <div className="latex-detail-grid"><aside className="latex-metadata"><h3>About this project</h3><p>{template.description}</p><dl><dt>Author</dt><dd>{template.author}</dd><dt>License</dt><dd>Not provided · original demo</dd><dt>Last updated</dt><dd>Not provided</dd><dt>Compiler</dt><dd>Not provided</dd><dt>Source files</dt><dd>main.tex</dd></dl><div className="latex-tags">{template.tags.map(tag => <span key={tag}>{tag}</span>)}</div></aside><div className="latex-detail-preview"><div className="latex-no-pdf"><FileText size={34} /><b>PDF preview unavailable</b><p>No compiled PDF is available for this original demo template. Open it as a project to edit its source.</p></div></div></div>
-    {showSource && <div className="latex-source-overlay" role="dialog" aria-modal="true" aria-label={`${template.title} source`}><section><header><div><b>main.tex</b><small>{template.title} · original demo source</small></div><button onClick={() => setShowSource(false)} aria-label="Close source">Close</button></header><pre><code>{template.source}</code></pre><footer><button className="latex-button" onClick={() => download('main.tex', template.source)}><Download size={15} /> Download source</button><button className="latex-button primary" onClick={() => { const project = createFrom(template); navigate(`/career/resume/editor/${project.id}`) }}>Open as project</button></footer></section></div>}
+    <div className="latex-detail-head"><div><span className="latex-eyebrow">{template.category}</span><h1>{template.title}</h1><p>{template.description}</p><div className="latex-detail-actions"><button className="latex-button primary" onClick={() => { const project = createFrom(template); navigate(`/career/resume/editor/${project.id}`) }}><Code2 size={16} /> Open as Template</button><button className="latex-button" onClick={() => setShowSource(true)}><Code2 size={16} /> View Source</button><button className="latex-button" onClick={() => download(template.mainFile, template.source)}><Download size={16} /> Download .tex</button>{previewUrl && <a className="latex-button" href={previewUrl} download={`${template.id}.pdf`}><Download size={16} /> Download PDF</a>}</div></div></div>
+    <div className="latex-detail-grid"><aside className="latex-metadata"><h3>About this project</h3><p>{template.description}</p><dl><dt>Author</dt><dd>{template.author}</dd><dt>License</dt><dd>{template.license || 'Not provided'}</dd><dt>Last updated</dt><dd>{template.lastUpdated || 'Not provided'}</dd><dt>Compiler</dt><dd>{template.compiler || 'LaTeX'}</dd><dt>Source files</dt><dd>{template.files.map(file => file.name).join(', ')}</dd></dl><div className="latex-tags">{template.tags.map(tag => <span key={tag}>{tag}</span>)}</div></aside><div className="latex-detail-preview">{previewUrl ? <iframe className="latex-template-pdf" src={previewUrl} title={`${template.title} PDF preview`} /> : <div className="latex-no-pdf" role="status"><FileText size={34} /><b>{previewStatus.includes('Loading') ? 'Preparing PDF preview' : 'PDF preview unavailable'}</b><p>{previewStatus}</p></div>}</div></div>
+    {showSource && <div className="latex-source-overlay" role="dialog" aria-modal="true" aria-label={`${template.title} source`}><section><header><div><b>{template.mainFile}</b><small>{template.title} · original demo source</small></div><button onClick={() => setShowSource(false)} aria-label="Close source">Close</button></header><pre><code>{template.source}</code></pre><footer><button className="latex-button" onClick={() => download(template.mainFile, template.source)}><Download size={15} /> Download source</button><button className="latex-button primary" onClick={() => { const project = createFrom(template); navigate(`/career/resume/editor/${project.id}`) }}>Open as project</button></footer></section></div>}
   </main>
 }
 export function ResumeProjects() {
@@ -362,7 +495,7 @@ export function ResumeEditor() {
     saveVersion('Compiled', true)
     setCompiling(true); setCompileError(''); setCompilerLog(''); setStatus('Compiling…')
     try {
-      const { data, headers } = await resumeProjectAPI.compile(cloudPayload(project))
+      const { data, headers } = await resumeProjectAPI.compile(project)
       if (pdfUrl) URL.revokeObjectURL(pdfUrl)
       setPdfUrl(URL.createObjectURL(data))
       const encodedLog = headers['x-compiler-log']
