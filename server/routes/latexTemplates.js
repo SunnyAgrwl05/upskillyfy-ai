@@ -7,6 +7,12 @@ import {
 
 const router = express.Router()
 
+// Template catalogue responses are small and static; avoid stale conditional 304s in the browser.
+router.use((_req, res, next) => {
+  res.set('Cache-Control', 'no-store')
+  next()
+})
+
 const ALIASES = {
   'ats-resume': 'ats-friendly-resume',
   'software-engineer': 'software-engineer-resume',

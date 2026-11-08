@@ -60,6 +60,24 @@ const localTemplateAliases = {
   'experienced-professional-resume': 'software-engineer',
 
 }
+
+// Keep the gallery usable when the template API is temporarily unavailable.
+function filterLocalTemplates(search = '', kind = 'All', category = 'All') {
+  const query = String(search).trim().toLowerCase()
+  return templates.filter((template) => {
+    const searchable = [
+      template.title,
+      template.description,
+      template.author,
+      template.category,
+      ...(Array.isArray(template.tags) ? template.tags : []),
+    ].join(' ').toLowerCase()
+    return (!query || searchable.includes(query))
+      && (kind === 'All' || template.kind === kind)
+      && (category === 'All' || template.category === category)
+  })
+}
+
 function saveProjects(items) {
   const before = getProjects()
   const normalized = items.map(item => before.some(previous => previous.id === item.id && previous.cloudSaved) ? { ...item, cloudSaved: true } : item)
