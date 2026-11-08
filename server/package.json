@@ -1,12 +1,15 @@
 {
   "name": "upskillyfy-ai-server",
   "version": "1.0.0",
+  "engines": { "node": ">=20.0.0" },
   "type": "module",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
     "test": "node --test",
+    "test:resume": "node --test tests/resumeTemplatePdfs.test.js tests/resumeAnalysisServices.test.js tests/resumeAnalysis.test.js tests/resumeProjects.test.js",
+    "resume:build-template-pdfs": "node scripts/buildResumeTemplatePdfs.js",
     "admin:promote": "node scripts/promoteAdmin.js",
     "preview:certificate": "node scripts/previewCertificate.js"
   },
@@ -24,6 +27,7 @@
     "mongoose": "^8.0.0",
     "multer": "^2.5.0",
     "nodemailer": "^6.9.7",
+    "pdfjs-dist": "4.10.38",
     "puppeteer": "^24.43.1",
     "qrcode": "^1.5.4",
     "upskillyfy": "file:..",

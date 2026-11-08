@@ -65,6 +65,7 @@ const NAV = [
         items: [
           { label: 'Skill Assessments', desc: 'Portals for students & faculty upskilling.', to: '/assessment', badge: 'New' },
           { label: 'Resume Builder', desc: 'ATS-optimized resume generator.', to: '/career/resume' },
+          { label: 'AI Resume Analyzer', desc: 'Review resume parsing, ATS readability and improvements.', to: '/career/resume-analyzer', badge: 'AI' },
         ],
       },
     ],

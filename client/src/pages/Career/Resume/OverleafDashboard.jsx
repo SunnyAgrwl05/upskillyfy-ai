@@ -7,8 +7,12 @@ import {
 import { resumeProjectAPI } from '../../../api'
 import {
   readProjects, upsertProject, removeProject, duplicateProject,
-  makeProject, timeAgo, downloadBlob, uid,
+  makeProject, timeAgo, downloadBlob,
 } from './ovStore'
+import {
+  fromResumeProjectPayload, getCurrentUserId, isValidTexUpload,
+  isValidZipUpload, toResumeProjectPayload,
+} from './resumeWorkspaceUtils'
 import './OverleafDashboard.css'
 
 const VIEWS = [
@@ -35,6 +39,49 @@ export default function OverleafDashboard() {
     const onStorage = () => refresh()
     window.addEventListener('storage', onStorage)
     return () => window.removeEventListener('storage', onStorage)
+  }, [])
+
+  useEffect(() => {
+    const owner = getCurrentUserId()
+    if (!owner) return undefined
+    let active = true
+    resumeProjectAPI.list().then(async ({ data }) => {
+      if (!active || !Array.isArray(data?.projects)) return
+      const remote = data.projects.map(project => fromResumeProjectPayload(project, owner)).filter(Boolean)
+      const before = readProjects()
+      const remoteById = new Map(remote.map(project => [project.id, project]))
+      const merged = [...remote]
+      const pending = []
+
+      for (const local of before.filter(project => !project.cloudOwner || project.cloudOwner === owner)) {
+        const localForOwner = { ...local, cloudOwner: owner }
+        const saved = remoteById.get(local.id)
+        if (!saved) {
+          merged.unshift(localForOwner)
+          pending.push(localForOwner)
+        } else if (Date.parse(local.updatedAt || 0) > Date.parse(saved.updatedAt || 0)) {
+          const index = merged.findIndex(project => project.id === local.id)
+          const newest = { ...saved, ...localForOwner, cloudSaved: true }
+          merged[index] = newest
+          pending.push(newest)
+        }
+      }
+
+      const foreign = before.filter(project => project.cloudOwner && project.cloudOwner !== owner)
+      writeProjects([...merged, ...foreign])
+      setProjects([...merged, ...foreign])
+      const results = await Promise.allSettled(pending.map(project => resumeProjectAPI.create(toResumeProjectPayload(project))))
+      if (!active) return
+      const successfulIds = new Set(pending.filter((_, index) => results[index].status === 'fulfilled').map(project => project.id))
+      if (successfulIds.size) {
+        const synced = readProjects().map(project => successfulIds.has(project.id) ? { ...project, cloudSaved: true } : project)
+        writeProjects(synced)
+        setProjects(synced)
+      }
+    }).catch(() => {
+      if (active) setNotice('Could not sync account projects. Local projects are still available on this device.')
+    })
+    return () => { active = false }
   }, [])
 
   const allTags = useMemo(
@@ -71,7 +118,14 @@ export default function OverleafDashboard() {
   const patch = (ids, changes) => {
     ids.forEach((id) => {
       const p = projects.find((x) => x.id === id)
-      if (p) upsertProject({ ...p, ...changes })
+      if (!p) return
+      const updated = upsertProject({ ...p, ...changes })
+      if (localStorage.getItem('token') && updated.cloudOwner) {
+        resumeProjectAPI.create(updated).then(() => {
+          const current = readProjects().find(project => project.id === updated.id)
+          if (current) upsertProject({ ...current, cloudSaved: true })
+        }).catch(() => setNotice('Saved locally, but this project change could not sync to your account.'))
+      }
     })
     setSelected(new Set())
     refresh()
@@ -99,13 +153,22 @@ export default function OverleafDashboard() {
     setMenuOpen(false)
     try {
       if (/\.tex$/i.test(file.name)) {
+        if (!isValidTexUpload(file)) throw new Error('TeX files must be no larger than 2 MB.')
         const text = await file.text()
         open(upsertProject(makeProject(file.name.replace(/\.tex$/i, ''), text)))
       } else if (/\.zip$/i.test(file.name)) {
+        if (!isValidZipUpload(file)) throw new Error('ZIP archives must be no larger than 5 MB.')
         const { data } = await resumeProjectAPI.importZip(file)
-        const incoming = data.project || data
-        if (!incoming?.files) throw new Error('Unexpected server response')
-        open(upsertProject({ ...makeProject(incoming.title || file.name), ...incoming, id: uid() }))
+        if (!Array.isArray(data?.files) || !Array.isArray(data.mainFiles) || !data.mainFiles.length) throw new Error('The archive did not contain a usable LaTeX project.')
+        const mainFile = data.mainFiles.length > 1
+          ? window.prompt(`Choose the main .tex file:\n${data.mainFiles.join('\n')}`, data.mainFile)
+          : data.mainFile
+        if (!mainFile || !data.mainFiles.includes(mainFile)) return
+        const files = data.files.map((entry) => ({ name: entry.path, content: entry.content, isBinary: entry.isBinary === true }))
+        const main = files.find((entry) => entry.name === mainFile)
+        if (!main || main.isBinary) throw new Error('The selected main document is invalid.')
+        const project = makeProject(file.name.replace(/\.zip$/i, ''), main.content, { mainFile, files })
+        open(upsertProject(project))
       } else {
         setNotice('Upload a .tex file or a .zip project.')
       }
@@ -129,9 +192,30 @@ export default function OverleafDashboard() {
     downloadBlob(`${(p.title || 'project').replace(/\W+/g, '-')}.tex`, main?.content || '')
   }
 
-  const emptyTrash = () => {
+  const deletePermanently = async (project) => {
+    try {
+      if (localStorage.getItem('token') && project.cloudOwner) {
+        try { await resumeProjectAPI.remove(project.id) } catch (error) { if (error.response?.status !== 404) throw error }
+      }
+      removeProject(project.id)
+      refresh()
+    } catch {
+      setNotice('The project could not be deleted from your account. It remains in your local workspace.')
+    }
+  }
+
+  const emptyTrash = async () => {
     if (!window.confirm('Permanently delete all trashed projects? This cannot be undone.')) return
-    projects.filter((p) => p.trashed).forEach((p) => removeProject(p.id))
+    const trashed = projects.filter((p) => p.trashed)
+    try {
+      await Promise.all(trashed.filter(p => localStorage.getItem('token') && p.cloudOwner).map(async (project) => {
+        try { await resumeProjectAPI.remove(project.id) } catch (error) { if (error.response?.status !== 404) throw error }
+      }))
+    } catch {
+      setNotice('Some account projects could not be deleted. The trash was left unchanged.')
+      return
+    }
+    trashed.forEach((project) => removeProject(project.id))
     refresh()
   }
 
@@ -241,7 +325,7 @@ export default function OverleafDashboard() {
                   </>}
                   {p.trashed && <>
                     <button title="Restore" aria-label="Restore" onClick={() => patch([p.id], { trashed: false })}><RotateCcw size={15} /></button>
-                    <button title="Delete forever" aria-label="Delete forever" onClick={() => { if (window.confirm('Delete permanently?')) { removeProject(p.id); refresh() } }}><Trash2 size={15} /></button>
+                    <button title="Delete forever" aria-label="Delete forever" onClick={() => { if (window.confirm('Delete permanently?')) deletePermanently(p) }}><Trash2 size={15} /></button>
                   </>}
                 </td>
               </tr>

@@ -13,6 +13,7 @@ import assessmentRoutes from './routes/assessments.js'
 import courseRoutes from './routes/courses.js'
 import resourceRoutes from './routes/resources.js'
 import resumeProjectRoutes from './routes/resumeProjects.js'
+import resumeAnalysisRoutes from './routes/resumeAnalysis.js'
 import latexTemplateRoutes from './routes/latexTemplates.js'
 import roadmapRoutes from './routes/roadmaps.js'
 import certificateRoutes from './routes/certificates.js'
@@ -64,6 +65,7 @@ app.use('/api/courses', courseRoutes)
 app.use('/api/resources', resourceRoutes)
 app.use('/api/latex-templates', latexTemplateRoutes)
 app.use('/api/resume-projects', resumeProjectRoutes)
+app.use('/api/resume-analysis', resumeAnalysisRoutes)
 app.use('/api/roadmaps', roadmapRoutes)
 app.use('/api/certificates', certificateRoutes)
 app.use('/api/documents', documentRoutes)

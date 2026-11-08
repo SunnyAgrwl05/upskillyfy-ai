@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { ArrowLeft, FileText, Plus, Trash2, Upload } from 'lucide-react'
 import { createProject as createResumeProject } from './ResumeWorkspace'
+import { analysisToResumeDraft, ATS_RESUME_TEMPLATE_CHOICES } from './resumeAnalyzerTransfer'
 import './ATSResumeBuilder.css'
 
 const emptyExperience = () => ({ role: '', company: '', dates: '', bullets: '' })
@@ -63,7 +64,7 @@ const linesToLatexItems = (value) =>
     .map((line) => `  \\item ${escapeLatex(line)}`)
     .join('\n')
 
-function toLatex(data) {
+function toLatex(data, templateId = 'ats-friendly-resume') {
   const contact = [data.email, data.phone, data.location].filter(Boolean).map(escapeLatex).join(' \\textbar{} ')
   const links = data.links.split(',').map((item) => escapeLatex(item.trim())).filter(Boolean).join(' \\textbar{} ')
   const experience = data.experience
@@ -84,8 +85,22 @@ function toLatex(data) {
   const skills = data.skills.split(',').map((item) => escapeLatex(item.trim())).filter(Boolean).join(', ')
   const leadership = data.leadership.trim() ? `\\begin{itemize}[leftmargin=1.2em]\n${linesToLatexItems(data.leadership)}\n\\end{itemize}` : ''
   const certifications = data.certifications.split('\n').map((item) => item.trim()).filter(Boolean).map(escapeLatex).join('\\\\\n')
-  return String.raw`\documentclass[10pt,a4paper]{article}
-\usepackage[margin=1.6cm]{geometry}
+  const academicFirst = templateId === 'academic-cv'
+  const fresherFirst = templateId === 'fresher-resume'
+  const fontSize = academicFirst || fresherFirst ? '11pt' : '10pt'
+  const margin = templateId === 'experienced-professional-resume' || templateId === 'software-engineer-resume' ? '1.4cm' : '1.6cm'
+  const resumeSections = [
+    section('Summary', escapeLatex(data.summary)),
+    section('Experience', experience),
+    section('Education', education),
+    section('Leadership & Extracurriculars', leadership),
+    section('Projects', projects ? `\\begin{itemize}\n${projects}\n\\end{itemize}` : ''),
+    section('Skills', skills),
+    section('Certifications', certifications),
+  ]
+  if (academicFirst || fresherFirst) [resumeSections[1], resumeSections[2]] = [resumeSections[2], resumeSections[1]]
+  return String.raw`\documentclass[${fontSize},a4paper]{article}
+\usepackage[margin=${margin}]{geometry}
 \usepackage[T1]{fontenc}
 \usepackage[hidelinks]{hyperref}
 \usepackage{enumitem}
@@ -95,7 +110,7 @@ function toLatex(data) {
 \begin{document}
 {\LARGE \textbf{${escapeLatex(data.name || 'Your Name')}}}\\
 ${data.headline ? `{\\large ${escapeLatex(data.headline)}}\\\n` : ''}${contact}${contact && links ? '\\\\\n' : ''}${links}
-${section('Summary', escapeLatex(data.summary))}${section('Experience', experience)}${section('Education', education)}${section('Leadership & Extracurriculars', leadership)}${section('Projects', projects ? `\\begin{itemize}\n${projects}\n\\end{itemize}` : '')}${section('Skills', skills)}${section('Certifications', certifications)}
+${resumeSections.join('')}
 \end{document}`
 }
 
@@ -141,7 +156,12 @@ function analyze(data, source) {
 
 export default function ATSResumeBuilder() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const analysisData = location.state?.resumeAnalyzerData
+  const importedFromAnalyzer = Boolean(analysisData)
+  const [selectedTemplate, setSelectedTemplate] = useState(location.state?.templateId || 'ats-friendly-resume')
   const [data, setData] = useState(() => {
+    if (analysisData) return analysisToResumeDraft(analysisData)
     try {
       return {
         ...{
@@ -183,14 +203,15 @@ export default function ATSResumeBuilder() {
   })
   const [showAnalysis, setShowAnalysis] = useState(false)
   const [pdfStatus, setPdfStatus] = useState('')
-  const source = useMemo(() => toLatex(data), [data])
+  const source = useMemo(() => toLatex(data, selectedTemplate), [data, selectedTemplate])
   const analysis = useMemo(() => analyze(data, source), [data, source])
 
   useEffect(() => {
+    if (importedFromAnalyzer) return
     try {
       localStorage.setItem(draftKey, JSON.stringify(data))
     } catch {}
-  }, [data])
+  }, [data, importedFromAnalyzer])
 
   const update = (key, value) => setData((current) => ({ ...current, [key]: value }))
   const updateRow = (key, index, field, value) =>
@@ -249,7 +270,7 @@ export default function ATSResumeBuilder() {
   }
 
   const createProject = () => {
-    const project = createResumeProject(data.name ? `${data.name} Resume` : 'ATS Resume', source, [{ name: 'main.tex', content: source }], 'ats-guided-resume')
+    const project = createResumeProject(data.name ? `${data.name} Resume` : 'ATS Resume', source, [{ name: 'main.tex', content: source }], selectedTemplate)
     navigate(`/career/resume/editor/${project.id}`)
   }
 
@@ -265,6 +286,15 @@ export default function ATSResumeBuilder() {
       </header>
       <div className="ats-layout">
         <div className="ats-form">
+          <section className="ats-card">
+            <h2>{importedFromAnalyzer ? 'Reviewed resume data imported' : 'Choose a resume layout'}</h2>
+            {importedFromAnalyzer && <p>Your analyzer review was transferred into these editable fields. This creates a new project and leaves existing projects unchanged.</p>}
+            <label className="ats-template-select">ATS template
+              <select value={selectedTemplate} onChange={(event) => setSelectedTemplate(event.target.value)}>
+                {ATS_RESUME_TEMPLATE_CHOICES.map((template) => <option value={template.id} key={template.id}>{template.title}</option>)}
+              </select>
+            </label>
+          </section>
           <section className="ats-card">
             <h2>Personal details</h2>
             <div className="ats-fields">

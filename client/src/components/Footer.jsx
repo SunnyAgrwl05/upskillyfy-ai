@@ -28,6 +28,7 @@ const NAV_GROUPS = [
       { label: 'Placements', to: '/career/placements' },
       { label: 'DSA Practice Hub', to: '/career/dsa' },
       { label: 'Resume Builder', to: '/career/resume' },
+      { label: 'AI Resume Analyzer', to: '/career/resume-analyzer' },
       { label: 'Mock Interviews', to: '/career/interviews' },
     ],
   },
