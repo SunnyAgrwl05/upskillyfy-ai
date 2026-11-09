@@ -10,7 +10,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 const outputDir = path.join(root, 'client/public/resume-templates')
 const requiredIds = [
   'ats-friendly-resume', 'fresher-resume', 'software-engineer-resume',
-  'experienced-professional-resume', 'academic-cv',
+  'experienced-professional-resume', 'academic-cv', 'cover-letter',
 ]
 const sha256 = (value) => createHash('sha256').update(value).digest('hex')
 

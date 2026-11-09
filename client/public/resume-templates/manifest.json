@@ -1,32 +1,38 @@
 {
   "ats-friendly-resume": {
     "sourceSha256": "643920a35d31807be84d4aeaa8513209a37b6980fab1e7273e11e32baa8008b4",
-    "pdfSha256": "93329fea6f4f58c49f0d889468e0f60a80f10d3af1a09a53fcb97778360e4a2e",
+    "pdfSha256": "75d2a0212727b72e82e49d34d6fa84b2d4f41eccc9fcc0227544080b0ac6a268",
     "pdfPath": "/resume-templates/ats-friendly-resume.pdf",
     "sourcePath": "/api/latex-templates/ats-friendly-resume"
   },
   "fresher-resume": {
     "sourceSha256": "5137e993bd11ac52e1dfdb964c11e572fb485c35e15c9d1528d8b6724d279300",
-    "pdfSha256": "95b0695913a67aca5ee9245c31a0051c385f87634f0abadc7e2152cb7d12756e",
+    "pdfSha256": "4f2b9e4c4f09bd6a179c97949f032dea7338bb8e3e9403907d72a2fde4a122da",
     "pdfPath": "/resume-templates/fresher-resume.pdf",
     "sourcePath": "/api/latex-templates/fresher-resume"
   },
   "software-engineer-resume": {
     "sourceSha256": "864329e0f8b67387bfb1c27a0390eb5c8823bccc9bd4eef727082dc7917beb52",
-    "pdfSha256": "f0dc76ba9c28d70b10157ca65b0301b94bfcf8e34191e53147ad219e48eaffb2",
+    "pdfSha256": "728a9b01bdc74ef622d562237b869d8ba31da55fb9e3951cc7bbb6237fe2a30b",
     "pdfPath": "/resume-templates/software-engineer-resume.pdf",
     "sourcePath": "/api/latex-templates/software-engineer-resume"
   },
   "experienced-professional-resume": {
     "sourceSha256": "73a0df0cbd3188aed0b8ad0aaf6b41b62fa7f2024cc767b79cf13a5d7bdd466e",
-    "pdfSha256": "7f546604b11562d98de5290fbcf205ee24483d167376e49fe1298019925fb80f",
+    "pdfSha256": "3cec6b6b85fb5cc797825d7c8534691ddd5667a8f7ab13f60f3397b9a3392817",
     "pdfPath": "/resume-templates/experienced-professional-resume.pdf",
     "sourcePath": "/api/latex-templates/experienced-professional-resume"
   },
   "academic-cv": {
     "sourceSha256": "45bcf0ee1eb5bde24c7bb3d16cd9483bdec5a1eb1acd78076ff96b2795d0715f",
-    "pdfSha256": "c687fada06ed044ee7709e4e23f16090ebc021066c3e292112244582c4324b08",
+    "pdfSha256": "6b82e0acf2182b1ef3d667294d9c7a3351d7fbffe1a8459420c5cbbf638d5808",
     "pdfPath": "/resume-templates/academic-cv.pdf",
     "sourcePath": "/api/latex-templates/academic-cv"
+  },
+  "cover-letter": {
+    "sourceSha256": "0aa7861892287e171a2081ef5fe36b3b8061bcd12ae33a7fb6a8505c1c0b49e1",
+    "pdfSha256": "adfcc2da7a7512d1cc97e8507d10f6673abffd37ebe64728df8ebe1dc36417e0",
+    "pdfPath": "/resume-templates/cover-letter.pdf",
+    "sourcePath": "/api/latex-templates/cover-letter"
   }
 }

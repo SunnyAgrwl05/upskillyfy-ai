@@ -12,7 +12,7 @@ import {
 const router = express.Router()
 const pdfTemplateIds = new Set([
   'ats-friendly-resume', 'fresher-resume', 'software-engineer-resume',
-  'experienced-professional-resume', 'academic-cv',
+  'experienced-professional-resume', 'academic-cv', 'cover-letter',
 ])
 const pdfAssetDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../client/public/resume-templates')
 let pdfManifestPromise
