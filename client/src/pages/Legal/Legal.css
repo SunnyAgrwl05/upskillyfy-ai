@@ -1,0 +1,10 @@
+.legal-page { min-height: calc(100vh - 80px); padding: 48px 20px 72px; background: var(--bg); color: var(--text); }
+.legal-page-inner { width: min(860px, 100%); margin: 0 auto; padding: clamp(24px, 5vw, 52px); border: 1px solid var(--border); border-radius: 20px; background: var(--bg-card); }
+.legal-eyebrow { color: var(--accent); font-size: .75rem; font-weight: 800; letter-spacing: .09em; }
+.legal-page h1 { margin: 10px 0 12px; color: var(--text-h); font-size: clamp(2rem, 5vw, 3rem); }
+.legal-intro { color: var(--muted); line-height: 1.7; margin-bottom: 28px; }
+.legal-section { padding: 20px 0; border-top: 1px solid var(--border); }
+.legal-section h2 { color: var(--text-h); font-size: 1.05rem; margin-bottom: 8px; }
+.legal-section p, .legal-footnote { color: var(--muted); font-size: .92rem; line-height: 1.75; }
+.legal-page a { color: var(--accent); font-weight: 600; }
+.legal-footnote { margin: 22px 0; padding: 14px; border-radius: 10px; background: var(--bg-alt); }
