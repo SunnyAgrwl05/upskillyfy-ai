@@ -1,117 +1,17 @@
 import express from 'express'
 import jwt from 'jsonwebtoken'
+import { OAuth2Client } from 'google-auth-library'
 import User from '../models/User.js'
+import AuthEvent from '../models/AuthEvent.js'
 import { protect } from '../middleware/auth.js'
-
-const router = express.Router()
-
-const getJwtSecret = () => {
-  if (!process.env.JWT_SECRET) {
-    throw Object.assign(new Error('Authentication is unavailable until JWT_SECRET is configured.'), { status: 503 })
-  }
-  return process.env.JWT_SECRET
-}
-const signToken = (id) => jwt.sign({ id }, getJwtSecret(), { expiresIn: '30d' })
-
-// POST /api/auth/register
-router.post('/register', async (req, res) => {
-  try {
-    getJwtSecret()
-    const { name, email, password, role, branch, college, year, termsAccepted, marketingConsent } = req.body
-
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: 'Name, email, and password are required' })
-    }
-    if (termsAccepted !== true) {
-      return res.status(400).json({ message: 'Please accept the Terms of Service and Privacy Policy to create an account.' })
-    }
-    if (password.length < 6) {
-      return res.status(400).json({ message: 'Password must be at least 6 characters long' })
-    }
-
-    const existingUser = await User.findOne({ email: email.toLowerCase().trim() })
-    if (existingUser) {
-      return res.status(400).json({ message: 'An account with this email already exists' })
-    }
-
-    const user = await User.create({
-      name: name.trim(),
-      email: email.toLowerCase().trim(),
-      password,
-      role: role && ['student', 'faculty'].includes(role) ? role : 'student',
-      branch: branch || '',
-      college: college || '',
-      year: year || '',
-      privacyConsents: {
-        termsAcceptedAt: new Date(),
-        privacyAcceptedAt: new Date(),
-        policyVersion: '2026-11-09',
-        marketingEmails: marketingConsent === true,
-      }
-    })
-
-    const token = signToken(user._id)
-
-    res.status(201).json({
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        branch: user.branch,
-        college: user.college,
-        year: user.year,
-        enrolledCourses: user.enrolledCourses || [],
-        savedInternships: user.savedInternships || []
-      }
-    })
-  } catch (err) {
-    console.error('Registration error:', err)
-    res.status(err.status || 500).json({ message: err.status ? err.message : 'Failed to register account' })
-  }
-})
-
-// POST /api/auth/login
-router.post('/login', async (req, res) => {
-  try {
-    getJwtSecret()
-    const { email, password } = req.body
-
-    if (!email || !password) {
-      return res.status(400).json({ message: 'Email and password are required' })
-    }
-
-    const user = await User.findOne({ email: email.toLowerCase().trim() })
-    if (!user || !(await user.comparePassword(password))) {
-      return res.status(401).json({ message: 'Invalid email or password' })
-    }
-
-    const token = signToken(user._id)
-
-    res.json({
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        branch: user.branch,
-        college: user.college,
-        year: user.year,
-        enrolledCourses: user.enrolledCourses || [],
-        savedInternships: user.savedInternships || []
-      }
-    })
-  } catch (err) {
-    console.error('Login error:', err)
-    res.status(err.status || 500).json({ message: err.status ? err.message : 'Failed to login' })
-  }
-})
-
-// GET /api/auth/me (Current user session)
-router.get('/me', protect, async (req, res) => {
-  res.json(req.user)
-})
-
+const router=express.Router()
+const googleClient=new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
+const getJwtSecret=()=>{if(!process.env.JWT_SECRET)throw Object.assign(new Error('Authentication is unavailable until JWT_SECRET is configured.'),{status:503});return process.env.JWT_SECRET}
+const signToken=id=>jwt.sign({id},getJwtSecret(),{expiresIn:'30d'})
+async function logEvent(req,{action,provider='password',status,user=null,email='',failureCode=''}){try{await AuthEvent.create({action,provider,status,user:user?._id||null,email:String(email||user?.email||'').toLowerCase().trim(),ipAddress:String(req.headers['x-forwarded-for']||req.socket.remoteAddress||'').split(',')[0].trim().slice(0,64),userAgent:String(req.headers['user-agent']||'').slice(0,300),failureCode:String(failureCode).slice(0,80)})}catch(e){console.error('Auth audit log error:',e.message)}}
+const payload=user=>({id:user._id,name:user.name,email:user.email,role:user.role,branch:user.branch,college:user.college,year:user.year,enrolledCourses:user.enrolledCourses||[],savedInternships:user.savedInternships||[]})
+router.post('/register',async(req,res)=>{const{name,email,password,role,branch,college,year,termsAccepted,marketingConsent}=req.body;try{getJwtSecret();if(!name||!email||!password)return res.status(400).json({message:'Name, email, and password are required'});if(termsAccepted!==true)return res.status(400).json({message:'Please accept the Terms of Service and Privacy Policy to create an account.'});if(password.length<6)return res.status(400).json({message:'Password must be at least 6 characters long'});const normalized=email.toLowerCase().trim();if(await User.findOne({email:normalized})){await logEvent(req,{action:'signup',status:'failure',email:normalized,failureCode:'EMAIL_ALREADY_EXISTS'});return res.status(400).json({message:'An account with this email already exists'})}const user=await User.create({name:name.trim(),email:normalized,password,role:['student','faculty'].includes(role)?role:'student',branch:branch||'',college:college||'',year:year||'',authProviders:['password'],privacyConsents:{termsAcceptedAt:new Date(),privacyAcceptedAt:new Date(),policyVersion:'2026-11-09',marketingEmails:marketingConsent===true}});await logEvent(req,{action:'signup',status:'success',user});res.status(201).json({token:signToken(user._id),user:payload(user)})}catch(e){console.error('Registration error:',e);await logEvent(req,{action:'signup',status:'failure',email,failureCode:e.code||'REGISTRATION_ERROR'});res.status(e.status||500).json({message:e.status?e.message:'Failed to register account'})}})
+router.post('/login',async(req,res)=>{const{email,password}=req.body;try{getJwtSecret();if(!email||!password)return res.status(400).json({message:'Email and password are required'});const normalized=email.toLowerCase().trim();const user=await User.findOne({email:normalized});if(!user||!(await user.comparePassword(password))){await logEvent(req,{action:'login',status:'failure',email:normalized,failureCode:'INVALID_CREDENTIALS'});return res.status(401).json({message:'Invalid email or password'})}if(!user.authProviders.includes('password')){user.authProviders.push('password');await user.save()}await logEvent(req,{action:'login',status:'success',user});res.json({token:signToken(user._id),user:payload(user)})}catch(e){console.error('Login error:',e);await logEvent(req,{action:'login',status:'failure',email,failureCode:e.code||'LOGIN_ERROR'});res.status(e.status||500).json({message:e.status?e.message:'Failed to login'})}})
+router.post('/google',async(req,res)=>{const{credential,intent='login',role='student',branch='',college='',year=''}=req.body;let email='';try{getJwtSecret();if(!process.env.GOOGLE_CLIENT_ID)return res.status(503).json({message:'Google sign-in is not configured yet.'});if(!credential)return res.status(400).json({message:'Google credential is required.'});const ticket=await googleClient.verifyIdToken({idToken:credential,audience:process.env.GOOGLE_CLIENT_ID});const profile=ticket.getPayload();if(!profile?.sub||!profile.email||!profile.email_verified){await logEvent(req,{action:intent==='signup'?'signup':'login',provider:'google',status:'failure',email,failureCode:'GOOGLE_EMAIL_NOT_VERIFIED'});return res.status(401).json({message:'Google account email could not be verified.'})}email=profile.email.toLowerCase().trim();let user=await User.findOne({$or:[{googleId:profile.sub},{email}]});let action='login';if(!user){action='signup';user=await User.create({name:profile.name||email.split('@')[0],email,googleId:profile.sub,password:undefined,avatar:profile.picture||'',role:['student','faculty'].includes(role)?role:'student',branch,college,year,authProviders:['google'],privacyConsents:{termsAcceptedAt:new Date(),privacyAcceptedAt:new Date(),policyVersion:'2026-11-09',marketingEmails:false}})}else{if(user.googleId&&user.googleId!==profile.sub){await logEvent(req,{action:'login',provider:'google',status:'failure',email,failureCode:'GOOGLE_ACCOUNT_CONFLICT'});return res.status(409).json({message:'This email is already linked to another Google account.'})}user.googleId=profile.sub;user.authProviders=[...new Set([...(user.authProviders||[]),'google'])];if(!user.avatar&&profile.picture)user.avatar=profile.picture;await user.save()}await logEvent(req,{action,provider:'google',status:'success',user});res.json({token:signToken(user._id),user:payload(user),isNewUser:action==='signup'})}catch(e){console.error('Google authentication error:',e.message);await logEvent(req,{action:intent==='signup'?'signup':'login',provider:'google',status:'failure',email,failureCode:e.code||'GOOGLE_AUTH_ERROR'});res.status(e.status||401).json({message:e.status?e.message:'Google authentication failed. Please try again.'})}})
+router.get('/me',protect,async(req,res)=>res.json(req.user))
 export default router
