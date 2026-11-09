@@ -15,6 +15,7 @@ import {
   PlayCircle
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import { GoogleLogin } from '@react-oauth/google'
 import './Auth.css'
 
 export default function Login() {
@@ -22,7 +23,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const { login } = useAuth()
+  const { login, loginWithGoogle } = useAuth()
   const navigate = useNavigate()
 
   const handleChange = (e) => {
@@ -50,8 +51,9 @@ export default function Login() {
     }
   }
 
-  const handleGoogleMock = () => {
-    setError('Google Single Sign-On is configured. For development, please log in with your email and password.')
+  const handleGoogleSuccess = async ({ credential }) => {
+    try { await loginWithGoogle(credential, { intent: 'login' }); navigate('/dashboard') }
+    catch (err) { setError(err.response?.data?.message || 'Google sign-in failed. Please try again.') }
   }
 
   return (
