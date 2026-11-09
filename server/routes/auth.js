@@ -22,7 +22,10 @@ router.post('/register', async (req, res) => {
     if (!name || !email || !password) {
       return res.status(400).json({ message: 'Name, email, and password are required' })
     }
-    if (termsAccepted !== true) {\n      return res.status(400).json({ message: 'Please accept the Terms of Service and Privacy Policy to create an account.' })\n    }\n    if (password.length < 6) {
+    if (termsAccepted !== true) {
+      return res.status(400).json({ message: 'Please accept the Terms of Service and Privacy Policy to create an account.' })
+    }
+    if (password.length < 6) {
       return res.status(400).json({ message: 'Password must be at least 6 characters long' })
     }
 
