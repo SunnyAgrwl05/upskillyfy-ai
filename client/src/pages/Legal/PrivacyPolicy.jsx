@@ -1,3 +1,4 @@
+import './Legal.css'
 import { Link } from 'react-router-dom'
 
 const sections = [
