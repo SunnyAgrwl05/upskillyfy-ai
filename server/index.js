@@ -3,6 +3,7 @@ import express from 'express'
 import mongoose from 'mongoose'
 import cors from 'cors'
 import dotenv from 'dotenv'
+import { corsOrigins, isProduction } from './config/env.js'
 import authRoutes from './routes/auth.js'
 import internshipRoutes from './routes/internships.js'
 import contactRoutes from './routes/contact.js'
@@ -26,34 +27,22 @@ import { errorHandler, notFound } from './middleware/error.js'
 dotenv.config()
 
 const app = express()
-
-const clientUrlEnv = process.env.CLIENT_URL || ''
-const configuredOrigins = clientUrlEnv.split(',').map(u => u.trim()).filter(Boolean)
+const allowedOrigins = new Set([
+  ...corsOrigins,
+  ...(!isProduction ? ['http://localhost:5173', 'http://127.0.0.1:5173'] : []),
+])
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow non-browser requests (like server-to-server, Postman, mobile)
-    if (!origin) return callback(null, true)
-
-    // Allow configured URLs, all Vercel preview/production deployments, and localhost
-    if (
-      configuredOrigins.includes(origin) ||
-      origin.endsWith('.vercel.app') ||
-      origin.includes('localhost') ||
-      origin.includes('upskillyfy')
-    ) {
-      return callback(null, true)
-    }
-
-    return callback(null, true)
+    if (!origin || allowedOrigins.has(origin)) return callback(null, true)
+    return callback(new Error('Origin is not allowed by CORS'))
   },
-  credentials: true
+  credentials: true,
 }))
 app.use('/api/resume-projects', express.json({ limit: '15mb' }))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
-// Routes
 app.use('/api/auth', authRoutes)
 app.use('/api/internships', internshipRoutes)
 app.use('/api/contact', contactRoutes)
@@ -73,24 +62,24 @@ app.use('/api/verification', verificationRoutes)
 app.use('/api/admin/credentials', adminCredentialRoutes)
 app.use('/api/hackathons', hackathonRoutes)
 
-// Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Upskillyfy API running 🚀', time: new Date() })
+  const database = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+  res.status(database === 'connected' ? 200 : 503).json({
+    status: database === 'connected' ? 'ok' : 'degraded',
+    database,
+    message: 'Upskillyfy API',
+    time: new Date(),
+  })
 })
 
 app.use(notFound)
 app.use(errorHandler)
 
-// MongoDB
-if (process.env.MONGODB_URI) {
-  mongoose.connect(process.env.MONGODB_URI)
-    .then(() => console.log('✅ MongoDB Connected'))
-    .catch(err => console.log('❌ MongoDB Error:', err.message))
-} else {
-  console.log('⚠️ MONGODB_URI not set. Running server without database connection.')
+if (!process.env.MONGODB_URI) {
+  throw new Error('MONGODB_URI is required; refusing to start without persistent storage.')
 }
+await mongoose.connect(process.env.MONGODB_URI)
+console.log('✅ MongoDB Connected')
 
 const PORT = process.env.PORT || 5000
-app.listen(PORT, () => {
-  console.log(`🚀 Upskillyfy Server: http://localhost:${PORT}`)
-})
+app.listen(PORT, () => console.log(`🚀 Upskillyfy Server: http://localhost:${PORT}`))

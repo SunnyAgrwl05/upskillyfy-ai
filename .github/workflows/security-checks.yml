@@ -1,0 +1,38 @@
+name: Security checks
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    services:
+      mongodb:
+        image: mongo:7
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand({ ping: 1 })'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      NODE_ENV: test
+      JWT_SECRET: test_only_secret_key_that_is_at_least_32_chars
+      MONGODB_URI: mongodb://127.0.0.1:27017/upskillyfy_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install backend dependencies
+        run: npm install --prefix server --no-audit --no-fund
+      - name: Install frontend dependencies
+        run: npm install --prefix client --no-audit --no-fund
+      - name: Run backend tests
+        run: npm test --prefix server
+      - name: Build frontend
+        run: npm run build --prefix client

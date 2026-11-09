@@ -8,37 +8,32 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const token = localStorage.getItem('token')
-    if (token) {
-      authAPI.me().then(res => { setUser(res.data); setLoading(false) })
-        .catch(() => { localStorage.removeItem('token'); setLoading(false) })
-    } else { setLoading(false) }
+    authAPI.me()
+      .then(res => setUser(res.data))
+      .catch(() => setUser(null))
+      .finally(() => setLoading(false))
   }, [])
 
   const login = async (email, password) => {
     const res = await authAPI.login({ email, password })
-    localStorage.setItem('token', res.data.token)
     setUser(res.data.user)
     return res.data
   }
 
   const register = async (data) => {
     const res = await authAPI.register(data)
-    localStorage.setItem('token', res.data.token)
     setUser(res.data.user)
     return res.data
   }
 
   const loginWithGoogle = async (credential, options = {}) => {
     const res = await authAPI.google({ credential, ...options })
-    localStorage.setItem('token', res.data.token)
     setUser(res.data.user)
     return res.data
   }
 
-  const logout = () => {
-    localStorage.removeItem('token')
-    setUser(null)
+  const logout = async () => {
+    try { await authAPI.logout() } finally { setUser(null) }
   }
 
   return (
