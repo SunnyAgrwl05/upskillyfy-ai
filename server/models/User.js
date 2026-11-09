@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs'
 const userSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-  password: { type: String, required: function () { return !this.googleId }, minlength: 6 },
+  password: { type: String, required: function () { return !this.googleId }, minlength: 8 },
   googleId: { type: String, default: undefined, unique: true, sparse: true },
   authProviders: { type: [String], enum: ['password', 'google'], default: ['password'] },
   role: { type: String, enum: ['student', 'faculty', 'admin'], default: 'student' },
