@@ -42,7 +42,7 @@ test('authentication integration', { skip: !canRun }, async (t) => {
       const me = await fetch(`${baseUrl}/api/auth/me`, { headers: { cookie } })
       assert.equal(me.status, 200)
       assert.equal((await me.json()).email, email)
-      const logout = await fetch(`${baseUrl}/api/auth/logout`, { method: 'POST', headers: { cookie } })
+      const logout = await fetch(`${baseUrl}/api/auth/logout`, { method: 'POST', headers: { cookie, origin: 'http://localhost:5173' } })
       assert.equal(logout.status, 200)
       assert.match(logout.headers.get('set-cookie') || '', /upskillyfy_token=;/)
     })
