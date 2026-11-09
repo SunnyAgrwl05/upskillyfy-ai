@@ -31,6 +31,8 @@ export default function Register() {
     year: '3rd Year'
   })
   const [showPassword, setShowPassword] = useState(false)
+  const [termsAccepted, setTermsAccepted] = useState(false)
+  const [marketingConsent, setMarketingConsent] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const { register } = useAuth()
@@ -64,6 +66,11 @@ export default function Register() {
       return
     }
 
+    if (!termsAccepted) {
+      setError('Please accept the Terms of Service and Privacy Policy to create an account.')
+      return
+    }
+
     if (form.password.length < 6) {
       setError('Password must be at least 6 characters long.')
       return
@@ -76,6 +83,8 @@ export default function Register() {
       await register({
         ...form,
         role,
+        termsAccepted,
+        marketingConsent,
         email: form.email.trim().toLowerCase()
       })
       navigate('/dashboard')
@@ -384,6 +393,18 @@ export default function Register() {
               </div>
             )}
 
+            <div className="auth-consent-group">
+              <label className="auth-consent-option">
+                <input type="checkbox" checked={termsAccepted} onChange={(event) => setTermsAccepted(event.target.checked)} required />
+                <span>I agree to the <Link to="/terms" target="_blank" rel="noreferrer">Terms of Service</Link> and <Link to="/privacy" target="_blank" rel="noreferrer">Privacy Policy</Link>. Required.</span>
+              </label>
+              <label className="auth-consent-option">
+                <input type="checkbox" checked={marketingConsent} onChange={(event) => setMarketingConsent(event.target.checked)} />
+                <span>Send me occasional product updates and career opportunities. Optional; you can unsubscribe anytime.</span>
+              </label>
+              <p className="auth-consent-note">Your college details are optional. Uploaded resumes are processed temporarily; analysis is saved only when you explicitly choose to save it.</p>
+            </div>
+
             <button type="submit" className="auth-submit-btn" disabled={loading}>
               {loading ? (
                 <>Creating Account...</>
@@ -403,7 +424,7 @@ export default function Register() {
           </div>
 
           <p className="auth-terms-note">
-            By registering, you agree to receive essential account and internship notifications. No spam, ever.
+            We use your account details to provide the service and essential account messages. Marketing emails are off unless you opt in.
           </p>
         </div>
       </div>
