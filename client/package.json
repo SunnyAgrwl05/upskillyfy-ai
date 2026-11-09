@@ -26,7 +26,8 @@
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.2",
-    "upskillyfy": "file:.."
+    "upskillyfy": "file:..",
+    "@react-oauth/google": "^0.12.2"
   },
   "devDependencies": {
     "@types/react": "^19.2.17",

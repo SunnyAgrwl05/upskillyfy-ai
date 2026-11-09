@@ -34,7 +34,8 @@
     "puppeteer": "^24.43.1",
     "qrcode": "^1.5.4",
     "upskillyfy": "file:..",
-    "zod": "^4.6.7"
+    "zod": "^4.6.7",
+    "google-auth-library": "^10.5.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"
