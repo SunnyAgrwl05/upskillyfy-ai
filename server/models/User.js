@@ -4,7 +4,9 @@ import bcrypt from 'bcryptjs'
 const userSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-  password: { type: String, required: true, minlength: 6 },
+  password: { type: String, required: function () { return !this.googleId }, minlength: 6 },
+  googleId: { type: String, default: null, unique: true, sparse: true },
+  authProviders: { type: [String], enum: ['password', 'google'], default: ['password'] },
   role: { type: String, enum: ['student', 'faculty', 'admin'], default: 'student' },
   college: { type: String, default: '', trim: true },
   branch: { type: String, default: '', trim: true },
@@ -38,7 +40,7 @@ userSchema.pre('save', async function(next) {
 })
 
 userSchema.methods.comparePassword = async function(password) {
-  return bcrypt.compare(password, this.password)
+  return Boolean(this.password) && bcrypt.compare(password, this.password)
 }
 
 export default mongoose.model('User', userSchema)
