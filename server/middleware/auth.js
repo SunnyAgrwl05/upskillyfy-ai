@@ -11,10 +11,25 @@ const getCookieToken = (req) => {
   try { return decodeURIComponent(entry.slice('upskillyfy_token='.length)) } catch { return null }
 }
 
+const isAllowedCookieOrigin = (origin) => {
+  const configured = [
+    ...(process.env.CLIENT_URL || '').split(','),
+    ...(process.env.EXTRA_CORS_ORIGINS || '').split(','),
+    ...(process.env.NODE_ENV !== 'production' ? ['http://localhost:5173', 'http://127.0.0.1:5173'] : []),
+  ].map(value => value.trim()).filter(Boolean)
+  return Boolean(origin) && configured.includes(origin)
+}
+
 export const protect = async (req, res, next) => {
   const authHeader = req.headers.authorization
   const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7).trim() : null
-  const token = bearerToken || getCookieToken(req)
+  const cookieToken = getCookieToken(req)
+  const token = bearerToken || cookieToken
+  if (cookieToken && !bearerToken && !['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+    if (!isAllowedCookieOrigin(req.headers.origin)) {
+      return res.status(403).json({ message: 'Request origin is not allowed.' })
+    }
+  }
   if (!token) return res.status(401).json({ message: 'Authentication required. Please login.' })
   const secret = getJwtSecret()
   if (!secret) return res.status(503).json({ message: 'Authentication is unavailable until JWT_SECRET is configured.', code: 'AUTH_NOT_CONFIGURED' })
