@@ -191,10 +191,11 @@ export const latexTemplateAPI = {
 }
 
 export const resumeAnalysisAPI = {
-  analyze: (file, jobDescription = '', onUploadProgress) => {
+  analyze: (file, jobDescription = '', saveToHistory = false, onUploadProgress) => {
     const form = new FormData()
     form.append('resume', file)
     if (jobDescription.trim()) form.append('jobDescription', jobDescription.trim())
+    if (saveToHistory) form.append('saveToHistory', 'true')
     return API.post('/resume-analysis', form, { onUploadProgress })
   },
   list: (params) => API.get('/resume-analysis', { params }),
