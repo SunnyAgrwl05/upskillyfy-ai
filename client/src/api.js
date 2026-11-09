@@ -70,12 +70,6 @@ async function getTemplateData(url, key, cache, validate, params, signal) {
   return { ...response, data }
 }
 
-API.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token')
-  if (token) config.headers.Authorization = `Bearer ${token}`
-  return config
-})
-
 export const authAPI = {
   register: (data) => API.post('/auth/register', data),
   login: (data) => API.post('/auth/login', data),
