@@ -13,6 +13,7 @@ const getBaseURL = () => {
 
 const API = axios.create({
   baseURL: getBaseURL(),
+  withCredentials: true,
 })
 
 const templateListCache = new Map()
@@ -80,6 +81,7 @@ export const authAPI = {
   login: (data) => API.post('/auth/login', data),
   google: (data) => API.post('/auth/google', data),
   me: () => API.get('/auth/me'),
+  logout: () => API.post('/auth/logout'),
 }
 
 export const internshipAPI = {
