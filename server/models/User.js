@@ -5,7 +5,7 @@ const userSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
   password: { type: String, required: function () { return !this.googleId }, minlength: 6 },
-  googleId: { type: String, default: null, unique: true, sparse: true },
+  googleId: { type: String, default: undefined, unique: true, sparse: true },
   authProviders: { type: [String], enum: ['password', 'google'], default: ['password'] },
   role: { type: String, enum: ['student', 'faculty', 'admin'], default: 'student' },
   college: { type: String, default: '', trim: true },
