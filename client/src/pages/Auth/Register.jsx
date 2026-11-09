@@ -18,6 +18,7 @@ import {
   BookOpen
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import { GoogleLogin } from '@react-oauth/google'
 import './Auth.css'
 
 export default function Register() {
@@ -35,7 +36,7 @@ export default function Register() {
   const [marketingConsent, setMarketingConsent] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const { register } = useAuth()
+  const { register, loginWithGoogle } = useAuth()
   const navigate = useNavigate()
 
   const handleChange = (e) => {
@@ -95,8 +96,10 @@ export default function Register() {
     }
   }
 
-  const handleGoogleMock = () => {
-    setError('Google Sign-Up is configured. For development, please fill in your details below.')
+  const handleGoogleSuccess = async ({ credential }) => {
+    if (!termsAccepted) { setError('Please accept the Terms and Privacy Policy before continuing with Google.'); return }
+    try { await loginWithGoogle(credential, { intent: 'signup', role, branch: form.branch, college: form.college, year: form.year }); navigate('/dashboard') }
+    catch (err) { setError(err.response?.data?.message || 'Google sign-up failed. Please try again.') }
   }
 
   return (
