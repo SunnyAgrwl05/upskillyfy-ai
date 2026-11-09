@@ -38,7 +38,13 @@ router.post('/register', async (req, res) => {
       role: role && ['student', 'faculty'].includes(role) ? role : 'student',
       branch: branch || '',
       college: college || '',
-      year: year || ''
+      year: year || '',
+      privacyConsents: {
+        termsAcceptedAt: new Date(),
+        privacyAcceptedAt: new Date(),
+        policyVersion: '2026-11-09',
+        marketingEmails: marketingConsent === true,
+      }
     })
 
     const token = signToken(user._id)
