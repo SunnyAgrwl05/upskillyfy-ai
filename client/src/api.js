@@ -13,6 +13,7 @@ const getBaseURL = () => {
 
 const API = axios.create({
   baseURL: getBaseURL(),
+  withCredentials: true,
 })
 
 const templateListCache = new Map()
@@ -69,17 +70,14 @@ async function getTemplateData(url, key, cache, validate, params, signal) {
   return { ...response, data }
 }
 
-API.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token')
-  if (token) config.headers.Authorization = `Bearer ${token}`
-  return config
-})
+
 
 export const authAPI = {
   register: (data) => API.post('/auth/register', data),
   login: (data) => API.post('/auth/login', data),
   google: (data) => API.post('/auth/google', data),
   me: () => API.get('/auth/me'),
+  logout: () => API.post('/auth/logout'),
 }
 
 export const internshipAPI = {
