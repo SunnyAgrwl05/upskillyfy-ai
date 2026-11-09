@@ -72,8 +72,8 @@ export default function Register() {
       return
     }
 
-    if (form.password.length < 6) {
-      setError('Password must be at least 6 characters long.')
+    if (form.password.length < 8) {
+      setError('Password must be at least 8 characters long.')
       return
     }
 
@@ -98,7 +98,7 @@ export default function Register() {
 
   const handleGoogleSuccess = async ({ credential }) => {
     if (!termsAccepted) { setError('Please accept the Terms and Privacy Policy before continuing with Google.'); return }
-    try { await loginWithGoogle(credential, { intent: 'signup', role, branch: form.branch, college: form.college, year: form.year }); navigate('/dashboard') }
+    try { await loginWithGoogle(credential, { intent: 'signup', termsAccepted, role, branch: form.branch, college: form.college, year: form.year }); navigate('/dashboard') }
     catch (err) { setError(err.response?.data?.message || 'Google sign-up failed. Please try again.') }
   }
 
