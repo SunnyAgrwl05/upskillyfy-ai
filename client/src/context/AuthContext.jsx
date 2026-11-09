@@ -1,51 +1,13 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import { authAPI } from '../api'
-
 const AuthContext = createContext()
-
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    const token = localStorage.getItem('token')
-    if (token) {
-      authAPI.me().then(res => { setUser(res.data); setLoading(false) })
-        .catch(() => { localStorage.removeItem('token'); setLoading(false) })
-    } else { setLoading(false) }
-  }, [])
-
-  const login = async (email, password) => {
-    const res = await authAPI.login({ email, password })
-    localStorage.setItem('token', res.data.token)
-    setUser(res.data.user)
-    return res.data
-  }
-
-  const register = async (data) => {
-    const res = await authAPI.register(data)
-    localStorage.setItem('token', res.data.token)
-    setUser(res.data.user)
-    return res.data
-  }
-
-  const loginWithGoogle = async (credential, options = {}) => {
-    const res = await authAPI.google({ credential, ...options })
-    localStorage.setItem('token', res.data.token)
-    setUser(res.data.user)
-    return res.data
-  }
-
-  const logout = () => {
-    localStorage.removeItem('token')
-    setUser(null)
-  }
-
-  return (
-    <AuthContext.Provider value={{ user, loading, login, register, loginWithGoogle, logout }}>
-      {children}
-    </AuthContext.Provider>
-  )
+ const [user,setUser]=useState(null),[loading,setLoading]=useState(true)
+ useEffect(()=>{authAPI.me().then(r=>setUser(r.data)).catch(()=>setUser(null)).finally(()=>setLoading(false))},[])
+ const login=async(email,password)=>{const r=await authAPI.login({email,password});setUser(r.data.user);return r.data}
+ const register=async data=>{const r=await authAPI.register(data);setUser(r.data.user);return r.data}
+ const loginWithGoogle=async(credential,options={})=>{const r=await authAPI.google({credential,...options});setUser(r.data.user);return r.data}
+ const logout=async()=>{try{await authAPI.logout()}finally{setUser(null)}}
+ return <AuthContext.Provider value={{user,loading,login,register,loginWithGoogle,logout}}>{children}</AuthContext.Provider>
 }
-
-export const useAuth = () => useContext(AuthContext)
+export const useAuth=()=>useContext(AuthContext)
