@@ -107,6 +107,7 @@ test('upload, review confirmation, ownership, retention, history, and deletion w
     const form = new FormData()
     form.append('resume', new Blob([fixturePdf], { type: 'application/pdf' }), 'resume.pdf')
     form.append('jobDescription', 'React engineer')
+    form.append('saveToHistory', 'true')
     const response = await request(origin, { method: 'POST', headers: auth(), body: form })
     assert.equal(response.status, 201)
     const result = await response.json()
