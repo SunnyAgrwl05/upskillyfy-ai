@@ -39,6 +39,14 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }))
+// Enforce same-origin/allowlisted Origin on browser state-changing requests (CSRF defense for cookie sessions).
+app.use((req, res, next) => {
+  if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next()
+  const origin = req.get('Origin')
+  if (origin && !configuredOrigins.includes(origin)) return res.status(403).json({ message: 'Request origin is not allowed.' })
+  next()
+})
+
 app.use('/api/resume-projects', express.json({ limit: '15mb' }))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
