@@ -7,7 +7,7 @@ import latexTemplates from '../routes/latexTemplates.js'
 import { LATEX_TEMPLATES } from '../data/latexTemplates.js'
 import { extractPdfText } from '../services/pdfTextService.js'
 
-const ids = ['ats-friendly-resume', 'fresher-resume', 'software-engineer-resume', 'experienced-professional-resume', 'academic-cv']
+const ids = ['ats-friendly-resume', 'fresher-resume', 'software-engineer-resume', 'experienced-professional-resume', 'academic-cv', 'cover-letter']
 const manifest = JSON.parse(await readFile(new URL('../../client/public/resume-templates/manifest.json', import.meta.url), 'utf8'))
 const app = express()
 app.use('/api/latex-templates', latexTemplates)
@@ -45,6 +45,7 @@ for (const id of ids) {
       'software-engineer-resume': 'Jordan Ellis',
       'experienced-professional-resume': 'Samuel Okonkwo',
       'academic-cv': 'Dr. Elena Novak',
+      'cover-letter': 'Priya Sharma',
     }[id]
     assert.ok(extracted.text.includes(expectedName))
   })
