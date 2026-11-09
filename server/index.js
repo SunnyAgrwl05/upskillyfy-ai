@@ -28,26 +28,16 @@ dotenv.config()
 const app = express()
 
 const clientUrlEnv = process.env.CLIENT_URL || ''
-const configuredOrigins = clientUrlEnv.split(',').map(u => u.trim()).filter(Boolean)
+const configuredOrigins = [...clientUrlEnv.split(','), ...(process.env.EXTRA_CORS_ORIGINS || '').split(',')].map(u => u.trim()).filter(Boolean)
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow non-browser requests (like server-to-server, Postman, mobile)
-    if (!origin) return callback(null, true)
-
-    // Allow configured URLs, all Vercel preview/production deployments, and localhost
-    if (
-      configuredOrigins.includes(origin) ||
-      origin.endsWith('.vercel.app') ||
-      origin.includes('localhost') ||
-      origin.includes('upskillyfy')
-    ) {
-      return callback(null, true)
-    }
-
-    return callback(null, true)
+    if (!origin || configuredOrigins.includes(origin)) return callback(null, true)
+    return callback(new Error('Origin is not allowed by CORS'))
   },
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }))
 app.use('/api/resume-projects', express.json({ limit: '15mb' }))
 app.use(express.json())
