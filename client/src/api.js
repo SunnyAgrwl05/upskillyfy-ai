@@ -70,8 +70,6 @@ async function getTemplateData(url, key, cache, validate, params, signal) {
   return { ...response, data }
 }
 
-
-
 export const authAPI = {
   register: (data) => API.post('/auth/register', data),
   login: (data) => API.post('/auth/login', data),
