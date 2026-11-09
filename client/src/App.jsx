@@ -11,6 +11,8 @@ import Portfolio from "./pages/Portfolio/Portfolio";
 import Contact from "./pages/Contact/Contact";
 import Login from "./pages/Auth/Login";
 import Register from "./pages/Auth/Register";
+import PrivacyPolicy from "./pages/Legal/PrivacyPolicy";
+import TermsOfService from "./pages/Legal/TermsOfService";
 import Dashboard from "./pages/Dashboard/Dashboard";
 import AssessmentHub from "./pages/Career/Assessments/AssessmentHub";
 import AssessmentFaculty from "./pages/Career/Assessments/AssessmentFaculty";
@@ -106,6 +108,8 @@ export default function App() {
 
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/terms" element={<TermsOfService />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/admin/credentials" element={<AdminCertificates />} />
             <Route path="/admin/documents" element={<AdminDocuments />} />

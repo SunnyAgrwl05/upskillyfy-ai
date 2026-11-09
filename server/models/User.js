@@ -12,6 +12,12 @@ const userSchema = new mongoose.Schema({
   avatar: { type: String, default: '' },
   linkedin: { type: String, default: '', trim: true },
   github: { type: String, default: '', trim: true },
+  privacyConsents: {
+    termsAcceptedAt: { type: Date, default: null },
+    privacyAcceptedAt: { type: Date, default: null },
+    policyVersion: { type: String, default: '2026-11-09' },
+    marketingEmails: { type: Boolean, default: false },
+  },
 
   // Learning state
   enrolledCourses: [{ type: String }],

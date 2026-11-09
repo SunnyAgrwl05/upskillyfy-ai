@@ -17,10 +17,13 @@ const signToken = (id) => jwt.sign({ id }, getJwtSecret(), { expiresIn: '30d' })
 router.post('/register', async (req, res) => {
   try {
     getJwtSecret()
-    const { name, email, password, role, branch, college, year } = req.body
+    const { name, email, password, role, branch, college, year, termsAccepted, marketingConsent } = req.body
 
     if (!name || !email || !password) {
       return res.status(400).json({ message: 'Name, email, and password are required' })
+    }
+    if (termsAccepted !== true) {
+      return res.status(400).json({ message: 'Please accept the Terms of Service and Privacy Policy to create an account.' })
     }
     if (password.length < 6) {
       return res.status(400).json({ message: 'Password must be at least 6 characters long' })
@@ -38,7 +41,13 @@ router.post('/register', async (req, res) => {
       role: role && ['student', 'faculty'].includes(role) ? role : 'student',
       branch: branch || '',
       college: college || '',
-      year: year || ''
+      year: year || '',
+      privacyConsents: {
+        termsAcceptedAt: new Date(),
+        privacyAcceptedAt: new Date(),
+        policyVersion: '2026-11-09',
+        marketingEmails: marketingConsent === true,
+      }
     })
 
     const token = signToken(user._id)

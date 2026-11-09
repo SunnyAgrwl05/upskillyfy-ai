@@ -42,6 +42,7 @@ export default function ResumeAnalyzer() {
   const [file, setFile] = useState(null)
   const [dragging, setDragging] = useState(false)
   const [jobDescription, setJobDescription] = useState('')
+  const [saveToHistory, setSaveToHistory] = useState(false)
   const [phase, setPhase] = useState('idle')
   const [progress, setProgress] = useState(0)
   const [error, setError] = useState('')
@@ -85,7 +86,7 @@ export default function ResumeAnalyzer() {
     if (!file || phase === 'uploading' || phase === 'analyzing') return
     setPhase('uploading'); setProgress(0); setError(''); setAnalysis(null); setRetention('')
     try {
-      const { data } = await resumeAnalysisAPI.analyze(file, jobDescription, (eventProgress) => {
+      const { data } = await resumeAnalysisAPI.analyze(file, jobDescription, saveToHistory, (eventProgress) => {
         if (eventProgress.total) {
           const percent = Math.round(eventProgress.loaded * 100 / eventProgress.total)
           setProgress(percent)
@@ -180,6 +181,10 @@ export default function ResumeAnalyzer() {
           {file && <button type="button" className="ra-remove-file" onClick={(event) => { event.stopPropagation(); setFile(null) }} aria-label="Remove PDF"><X size={16} /></button>}
         </div>
         <label className="ra-job-description">Target job description <span>Optional, for keyword coverage</span><textarea value={jobDescription} maxLength={12000} onChange={(event) => setJobDescription(event.target.value)} placeholder="Paste the job description to compare relevant terms. It is not saved to your history." /></label>
+        {user && <label className="ra-save-consent">
+          <input type="checkbox" checked={saveToHistory} onChange={(event) => setSaveToHistory(event.target.checked)} />
+          <span><b>Save this analysis to my account history</b><small>Off by default. Your PDF and raw extracted text are discarded after processing; only structured analysis is saved if you opt in.</small></span>
+        </label>}
         {error && <p className="ra-error" role="alert">{error}</p>}
         {phase === 'uploading' || phase === 'analyzing' ? <div className="ra-progress" role="status"><div><LoaderCircle size={17} className="ra-spin" />{phase === 'uploading' ? `Uploading PDF · ${progress}%` : 'Extracting and analyzing resume…'}</div><i><em style={{ width: `${phase === 'analyzing' ? 100 : progress}%` }} /></i></div> : null}
         <button className="ra-primary" type="submit" disabled={!file || phase === 'uploading' || phase === 'analyzing'}><Sparkles size={17} /> Analyze resume <ArrowRight size={16} /></button>

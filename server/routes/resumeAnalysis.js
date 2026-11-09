@@ -114,7 +114,8 @@ router.post('/', analysisAdmission, optionalAuth, analysisRateLimit, receiveResu
     keywordCoverage: result.scoring.keywordCoverage,
     verificationNotice: 'AI analysis reviews text only. It does not verify the authenticity of education, employment, certifications, or achievements.',
   }
-  const saved = req.user ? await ResumeAnalysis.create({
+  const saveToHistory = Boolean(req.user && req.body.saveToHistory === 'true')
+  const saved = saveToHistory ? await ResumeAnalysis.create({
     owner: req.user._id,
     extractedData: result.extractedData,
     feedback,
@@ -128,7 +129,9 @@ router.post('/', analysisAdmission, optionalAuth, analysisRateLimit, receiveResu
     analysis,
     retention: saved
       ? 'Structured analysis is saved to your account until you delete it. The uploaded PDF and extracted raw text are discarded after this request.'
-      : 'This guest analysis remains in this browser session only. Sign in to save it to your history. The uploaded PDF and extracted raw text are discarded after this request.',
+      : req.user
+        ? 'This analysis was not saved. Choose Save to history if you want to keep it in your account. The uploaded PDF and extracted raw text are discarded after this request.'
+        : 'This guest analysis remains in this browser session only. Sign in and explicitly choose Save to history to keep it. The uploaded PDF and extracted raw text are discarded after this request.',
   })
 }))
 
