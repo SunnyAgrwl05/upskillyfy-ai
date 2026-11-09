@@ -9,11 +9,12 @@ const getJwtSecret = () => process.env.JWT_SECRET
  */
 export const protect = async (req, res, next) => {
   const authHeader = req.headers.authorization
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  const cookieToken = req.headers.cookie?.split(';').map(v => v.trim()).find(v => v.startsWith('upskillyfy_session='))?.slice('upskillyfy_session='.length)
+  const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice('Bearer '.length).trim() : ''
+  const token = cookieToken ? decodeURIComponent(cookieToken) : bearerToken
+  if (!token) {
     return res.status(401).json({ message: 'Authentication required. Please login.' })
   }
-  const token = authHeader.slice('Bearer '.length).trim()
-  if (!token) return res.status(401).json({ message: 'Authentication required. Please login.' })
   const secret = getJwtSecret()
   if (!secret) {
     return res.status(503).json({ message: 'Authentication is unavailable until JWT_SECRET is configured.', code: 'AUTH_NOT_CONFIGURED' })
@@ -56,9 +57,10 @@ export const adminOnly = (req, res, next) => {
 export const optionalAuth = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization
+    const cookieToken = req.headers.cookie?.split(';').map(v => v.trim()).find(v => v.startsWith('upskillyfy_session='))?.slice('upskillyfy_session='.length)
+    const token = cookieToken ? decodeURIComponent(cookieToken) : (authHeader?.startsWith('Bearer ') ? authHeader.slice(7).trim() : '')
     const secret = getJwtSecret()
-    if (secret && authHeader && authHeader.startsWith('Bearer ')) {
-      const token = authHeader.split(' ')[1]
+    if (secret && token) {
       const decoded = jwt.verify(token, secret)
       const user = await User.findById(decoded.id).select('-password')
       if (user) req.user = user
