@@ -96,6 +96,7 @@ router.post('/login', authLimiter, async (req, res) => {
 router.post('/google', authLimiter, async (req, res) => {
   const { credential, intent = 'login', role = 'student', branch = '', college = '', year = '', termsAccepted } = req.body
   let email = ''
+  let createdAccount = false
   try {
     getJwtSecret()
     if (!process.env.GOOGLE_CLIENT_ID) return res.status(503).json({ message: 'Google sign-in is not configured yet.' })
@@ -124,13 +125,14 @@ router.post('/google', authLimiter, async (req, res) => {
         branch, college, year, authProviders: ['google'],
         privacyConsents: { termsAcceptedAt: new Date(), privacyAcceptedAt: new Date(), policyVersion: '2026-11-09', marketingEmails: false },
       })
+      createdAccount = true
     } else {
       if (intent === 'signup') return res.status(409).json({ message: 'A Google account is already registered. Please sign in instead.' })
       if (!user.authProviders.includes('google')) { user.authProviders.push('google'); await user.save() }
     }
-    await logEvent(req, { action: user ? 'login' : 'signup', provider: 'google', status: 'success', user })
+    await logEvent(req, { action: createdAccount ? 'signup' : 'login', provider: 'google', status: 'success', user })
     issueSession(res, user)
-    res.json({ user: payload(user), isNewUser: intent === 'signup' })
+    res.json({ user: payload(user), isNewUser: createdAccount })
   } catch (error) {
     console.error('Google authentication error:', error.message)
     await logEvent(req, { action: intent === 'signup' ? 'signup' : 'login', provider: 'google', status: 'failure', email, failureCode: error.code || 'GOOGLE_AUTH_ERROR' })
