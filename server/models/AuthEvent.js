@@ -8,4 +8,5 @@ const schema = new mongoose.Schema({
  ipAddress:{type:String,default:''}, userAgent:{type:String,default:''}, failureCode:{type:String,default:''}
 },{timestamps:true})
 schema.index({createdAt:-1})
+schema.index({ createdAt: 1 }, { expireAfterSeconds: 60 * 60 * 24 * 90 })
 export default mongoose.model('AuthEvent',schema)
