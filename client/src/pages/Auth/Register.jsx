@@ -48,7 +48,7 @@ export default function Register() {
   const passwordStrength = useMemo(() => {
     const pwd = form.password
     if (!pwd) return { score: 0, label: '', color: 'transparent', width: '0%' }
-    if (pwd.length < 6) return { score: 1, label: 'Too short (min 6 chars)', color: '#ea4335', width: '25%' }
+    if (pwd.length < 8) return { score: 1, label: 'Too short (min 8 chars)', color: '#ea4335', width: '25%' }
 
     let score = 1
     if (/[A-Z]/.test(pwd)) score++
@@ -72,8 +72,8 @@ export default function Register() {
       return
     }
 
-    if (form.password.length < 6) {
-      setError('Password must be at least 6 characters long.')
+    if (form.password.length < 8) {
+      setError('Password must be at least 8 characters long.')
       return
     }
 
