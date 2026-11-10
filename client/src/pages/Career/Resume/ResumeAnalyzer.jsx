@@ -54,6 +54,7 @@ export default function ResumeAnalyzer() {
   const [selectedTemplate, setSelectedTemplate] = useState(TEMPLATES[0][0])
   const [savingReview, setSavingReview] = useState(false)
   const [historyStatus, setHistoryStatus] = useState('')
+  const [dailyUsage, setDailyUsage] = useState(null)
 
   useEffect(() => {
     if (!user) { setHistory([]); return }
@@ -95,6 +96,7 @@ export default function ResumeAnalyzer() {
       })
       setAnalysis(emptyAnalysis(data.analysis))
       setRetention(data.retention || '')
+      resumeAnalysisAPI.usage().then(({ data: usage }) => setDailyUsage(usage)).catch(() => {})
       setPhase('done')
       setFile(null)
     } catch (requestError) {
@@ -187,7 +189,8 @@ export default function ResumeAnalyzer() {
         </label>}
         {error && <p className="ra-error" role="alert">{error}</p>}
         {phase === 'uploading' || phase === 'analyzing' ? <div className="ra-progress" role="status"><div><LoaderCircle size={17} className="ra-spin" />{phase === 'uploading' ? `Uploading PDF · ${progress}%` : 'Extracting and analyzing resume…'}</div><i><em style={{ width: `${phase === 'analyzing' ? 100 : progress}%` }} /></i></div> : null}
-        <button className="ra-primary" type="submit" disabled={!file || phase === 'uploading' || phase === 'analyzing'}><Sparkles size={17} /> Analyze resume <ArrowRight size={16} /></button>
+        {user && dailyUsage && <p className="ra-privacy">Daily free analyses: {dailyUsage.remaining} of {dailyUsage.limit} remaining. Resets at midnight UTC.</p>}
+        <button className="ra-primary" type="submit" disabled={!file || phase === 'uploading' || phase === 'analyzing' || dailyUsage?.remaining === 0}><Sparkles size={17} /> Analyze resume <ArrowRight size={16} /></button>
         <p className="ra-privacy">Uploaded files are not retained. Scanned PDFs require OCR, which is not enabled.</p>
       </form>
       <aside className="ra-process-card"><p className="ra-eyebrow">HOW IT WORKS</p>{[['01', 'Extract', 'We read selectable text from your PDF.'], ['02', 'Analyze', 'AI provides structured feedback and explicit completeness checks.'], ['03', 'Review', 'Edit, remove, confirm, or flag each section yourself.'], ['04', 'Build', 'Choose an ATS template and open your editable resume.']].map(([num, title, copy]) => <div className="ra-process-step" key={num}><span>{num}</span><div><b>{title}</b><p>{copy}</p></div></div>)}<div className="ra-notice"><b>No external verification</b><p>Education, employment and credentials are not authenticated by this tool. Review and verify claims yourself.</p></div></aside>
