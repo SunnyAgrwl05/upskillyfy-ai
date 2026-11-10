@@ -27,6 +27,24 @@
 @keyframes ove-spin{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){.spin{animation:none}}
 
+.ove-menu-bar{display:flex;align-items:center;gap:4px;padding:4px 12px;background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap}
+.ove-mb-group{display:flex;align-items:center;gap:2px}
+.ove-mb-dd{display:inline-flex;align-items:center;gap:3px;padding:5px 9px;border:1px solid var(--line);border-radius:5px;color:var(--text);font-weight:600;font-size:13px}
+.ove-mb-dd:hover{background:#2f3b4a}
+
+.ove-mode{display:flex;align-items:center;gap:4px;padding:4px 6px;background:#242b36;border:1px solid var(--line);border-radius:4px}
+.ove-mode button{padding:5px 8px;border-radius:4px;color:var(--muted);font-size:12px}
+.ove-mode button:hover{background:#2f3b4a;color:var(--text)}
+.ove-mode button.on{color:var(--text);background:#34425a;box-shadow:inset 2px 0 0 var(--green-2)}
+.ove-mode select{background:#242b36;border:1px solid var(--line);border-radius:4px;color:var(--text);padding:5px 8px;font-size:12px}
+.ove-mode select:hover{border-color:var(--line)}
+
+.ove-pdf-nav{display:flex;align-items:center;gap:4px}
+.ove-pdf-nav button{padding:3px 8px;border:1px solid var(--line);border-radius:4px;color:var(--text);font-size:12px;background:var(--bg)}
+.ove-pdf-nav button:disabled{opacity:.4;cursor:not-allowed}
+.ove-pdf-nav button:hover:not(:disabled){background:#2f3b4a}
+.ove-pdf-page{font-size:12px;color:var(--muted);min-width:40px;text-align:center}
+
 .ove-body{flex:1;display:grid;grid-template-columns:230px minmax(0,1fr) minmax(0,1fr);min-height:0;position:relative}
 .ove-body.layout-editor{grid-template-columns:230px minmax(0,1fr) 0}
 .ove-body.layout-editor .ove-right{display:none}
