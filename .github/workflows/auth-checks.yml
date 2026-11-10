@@ -1,0 +1,37 @@
+name: Auth and app checks
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main, feature/auth-security-hardening]
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install frontend dependencies
+        working-directory: client
+        run: npm install
+      - name: Build frontend
+        working-directory: client
+        run: npm run build
+      - name: Install backend dependencies
+        working-directory: server
+        run: npm install
+      - name: Syntax-check auth modules
+        working-directory: server
+        run: |
+          node --check index.js
+          node --check middleware/auth.js
+          node --check routes/auth.js
+          node --check routes/users.js
+      - name: Run backend tests
+        working-directory: server
+        env:
+          NODE_ENV: test
+          JWT_SECRET: test_only_secret_key_that_is_at_least_32_chars
+          MONGODB_URI: mongodb://127.0.0.1:27017/upskillyfy_test
+        run: npm test
