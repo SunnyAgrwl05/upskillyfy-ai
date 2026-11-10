@@ -85,7 +85,10 @@ test('upload, review confirmation, ownership, retention, history, and deletion w
   const tooLarge = await request(origin, { method: 'POST', body: oversized })
   assert.equal(tooLarge.status, 413)
   assert.equal((await tooLarge.json()).code, 'UPLOAD_TOO_LARGE')
-  assert.equal((await request(origin, { method: 'POST' })).status, 429)
+  assert.equal((await request(origin, { method: 'POST' })).status, 422)
+  const sixthGuestAttempt = await request(origin, { method: 'POST' })
+  assert.equal(sixthGuestAttempt.status, 429)
+  assert.equal((await sixthGuestAttempt.json()).code, 'RATE_LIMITED')
 
   const previousFetch = globalThis.fetch
   process.env.OPENAI_API_KEY = 'resume-analyzer-test-key'
