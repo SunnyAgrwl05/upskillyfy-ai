@@ -49,18 +49,21 @@ function analysisAdmission(req, res, next) {
 
 async function analysisRateLimit(req, res, next) {
   if (mongoose.connection.readyState !== 1) return res.status(503).json({ message: 'Resume analysis is temporarily unavailable.', code: 'DATABASE_UNAVAILABLE' })
-  const windowStart = Math.floor(Date.now() / (60 * 60 * 1000))
-  const identity = req.user?._id ? String(req.user._id) : `guest:${createHash('sha256').update(req.ip || 'unknown').digest('hex')}`
-  const key = `${identity}:${windowStart}`
+  const now = new Date()
+  const dayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
+  const nextDay = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000)
+  const identity = req.user?._id ? `user:${req.user._id}` : `guest:${createHash('sha256').update(req.ip || 'unknown').digest('hex')}`
+  const key = `${identity}:${dayStart.toISOString().slice(0, 10)}`
   try {
     const counter = await ResumeAnalysisRateLimit.findOneAndUpdate(
       { _id: key },
-      { $inc: { count: 1 }, $setOnInsert: { expiresAt: new Date((windowStart + 2) * 60 * 60 * 1000) } },
+      { $inc: { count: 1 }, $setOnInsert: { expiresAt: new Date(nextDay.getTime() + 24 * 60 * 60 * 1000) } },
       { upsert: true, new: true, setDefaultsOnInsert: true },
     )
-    res.set('RateLimit-Limit', '3')
-    res.set('RateLimit-Remaining', String(Math.max(0, 3 - counter.count)))
-    if (counter.count > 3) return res.status(429).json({ message: 'Resume analysis limit reached. Try again later.', code: 'RATE_LIMITED' })
+    res.set('RateLimit-Limit', '5')
+    res.set('RateLimit-Remaining', String(Math.max(0, 5 - counter.count)))
+    res.set('RateLimit-Reset', String(Math.floor(nextDay.getTime() / 1000)))
+    if (counter.count > 5) return res.status(429).json({ message: 'Daily limit reached: you can analyze up to 5 resumes per day. Try again after the daily reset.', code: 'RATE_LIMITED', limit: 5, remaining: 0, resetAt: nextDay.toISOString() })
     next()
   } catch (error) {
     if (error?.code === 11000) return analysisRateLimit(req, res, next)
@@ -88,6 +91,17 @@ const publicAnalysis = (item) => ({
   createdAt: item.createdAt,
   updatedAt: item.updatedAt,
 })
+
+router.get('/usage', optionalAuth, asyncHandler(async (req, res) => {
+  if (mongoose.connection.readyState !== 1) return res.status(503).json({ message: 'Resume analysis is temporarily unavailable.', code: 'DATABASE_UNAVAILABLE' })
+  const now = new Date()
+  const dayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
+  const nextDay = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000)
+  const identity = req.user?._id ? `user:${req.user._id}` : `guest:${createHash('sha256').update(req.ip || 'unknown').digest('hex')}`
+  const counter = await ResumeAnalysisRateLimit.findById(`${identity}:${dayStart.toISOString().slice(0, 10)}`).lean()
+  const used = counter?.count || 0
+  res.json({ limit: 5, used, remaining: Math.max(0, 5 - used), resetAt: nextDay.toISOString(), accountBased: Boolean(req.user) })
+}))
 
 router.post('/', analysisAdmission, optionalAuth, analysisRateLimit, receiveResumeUpload, asyncHandler(async (req, res) => {
   if (!req.file) return res.status(422).json({ message: 'Choose a PDF resume to analyze.', code: 'RESUME_REQUIRED' })
