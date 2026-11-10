@@ -9,6 +9,7 @@ import {
   ArrowLeft, Play, Download, FilePlus, FolderPlus, Upload, Pencil, Trash2,
   ChevronRight, ChevronDown, File as FileIcon, Folder, Bold, Italic, List,
   Sigma, Link2, Heading, Undo2, Redo2, History, Columns, X, RefreshCw, AlertTriangle,
+  Underline, Table, Share2, Copy, Check,
 } from 'lucide-react'
 import { resumeProjectAPI } from '../../../api'
 import { readProjects, upsertProject, downloadBlob } from './ovStore'
@@ -56,12 +57,19 @@ export default function OverleafEditor() {
   const [showHistory, setShowHistory] = useState(false)
   const [history, setHistory] = useState([])
   const [dlOpen, setDlOpen] = useState(false)
+  const [mode, setMode] = useState('code') // code | visual
+  const [menuOpen, setMenuOpen] = useState(null) // 'file'|'edit'|'insert'|'view'|'format'|'help'|null
+  const [shareOpen, setShareOpen] = useState(false)
+  const [shareLink, setShareLink] = useState('')
+  const [pageNum, pageNumRef] = useState(1)
+  const [maxPages, setMaxPages] = useState(1)
   const viewRef = useRef(null)
   const projectRef = useRef(project)
   const cloudTimer = useRef(null)
   const autoTimer = useRef(null)
   const uploadRef = useRef(null)
   const pdfRef = useRef('')
+  const menuRef = useRef(null)
 
   projectRef.current = project
 
@@ -353,6 +361,77 @@ export default function OverleafEditor() {
 
   return (
     <div className="ove" onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); uploadFiles([...e.dataTransfer.files]) }}>
+      <div className="ove-menu-bar">
+        <div className="ove-mb-group">
+          <button className="ove-mb-dd" onClick={() => setMenuOpen(menuOpen === 'file' ? null : 'file')}>File ▾</button>
+          {menuOpen === 'file' && (
+            <div className="ove-menu" ref={menuRef} onMouseLeave={() => setMenuOpen(null)}>
+              <button onClick={() => { setMenuOpen(null); newFile() }}>New file</button>
+              <button onClick={() => { setMenuOpen(null); uploadRef.current?.click() }}>Upload</button>
+              <button onClick={() => { setMenuOpen(null); downloadZip() }}>Download project (.zip)</button>
+              <button onClick={() => { setMenuOpen(null); const m = project.files.find((f) => f.name === project.mainFile); downloadBlob(project.mainFile, m?.content || '') }}>Download main source (.tex)</button>
+            </div>
+          )}
+        </div>
+        <div className="ove-mb-group">
+          <button className="ove-mb-dd" onClick={() => setMenuOpen(menuOpen === 'edit' ? null : 'edit')}>Edit ▾</button>
+          {menuOpen === 'edit' && (
+            <div className="ove-menu" ref={menuRef} onMouseLeave={() => setMenuOpen(null)}>
+              <button onClick={() => { setMenuOpen(null); viewRef.current && undo(viewRef.current) }}>Undo</button>
+              <button onClick={() => { setMenuOpen(null); viewRef.current && redo(viewRef.current) }}>Redo</button>
+              <button onClick={() => { setMenuOpen(null); wrap('\\textbf{', '}', 'bold') }}>Bold</button>
+              <button onClick={() => { setMenuOpen(null); wrap('\\textit{', '}', 'italic') }}>Italic</button>
+              <button onClick={() => { setMenuOpen(null); wrap('\\underline{', '}', 'text') }}>Underline</button>
+            </div>
+          )}
+        </div>
+        <div className="ove-mb-group">
+          <button className="ove-mb-dd" onClick={() => setMenuOpen(menuOpen === 'insert' ? null : 'insert')}>Insert ▾</button>
+          {menuOpen === 'insert' && (
+            <div className="ove-menu" ref={menuRef} onMouseLeave={() => setMenuOpen(null)}>
+              <button onClick={() => { setMenuOpen(null); wrap('\\section{', '}', 'Title') }}>Section</button>
+              <button onClick={() => { setMenuOpen(null); wrap('\\begin{itemize}\n  \\item ', '\n\\end{itemize}', 'item') }}>Bullet list</button>
+              <button onClick={() => { setMenuOpen(null); wrap('\\begin{enumerate}\n  \\item ', '\n\\end{enumerate}', 'item') }}>Numbered list</button>
+              <button onClick={() => { setMenuOpen(null); wrap('\\begin{tabular}{ll}\n  \\hline\n  A & B \\\\\n  \\hline\n  1 & 2 \\\\\n  \\hline\n\\end{tabular}\n') }}>Table</button>
+              <button onClick={() => { setMenuOpen(null); wrap('$', '$', 'x^2') }}>Inline math</button>
+              <button onClick={() => { setMenuOpen(null); wrap('\\href{https://}{', '}', 'text') }}>Link</button>
+              <button onClick={() => { setMenuOpen(null); wrap('\\includegraphics[width=0.8\\linewidth]{', '}', 'image.png') }}>Image</button>
+            </div>
+          )}
+        </div>
+        <div className="ove-mb-group">
+          <button className="ove-mb-dd" onClick={() => setMenuOpen(menuOpen === 'view' ? null : 'view')}>View ▾</button>
+          {menuOpen === 'view' && (
+            <div className="ove-menu" ref={menuRef} onMouseLeave={() => setMenuOpen(null)}>
+              <button onClick={() => { setMenuOpen(null); setLayout(LAYOUTS[(LAYOUTS.indexOf(layout) + 1) % LAYOUTS.length]) }}>Cycle layout</button>
+              <button onClick={() => { setMenuOpen(null); setAuto(a => !a) }}>{auto ? 'Turn off' : 'Turn on'} auto-compile</button>
+              <button onClick={() => { setMenuOpen(null); setShowLog(l => !l) }}>{showLog ? 'Hide' : 'Show'} compile log</button>
+            </div>
+          )}
+        </div>
+        <div className="ove-mb-group">
+          <button className="ove-mb-dd" onClick={() => setMenuOpen(menuOpen === 'format' ? null : 'format')}>Format ▾</button>
+          {menuOpen === 'format' && (
+            <div className="ove-menu" ref={menuRef} onMouseLeave={() => setMenuOpen(null)}>
+              <button onClick={() => { setMenuOpen(null); wrap('\\textbf{', '}', 'bold') }}>Bold</button>
+              <button onClick={() => { setMenuOpen(null); wrap('\\textit{', '}', 'italic') }}>Italic</button>
+              <button onClick={() => { setMenuOpen(null); wrap('\\underline{', '}', 'text') }}>Underline</button>
+              <button onClick={() => { setMenuOpen(null); wrap('\\section{', '}', 'Title') }}>Section</button>
+            </div>
+          )}
+        </div>
+        <div className="ove-mb-group">
+          <button className="ove-mb-dd" onClick={() => setMenuOpen(menuOpen === 'help' ? null : 'help')}>Help ▾</button>
+          {menuOpen === 'help' && (
+            <div className="ove-menu" ref={menuRef} onMouseLeave={() => setMenuOpen(null)}>
+              <button onClick={() => { setMenuOpen(null); window.open('https://www.overleaf.com/learn', '_blank', 'noopener,noreferrer') }}>Overleaf help centre</button>
+              <button onClick={() => { setMenuOpen(null); window.alert('Shortcuts: Ctrl/Cmd+B bold, Ctrl/Cmd+I italic, Ctrl/Cmd+F find, Tab indent, Shift+Tab outdent') }}>Keyboard shortcuts</button>
+            </div>
+          )}
+        </div>
+        <div className="ove-spacer" />
+        <button className="ove-btn" onClick={() => { setShareLink(`${window.location.origin}/career/resume/editor/${project.id}`); setShareOpen(true) }}><Download size={15} /> Share</button>
+      </div>
       <header className="ove-top">
         <button className="ove-icon" onClick={() => navigate('/career/resume/projects')} aria-label="Back to projects"><ArrowLeft size={18} /></button>
         <input className="ove-title" defaultValue={project.title} key={project.id} onBlur={titleBlur} onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()} aria-label="Project name" />
@@ -375,7 +454,30 @@ export default function OverleafEditor() {
           {compiling ? <RefreshCw size={15} className="spin" /> : <Play size={15} />} {compiling ? 'Compiling…' : 'Recompile'}
         </button>
       </header>
-
+      {/* Share modal */}
+      {shareOpen && (
+        <div className="ove-share" onClick={() => setShareOpen(false)}>
+          <div className="ove-share-card" onClick={(e) => e.stopPropagation()}>
+            <b>Share link</b>
+            <p className="muted">Anyone with this link can open the editor for this project.</p>
+            <div className="ove-share-input">
+              <input readOnly value={shareLink} />
+              <button className="ove-btn small" onClick={() => {
+                navigator.clipboard.writeText(shareLink)
+                setShareOpen(false)
+              }}><Copy size={14} /> Copy</button>
+            </div>
+            <button className="ove-btn small" onClick={() => setShareOpen(false)}>Close</button>
+          </div>
+        </div>
+      )}
+      <style>{`
+        .ove-share{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:40;display:flex;align-items:center;justify-content:center}
+        .ove-share-card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;min-width:320px;max-width:90vw}
+        .ove-share-input{display:flex;gap:8px;margin-top:10px}
+        .ove-share-input input{flex:1;background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:6px 8px;color:var(--text);font-family:monospace;font-size:12px}
+        .ove-share-input button{padding:6px 10px}
+      `}</style>
       <div className={`ove-body layout-${layout}`}>
         <aside className="ove-left">
           <div className="ove-left-head">
@@ -406,6 +508,15 @@ export default function OverleafEditor() {
               </div>
             ))}
           </div>
+          <div className="ove-mode">
+            <button className={mode === 'code' ? 'on' : ''} onClick={() => setMode('code')}>Code</button>
+            <button className={mode === 'visual' ? 'on' : ''} onClick={() => setMode('visual')} disabled={!file || file.isBinary}>Visual</button>
+            <select value="" onChange={(e) => { if (e.target.value) { setMode(e.target.value); e.target.value = '' } }} aria-label="Editor mode">
+              <option value="" disabled>Editing ▾</option>
+              <option value="code">Code</option>
+              <option value="visual">Visual</option>
+            </select>
+          </div>
           <div className="ove-toolbar">
             <button aria-label="Undo" title="Undo" onClick={() => viewRef.current && undo(viewRef.current)}><Undo2 size={15} /></button>
             <button aria-label="Redo" title="Redo" onClick={() => viewRef.current && redo(viewRef.current)}><Redo2 size={15} /></button>
@@ -413,6 +524,8 @@ export default function OverleafEditor() {
             <button aria-label="Section" title="Section" onClick={() => wrap('\\section{', '}', 'Title')}><Heading size={15} /></button>
             <button aria-label="Bold" title="Bold" onClick={() => wrap('\\textbf{', '}', 'bold')}><Bold size={15} /></button>
             <button aria-label="Italic" title="Italic" onClick={() => wrap('\\textit{', '}', 'italic')}><Italic size={15} /></button>
+            <button aria-label="Underline" title="Underline" onClick={() => wrap('\\underline{', '}', 'text')}><Underline size={15} /></button>
+            <button aria-label="Table" title="Table" onClick={() => wrap('\\begin{tabular}{ll}\n  \\hline\n  A & B \\\\\n  \\hline\n  1 & 2 \\\\\n  \\hline\n\\end{tabular}\n')}><Table size={15} /></button>
             <button aria-label="Math" title="Inline math" onClick={() => wrap('$', '$', 'x^2')}><Sigma size={15} /></button>
             <button aria-label="Link" title="Link" onClick={() => wrap('\\href{https://}{', '}', 'text')}><Link2 size={15} /></button>
             <button aria-label="Bullet list" title="Bullet list" onClick={() => wrap('\\begin{itemize}\n  \\item ', '\n\\end{itemize}', 'item')}><List size={15} /></button>
@@ -443,6 +556,12 @@ export default function OverleafEditor() {
         <section className="ove-right">
           <div className="ove-pdfbar">
             <b>PDF preview</b>
+            <button className={`ove-btn small ${log ? 'warn' : ''}`} onClick={() => setShowLog((v) => !v)}><AlertTriangle size={13} /> Logs</button>
+            <div className="ove-pdf-nav">
+              <button disabled={!pdfUrl || pageNum <= 1} onClick={() => setPageNum(p => p - 1)}>‹</button>
+              <span className="ove-pdf-page">{pageNum} / {maxPages}</span>
+              <button disabled={!pdfUrl || pageNum >= maxPages} onClick={() => setPageNum(p => p + 1)}>›</button>
+            </div>
             <select value={zoom} onChange={(e) => setZoom(e.target.value)} aria-label="Zoom">
               <option value="page-width">Fit width</option>
               <option value="page-fit">Fit page</option>
@@ -450,7 +569,6 @@ export default function OverleafEditor() {
               <option value="100">100%</option>
               <option value="150">150%</option>
             </select>
-            <button className={`ove-btn small ${log ? 'warn' : ''}`} onClick={() => setShowLog((v) => !v)}><AlertTriangle size={13} /> Logs</button>
           </div>
           <div className="ove-pdf">
             {pdfUrl
