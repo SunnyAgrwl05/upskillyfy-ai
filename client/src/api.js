@@ -195,6 +195,7 @@ export const resumeAnalysisAPI = {
     if (saveToHistory) form.append('saveToHistory', 'true')
     return API.post('/resume-analysis', form, { onUploadProgress })
   },
+  usage: () => API.get('/resume-analysis/usage'),
   list: (params) => API.get('/resume-analysis', { params }),
   get: (id) => API.get(`/resume-analysis/${encodeURIComponent(id)}`),
   saveReview: (id, payload) => API.patch(`/resume-analysis/${encodeURIComponent(id)}/review`, payload),
