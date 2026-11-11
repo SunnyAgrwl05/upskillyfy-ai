@@ -23,6 +23,7 @@ import verificationRoutes from './routes/verification.js'
 import adminCredentialRoutes from './routes/adminCredentials.js'
 import hackathonRoutes from './routes/hackathons.js'
 import { errorHandler, notFound } from './middleware/error.js'
+import { apiLimiter } from './middleware/security.js'
 
 dotenv.config()
 
@@ -39,9 +40,11 @@ app.use(cors({
   },
   credentials: true,
 }))
+// Apply the shared API budget before parsing request bodies. /api/health is excluded by apiLimiter.
+app.use('/api', apiLimiter)
 app.use('/api/resume-projects', express.json({ limit: '15mb' }))
-app.use(express.json())
-app.use(express.urlencoded({ extended: true }))
+app.use(express.json({ limit: '1mb' }))
+app.use(express.urlencoded({ extended: true, limit: '1mb' }))
 
 app.use('/api/auth', authRoutes)
 app.use('/api/internships', internshipRoutes)
