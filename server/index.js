@@ -4,6 +4,7 @@ import mongoose from 'mongoose'
 import cors from 'cors'
 import dotenv from 'dotenv'
 import { corsOrigins, isProduction } from './config/env.js'
+import { apiLimiter } from './middleware/security.js'
 import authRoutes from './routes/auth.js'
 import internshipRoutes from './routes/internships.js'
 import contactRoutes from './routes/contact.js'
@@ -39,9 +40,13 @@ app.use(cors({
   },
   credentials: true,
 }))
+
+// Apply the shared API budget before parsing request bodies to reduce avoidable work.
+// The limiter explicitly skips /api/health so monitoring remains available.
+app.use('/api', apiLimiter)
 app.use('/api/resume-projects', express.json({ limit: '15mb' }))
-app.use(express.json())
-app.use(express.urlencoded({ extended: true }))
+app.use(express.json({ limit: '1mb' }))
+app.use(express.urlencoded({ extended: true, limit: '1mb' }))
 
 app.use('/api/auth', authRoutes)
 app.use('/api/internships', internshipRoutes)
