@@ -42,6 +42,7 @@ export async function createStudentDocument(
 
   const fileName = file.originalname.replace(/[^\w .()-]/g, '_').slice(0, 180) || 'student-document.pdf'
   const fileId = await fileUploader(file.buffer, {
+    fileName,
     purpose: 'student-document',
     documentType,
     contentType: 'application/pdf',
