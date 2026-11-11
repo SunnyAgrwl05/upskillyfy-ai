@@ -22,7 +22,7 @@ jobs:
     env:
       NODE_ENV: test
       JWT_SECRET: test_only_secret_key_that_is_at_least_32_chars
-      MONGODB_URI: mongodb://127.0.0.1:27017/upskillyfy_test
+      TEST_MONGODB_URI: mongodb://127.0.0.1:27017/upskillyfy_ci_test
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
