@@ -5,22 +5,27 @@ import mongoose from 'mongoose'
 import authRoutes from '../routes/auth.js'
 import User from '../models/User.js'
 
-const canRun = Boolean(process.env.MONGODB_URI && process.env.JWT_SECRET)
-const email = `auth-test-${Date.now()}@example.test`
+const testMongoUri = process.env.TEST_MONGODB_URI
+const canRun = Boolean(testMongoUri && process.env.JWT_SECRET)
 
-test('authentication integration', { skip: !canRun }, async (t) => {
-  await mongoose.connect(process.env.MONGODB_URI)
+test('authentication integration', { skip: !canRun && 'Set TEST_MONGODB_URI to an isolated CI test database.' }, async (t) => {
+  const parsed = new URL(testMongoUri)
+  if (!['127.0.0.1', 'localhost', '::1'].includes(parsed.hostname) || !/upskillyfy_ci_test/i.test(parsed.pathname)) {
+    throw new Error('Refusing to run auth integration tests against a non-isolated database.')
+  }
+  await mongoose.connect(testMongoUri)
   const app = express()
   app.use(express.json())
   app.use('/api/auth', authRoutes)
-  const server = app.listen(0)
+  const server = app.listen(0, '127.0.0.1')
   await new Promise(resolve => server.once('listening', resolve))
-  const baseUrl = `http://127.0.0.1:${server.address().port}`
+  const baseUrl = `http://127.0.0.1:${server.address().port}/api/auth`
+  const email = `auth-test-${Date.now()}@example.test`
 
   try {
     let cookie = ''
     await t.test('signup persists user and issues HttpOnly cookie', async () => {
-      const response = await fetch(`${baseUrl}/api/auth/register`, {
+      const response = await fetch(`${baseUrl}/register`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ name: 'Auth Test', email, password: 'SecurePass123!', termsAccepted: true }),
@@ -39,21 +44,21 @@ test('authentication integration', { skip: !canRun }, async (t) => {
     })
 
     await t.test('session cookie authenticates /me and logout clears it', async () => {
-      const me = await fetch(`${baseUrl}/api/auth/me`, { headers: { cookie } })
+      const me = await fetch(`${baseUrl}/me`, { headers: { cookie } })
       assert.equal(me.status, 200)
       assert.equal((await me.json()).email, email)
-      const logout = await fetch(`${baseUrl}/api/auth/logout`, { method: 'POST', headers: { cookie, origin: 'http://localhost:5173' } })
+      const logout = await fetch(`${baseUrl}/logout`, { method: 'POST', headers: { cookie, origin: 'http://localhost:5173' } })
       assert.equal(logout.status, 200)
       assert.match(logout.headers.get('set-cookie') || '', /upskillyfy_token=;/)
     })
 
     await t.test('login rejects invalid password and accepts correct password', async () => {
-      const invalid = await fetch(`${baseUrl}/api/auth/login`, {
+      const invalid = await fetch(`${baseUrl}/login`, {
         method: 'POST', headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ email, password: 'wrong-password' }),
       })
       assert.equal(invalid.status, 401)
-      const valid = await fetch(`${baseUrl}/api/auth/login`, {
+      const valid = await fetch(`${baseUrl}/login`, {
         method: 'POST', headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ email, password: 'SecurePass123!' }),
       })
