@@ -157,6 +157,7 @@ test('enforces student document ownership', async () => {
 
 test('stores an authorized PDF student document and audit record', async () => {
   const uploaded = []
+  const uploadMetadata = []
   const audits = []
   const student = { _id: userId, role: 'student' }
   const document = { _id: certificateId, user: userId, documentType: 'OFFER_LETTER', title: 'Offer', status: 'ACTIVE' }
@@ -170,11 +171,13 @@ test('stores an authorized PDF student document and audit record', async () => {
     UserModel: { findById: () => ({ select: async () => student }) },
     DocumentModel: { create: async () => document },
     AuditLogModel: { create: async (record) => audits.push(record) },
-    fileUploader: async (buffer) => { uploaded.push(buffer); return new mongoose.Types.ObjectId() },
+    fileUploader: async (buffer, metadata) => { uploaded.push(buffer); uploadMetadata.push(metadata); return new mongoose.Types.ObjectId() },
     fileDeleter: async () => {},
   })
   assert.equal(result, document)
   assert.equal(uploaded.length, 1)
+  assert.equal(uploadMetadata[0].fileName, 'offer.pdf')
+  assert.equal(uploadMetadata[0].contentType, 'application/pdf')
   assert.equal(audits[0].action, 'DOCUMENT_UPLOADED')
 })
 
