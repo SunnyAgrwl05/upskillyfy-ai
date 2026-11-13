@@ -37,6 +37,69 @@ const SECTION_LABELS = {
   certifications: 'Certifications', achievements: 'Achievements', links: 'Links',
 }
 
+function normalizeStringList(value, maxItems, maxLength) {
+  const items = typeof value === 'string' ? [value] : Array.isArray(value) ? value : []
+  return items
+    .filter((item) => typeof item === 'string')
+    .map((item) => item.trim().slice(0, maxLength))
+    .filter(Boolean)
+    .slice(0, maxItems)
+}
+
+// Providers sometimes return a single string where the API schema expects
+// an array. Normalize only known text-list fields; leave other invalid shapes
+// untouched so Zod can reject them and the correction retry can run.
+export function normalizeResumeAnalysisOutput(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return value
+
+  const output = { ...value }
+  const data = output.extractedData && typeof output.extractedData === 'object' && !Array.isArray(output.extractedData)
+    ? { ...output.extractedData }
+    : output.extractedData
+
+  if (data && typeof data === 'object') {
+    data.technicalSkills = normalizeStringList(data.technicalSkills, 100, 100)
+    data.softSkills = normalizeStringList(data.softSkills, 100, 100)
+    data.achievements = normalizeStringList(data.achievements, 30, 1000)
+    data.links = normalizeStringList(data.links, 50, 500)
+
+    if (Array.isArray(data.projects)) {
+      data.projects = data.projects.slice(0, 30).map((project) => {
+        if (!project || typeof project !== 'object' || Array.isArray(project)) return project
+        return {
+          ...project,
+          description: normalizeStringList(project.description, 20, 1000),
+          technologies: normalizeStringList(project.technologies, 40, 100),
+        }
+      })
+    }
+
+    if (Array.isArray(data.workExperience)) {
+      data.workExperience = data.workExperience.slice(0, 30).map((role) => {
+        if (!role || typeof role !== 'object' || Array.isArray(role)) return role
+        return { ...role, bullets: normalizeStringList(role.bullets, 30, 1000) }
+      })
+    }
+  }
+
+  output.extractedData = data
+  output.strengths = normalizeStringList(output.strengths, 12, 500)
+  output.missingInformation = normalizeStringList(output.missingInformation, 20, 500)
+  output.potentialInconsistencies = normalizeStringList(output.potentialInconsistencies, 20, 500)
+  output.grammarAndClarity = normalizeStringList(output.grammarAndClarity, 20, 500)
+  output.formattingIssues = normalizeStringList(output.formattingIssues, 20, 500)
+  output.suspiciousLinks = normalizeStringList(output.suspiciousLinks, 20, 500)
+
+  if (output.dateConsistency && typeof output.dateConsistency === 'object' && !Array.isArray(output.dateConsistency)) {
+    output.dateConsistency = {
+      ...output.dateConsistency,
+      findings: normalizeStringList(output.dateConsistency.findings, 20, 500),
+    }
+  }
+
+  return output
+}
+
 function sectionScores(data, text, jobDescription = '') {
   const factors = {
     contact: [Boolean(data.email), Boolean(data.phone)],
@@ -107,7 +170,7 @@ export async function analyzeResumeText(text, { jobDescription = '', fetchImpl =
   ]
 
   let raw = await requestJsonCompletion(messages, { fetchImpl })
-  let parsed = resumeOutputSchema.safeParse(raw)
+  let parsed = resumeOutputSchema.safeParse(normalizeResumeAnalysisOutput(raw))
 
   if (!parsed.success) {
     const safeIssues = parsed.error.issues.slice(0, 20).map(({ code, path }) => ({
@@ -120,7 +183,7 @@ export async function analyzeResumeText(text, { jobDescription = '', fetchImpl =
       content: `The previous JSON did not match the required output schema. Correct these field issues and return the complete JSON object only: ${JSON.stringify(safeIssues)}. Do not include Markdown or commentary.`,
     }
     raw = await requestJsonCompletion([...messages, correction], { fetchImpl })
-    parsed = resumeOutputSchema.safeParse(raw)
+    parsed = resumeOutputSchema.safeParse(normalizeResumeAnalysisOutput(raw))
   }
 
   if (!parsed.success) {
