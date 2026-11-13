@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { test } from 'node:test'
 import { extractPdfText } from '../services/pdfTextService.js'
-import { analyzeResumeText, scoreResumeAnalysis } from '../services/resumeAnalysisService.js'
+import { analyzeResumeText, normalizeResumeAnalysisOutput, parseResumeAnalysisOutput, scoreResumeAnalysis } from '../services/resumeAnalysisService.js'
 
 const savedKey = process.env.OPENAI_API_KEY
 const fixturePath = new URL('../../client/public/resume-templates/ats-friendly-resume.pdf', import.meta.url)
@@ -74,6 +74,36 @@ test('provider failure is safe and prompt injection remains untrusted resume con
   assert.match(result.scoring.method, /not a hiring prediction/)
   if (savedKey !== undefined) process.env.OPENAI_API_KEY = savedKey
   else delete process.env.OPENAI_API_KEY
+})
+
+
+test('normalizes provider string fields into bounded schema-compatible arrays', () => {
+  const normalized = normalizeResumeAnalysisOutput({
+    extractedData: {
+      projects: [{ name: 'Demo', description: 'Built a React app', technologies: 'React, Node.js' }],
+      workExperience: [{ title: 'Developer', bullets: 'Fixed bugs and tested APIs' }],
+      technicalSkills: 'JavaScript',
+      softSkills: ['Communication'],
+      achievements: 'Won a college hackathon',
+      links: 'https://example.com',
+    },
+    strengths: 'Clear project experience',
+    missingInformation: 'Add measurable outcomes',
+    potentialInconsistencies: 'Dates need review',
+    grammarAndClarity: 'Use consistent tense',
+    formattingIssues: 'Align section headings',
+    suspiciousLinks: 'https://example.com/redirect',
+    dateConsistency: { summary: 'Review date ranges', findings: 'One date range may overlap' },
+    improvementSuggestions: [],
+    confidenceLevels: {},
+  })
+
+  assert.deepEqual(normalized.extractedData.projects[0].description, ['Built a React app'])
+  assert.deepEqual(normalized.extractedData.projects[0].technologies, ['React, Node.js'])
+  assert.deepEqual(normalized.extractedData.workExperience[0].bullets, ['Fixed bugs and tested APIs'])
+  assert.deepEqual(normalized.strengths, ['Clear project experience'])
+  assert.deepEqual(normalized.dateConsistency.findings, ['One date range may overlap'])
+  assert.equal(parseResumeAnalysisOutput(normalized).success, true)
 })
 
 test('resume scores are explainable and not based on fabricated AI assertions', () => {
