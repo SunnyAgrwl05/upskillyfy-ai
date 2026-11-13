@@ -52,7 +52,7 @@ async function callGemini(model, messages, apiKey, fetchImpl) {
 }
 
 async function callOpenAICompatible({ endpoint, apiKey, model, messages, fetchImpl, headers = {}, openRouter = false }) {
-  const response = await fetchImpl(`${endpoint.replace(/\\/+$/, '')}/chat/completions`, {
+  const response = await fetchImpl(`${endpoint.replace(/\/+$/, '')}/chat/completions`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json', ...headers },
     signal: AbortSignal.timeout(35_000),
