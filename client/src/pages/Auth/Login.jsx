@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useState, useMemo } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   Mail,
   Lock,
@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { GoogleLogin } from '@react-oauth/google'
+import { safeRedirectPath } from '../Career/Resume/compileGuestUtils'
 import './Auth.css'
 
 export default function Login() {
@@ -25,11 +26,16 @@ export default function Login() {
   const [loading, setLoading] = useState(false)
   const { login, loginWithGoogle } = useAuth()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const rawNext = searchParams.get('next')
+  const next = useMemo(() => safeRedirectPath(rawNext, '/dashboard'), [rawNext])
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value })
     if (error) setError('')
   }
+
+  const googleConfigured = useMemo(() => Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID), [])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -43,7 +49,7 @@ export default function Login() {
 
     try {
       await login(form.email.trim(), form.password)
-      navigate('/dashboard')
+      navigate(next)
     } catch (err) {
       setError(err.response?.data?.message || 'Invalid email or password. Please try again.')
     } finally {
@@ -52,7 +58,7 @@ export default function Login() {
   }
 
   const handleGoogleSuccess = async ({ credential }) => {
-    try { await loginWithGoogle(credential, { intent: 'login' }); navigate('/dashboard') }
+    try { await loginWithGoogle(credential, { intent: 'login' }); navigate(next) }
     catch (err) { setError(err.response?.data?.message || 'Google sign-in failed. Please try again.') }
   }
 
@@ -130,7 +136,9 @@ export default function Login() {
           </div>
 
           {/* Google Quick Sign-In */}
-          <div className="auth-google-btn"><GoogleLogin onSuccess={handleGoogleSuccess} onError={() => setError('Google authentication could not start.')} text="signin_with" /></div>
+          {googleConfigured && (
+            <div className="auth-google-btn"><GoogleLogin onSuccess={handleGoogleSuccess} onError={() => setError('Google authentication could not start.')} text="signin_with" /></div>
+          )}
 
           <div className="auth-divider">
             <span>or sign in with email</span>

@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   User,
   Mail,
@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { GoogleLogin } from '@react-oauth/google'
+import { safeRedirectPath } from '../Career/Resume/compileGuestUtils'
 import './Auth.css'
 
 export default function Register() {
@@ -38,11 +39,8 @@ export default function Register() {
   const [loading, setLoading] = useState(false)
   const { register, loginWithGoogle } = useAuth()
   const navigate = useNavigate()
-
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value })
-    if (error) setError('')
-  }
+  const [searchParams] = useSearchParams()
+  const next = useMemo(() => safeRedirectPath(searchParams.get('next'), '/dashboard'), [searchParams])
 
   // Password strength calculation
   const passwordStrength = useMemo(() => {
@@ -59,6 +57,13 @@ export default function Register() {
     if (score === 3) return { score: 3, label: 'Good password', color: '#1a73e8', width: '75%' }
     return { score: 4, label: 'Strong password', color: '#34a853', width: '100%' }
   }, [form.password])
+
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value })
+    if (error) setError('')
+  }
+
+  const googleConfigured = useMemo(() => Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID), [])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -88,7 +93,7 @@ export default function Register() {
         marketingConsent,
         email: form.email.trim().toLowerCase()
       })
-      navigate('/dashboard')
+      navigate(next)
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed. Please check your network and try again.')
     } finally {
@@ -98,7 +103,7 @@ export default function Register() {
 
   const handleGoogleSuccess = async ({ credential }) => {
     if (!termsAccepted) { setError('Please accept the Terms and Privacy Policy before continuing with Google.'); return }
-    try { await loginWithGoogle(credential, { intent: 'signup', role, branch: form.branch, college: form.college, year: form.year, termsAccepted }); navigate('/dashboard') }
+    try { await loginWithGoogle(credential, { intent: 'signup', role, branch: form.branch, college: form.college, year: form.year, termsAccepted }); navigate(next) }
     catch (err) { setError(err.response?.data?.message || 'Google sign-up failed. Please try again.') }
   }
 
@@ -194,7 +199,9 @@ export default function Register() {
           </div>
 
           {/* Google Quick Sign-Up */}
-          <div className="auth-google-btn"><GoogleLogin onSuccess={handleGoogleSuccess} onError={() => setError('Google authentication could not start.')} text="signup_with" /></div>
+          {googleConfigured && (
+            <div className="auth-google-btn"><GoogleLogin onSuccess={handleGoogleSuccess} onError={() => setError('Google authentication could not start.')} text="signup_with" /></div>
+          )}
 
           <div className="auth-divider">
             <span>or register with email</span>
