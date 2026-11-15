@@ -1,5 +1,6 @@
 import express from 'express'
 import { spawn } from 'node:child_process'
+import { compatTex } from '../services/texCompat.js'
 import { chmod, mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
@@ -192,7 +193,7 @@ router.post('/compile', compileLimiter, asyncHandler(async (req, res) => {
         const destination = path.resolve(sourceDir, file.path)
         if (!destination.startsWith(`${sourceDir}${path.sep}`)) return res.status(422).json({ message: 'Unsafe project path.' })
         await mkdir(path.dirname(destination), { recursive: true, mode: 0o755 })
-        await writeFile(destination, file.isBinary ? Buffer.from(file.content, 'base64') : file.content, { flag: 'wx', mode: 0o644 })
+        await writeFile(destination, file.isBinary ? Buffer.from(file.content, 'base64') : compatTex(file.path, file.content), { flag: 'wx', mode: 0o644 })
       }
       const args = [
         'run', '--rm', '--pull=never', '--network=none', '--read-only', '--memory=512m', '--cpus=1', '--pids-limit=64',
