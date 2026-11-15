@@ -417,3 +417,24 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Hack2Skill-inspired detail page skin — keeps all existing sections/actions */
+.hackathon-detail-page { background: #f7f9fc; color: #26395f; padding: 28px 0 64px; }
+.hackathon-detail-page > .container { max-width: 1320px; padding-inline: clamp(16px, 2.5vw, 32px); }
+.hackathon-back-link { color: #7183a2; font-size: .82rem; }
+.hackathon-detail-hero, .hackathon-detail-section, .hackathon-detail-card {
+  border-color: #e5eaf3; border-radius: 12px; background: #fff; box-shadow: 0 4px 18px rgba(36,54,93,.045);
+}
+.hackathon-detail-hero { padding: 26px; gap: 24px; }
+.hackathon-detail-hero h1 { color: #20345d; font-size: clamp(1.8rem,3vw,2.7rem); letter-spacing: -.04em; }
+.hackathon-detail-hero p, .hackathon-detail-copy, .hackathon-detail-muted { color: #7b8aa8; }
+.hackathon-detail-cta { border-color: #e5eaf3; border-radius: 10px; background: #f7f9fd; }
+.hackathon-detail-section, .hackathon-detail-card { padding: 21px; }
+.hackathon-detail-section-title { color: #3c70c5; }
+.hackathon-detail-section-title h2 { color: #2a3e65; font-size: 1.05rem; }
+.hackathon-prize-grid article, .hackathon-resource-list a, .hackathon-partner-list a, .hackathon-partner-list span {
+  border-color: #e7ecf4; border-radius: 9px; background: #f8faff;
+}
+.hackathon-detail-state { border: 1px solid #e5eaf3; border-radius: 12px; background: #fff; }
+
