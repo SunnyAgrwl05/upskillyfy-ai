@@ -966,3 +966,72 @@ html:has(.hackathons-page) {
     max-height: calc(100vh - 40px);
   }
 }
+
+
+/* Hack2Skill-inspired catalogue skin — presentation only */
+.hackathons-page {
+  --h2s-ink: #24365d;
+  --h2s-muted: #7b8aa8;
+  --h2s-blue: #2864c5;
+  --h2s-border: #e5eaf3;
+  --h2s-soft: #f5f8fd;
+  background: #f7f9fc;
+  color: var(--h2s-ink);
+  font-family: inherit;
+}
+.hackathons-catalogue { padding: 24px 0 64px; }
+.hackathons-catalogue > .container { max-width: 1440px; padding-inline: clamp(18px, 2.5vw, 36px); }
+.hackathons-page-heading { margin-bottom: 22px; align-items: center; }
+.hackathons-page-heading h1 { color: #1f3157; font-size: clamp(1.8rem, 3vw, 2.35rem); letter-spacing: -.035em; }
+.hackathons-page-heading p { color: #8290aa; font-size: .88rem; }
+.hackathons-kicker { color: #4776c9; letter-spacing: .055em; font-size: .68rem; }
+.hackathons-layout { grid-template-columns: minmax(0,1fr) 258px; gap: 20px; }
+.catalogue-featured-section, .hackathons-filter-sidebar, .hackathons-state {
+  border-color: var(--h2s-border); border-radius: 12px; background: #fff; box-shadow: 0 4px 18px rgba(36,54,93,.045);
+}
+.catalogue-featured-section { padding: 18px; margin-bottom: 22px; }
+.catalogue-section-heading { margin-bottom: 14px; }
+.catalogue-section-heading h2, .hackathons-results-head h2 { color: #26395f; font-size: 1.28rem; letter-spacing: -.025em; }
+.featured-card-grid { gap: 13px; }
+.hackathons-toolbar { margin-bottom: 20px; gap: 9px; }
+.hackathon-search, .sort-control select, .hackathons-toolbar select {
+  min-height: 42px; border-color: #e2e8f2; border-radius: 8px; background: #fff; color: #405477; font-size: .8rem;
+}
+.hackathon-search:focus-within, .hackathon-domain-filter:focus { border-color: #7da6e8; box-shadow: 0 0 0 3px rgba(50,105,201,.09); }
+.view-toggle { background: #fff; border-color: #e5eaf3; border-radius: 8px; }
+.view-toggle button { width: 34px; height: 34px; color: #7183a2; }
+.view-toggle button.active { background: #edf3ff; color: #2864c5; }
+.refresh-button { height: 42px; border-color: #e2e8f2; background: #fff; color: #4776c9; }
+.hackathons-filter-sidebar { gap: 17px; padding: 18px; top: 18px; }
+.filter-sidebar-heading { padding-bottom: 12px; }
+.filter-sidebar-heading h2 { color: #26395f; font-size: 1rem; }
+.hackathons-filter-sidebar legend { color: #405477; font-size: .76rem; }
+.hackathons-filter-sidebar fieldset label { color: #7888a5; font-size: .76rem; }
+.filter-domain-input input, .filter-date-range input { min-height: 36px; border-color: #e2e8f2; border-radius: 7px; background: #fff; font-size: .76rem; }
+.hackathon-card { border-color: #e5eaf3; border-radius: 11px; background: #fff; box-shadow: 0 3px 14px rgba(33,55,94,.055); }
+.hackathon-card:hover { border-color: #b9cef2; box-shadow: 0 9px 24px rgba(33,75,145,.1); transform: translateY(-2px); }
+.hackathon-card-poster { min-height: 142px; }
+.hackathon-card-poster svg, .hackathon-card-poster img, .hackathon-card-poster .domain-illustration { height: 142px; }
+.hackathon-card-top { padding: 13px 15px 0; }
+.hackathon-logo { width: 44px; height: 44px; border-radius: 10px; }
+.hackathon-card-content { gap: 9px; padding: 13px 15px 15px; }
+.hackathon-organiser { color: #5679b7; font-size: .7rem; }
+.hackathon-card h2 { color: #293d66; font-size: 1rem; }
+.hackathon-description { color: #8290a8; font-size: .78rem; }
+.hackathon-card-meta { color: #7889a7; font-size: .72rem; }
+.hackathon-domain-list span { border-color: #e5eaf3; background: #f8faff; color: #62799f; }
+.hackathon-card-footer { border-color: #edf0f6; font-size: .68rem; }
+.hackathon-fee { color: #2e67c4; }
+.hackathon-card-cta { min-height: 36px; margin: 0 15px 15px; border-radius: 7px; font-size: .76rem; }
+.hackathon-pagination button { min-height: 36px; border-color: #e2e8f2; border-radius: 7px; color: #5273ac; }
+.demo-preview-notice { border-radius: 8px; }
+@media (max-width: 900px) {
+ .hackathons-layout { grid-template-columns: 1fr; }
+ .hackathons-filter-sidebar { border-radius: 10px; }
+}
+@media (max-width: 620px) {
+ .hackathons-page-heading { align-items: flex-start; flex-direction: column; }
+ .hackathons-catalogue > .container { padding-inline: 16px; }
+ .catalogue-featured-section { padding: 14px; }
+}
+
