@@ -1200,3 +1200,47 @@
     }
   }
 }
+
+
+/* Hack2Skill-inspired participant and organizer portal skin — existing routes/data only */
+.hackathon-dashboard-page, .hackathon-workspace-page { background: #f7f9fc; color: #26395f; }
+.hackathon-dashboard-page > .container, .hackathon-workspace-page > .container { max-width: 1380px; }
+.hackathon-dashboard-sidebar {
+  border: 1px solid #e5eaf3; border-radius: 12px; background: #fff;
+  box-shadow: 0 4px 18px rgba(36,54,93,.045); padding: 15px 12px;
+}
+.hackathon-dashboard-sidebar a { border-radius: 8px; color: #7183a2; }
+.hackathon-dashboard-sidebar a.active, .hackathon-dashboard-sidebar a:hover {
+  background: #edf3ff; color: #2864c5;
+}
+.hackathon-sidebar-label { color: #7b8aa8; }
+.hackathon-dashboard-content .portal-heading h1, .workspace-header h1 { color: #20345d; letter-spacing: -.04em; }
+.hackathon-dashboard-content .portal-heading p, .workspace-header p { color: #8290a8; }
+.dashboard-stat-card, .dashboard-panel, .workspace-panel, .organizer-module, .organizer-table-panel, .organizer-chart-panel {
+  border: 1px solid #e5eaf3; border-radius: 11px; background: #fff;
+  box-shadow: 0 4px 18px rgba(36,54,93,.045);
+}
+.dashboard-stat-card { color: #4776c9; }
+.dashboard-stat-card strong { color: #2b3e64; }
+.dashboard-stat-card span, .dashboard-panel p { color: #7b8aa8; }
+.dashboard-panel h2, .workspace-panel h2 { color: #2a3e65; }
+.dashboard-registration-list a, .registration-card, .submission-card {
+  border-color: #e7ecf4; border-radius: 9px; background: #fff;
+}
+.workspace-tabs { border-color: #e5eaf3; border-radius: 10px; background: #edf1f7; }
+.workspace-tabs a { border-radius: 7px; color: #667a9e; }
+.workspace-tabs a.active, .workspace-tabs a:hover { background: #fff; color: #2864c5; box-shadow: 0 2px 7px rgba(36,54,93,.08); }
+.workspace-panel { padding: 22px; }
+.workspace-info-grid span, .team-member-card { border-color: #e5eaf3; border-radius: 9px; background: #f9fbfe; }
+.workspace-form input, .workspace-form select, .workspace-form textarea {
+  border-color: #e2e8f2; border-radius: 8px; background: #fff;
+}
+.workspace-form input:focus, .workspace-form select:focus, .workspace-form textarea:focus {
+  border-color: #7da6e8; box-shadow: 0 0 0 3px rgba(50,105,201,.09);
+}
+.organizer-sidebar { border-radius: 12px; background: #20204d; }
+.organizer-sidebar a.active, .organizer-sidebar a:hover { background: rgba(255,255,255,.13); }
+@media (max-width: 900px) {
+ .hackathon-dashboard-sidebar { border-radius: 10px; }
+}
+
