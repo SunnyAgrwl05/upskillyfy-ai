@@ -11,9 +11,11 @@ import {
   Sigma, Link2, Heading, Undo2, Redo2, History, Columns, X, RefreshCw, AlertTriangle,
   Underline, Table, Share2, Copy, Check,
 } from 'lucide-react'
+import { useAuth } from '../../../context/AuthContext'
 import { resumeProjectAPI } from '../../../api'
 import { readProjects, upsertProject, downloadBlob } from './ovStore'
 import { fromResumeProjectPayload, getCurrentUserId } from './resumeWorkspaceUtils'
+import { compileButtonLabel, compileErrorMessage, loginUrl } from './compileGuestUtils'
 import './OverleafEditor.css'
 
 const HIDDEN = '.gitkeep'
@@ -41,6 +43,9 @@ function readHistory(id) {
 export default function OverleafEditor() {
   const { projectId } = useParams()
   const navigate = useNavigate()
+  const { user } = useAuth()
+  const isLoggedIn = Boolean(user)
+  const goLogin = (path = '') => navigate(loginUrl(path), { replace: false })
   const [project, setProject] = useState(() => readProjects().find((p) => p.id === projectId))
   const [loadingProject, setLoadingProject] = useState(() => !readProjects().some((p) => p.id === projectId))
   const [active, setActive] = useState(null)
@@ -270,6 +275,7 @@ export default function OverleafEditor() {
 
   /* ---------- compile & download ---------- */
   const compile = async () => {
+    if (!isLoggedIn) { goLogin(`/career/resume/editor/${projectId}`); return }
     const p = projectRef.current
     if (!p) return
     setCompiling(true)
@@ -289,11 +295,15 @@ export default function OverleafEditor() {
     } catch (e) {
       let msg = e.message
       let detail = e.detail
-      const b = e.response?.data
+      let b = e.response?.data
       if (b instanceof Blob) {
-        try { const j = JSON.parse(await b.text()); msg = j.message || msg; detail = j.log || j.details } catch { /* ignore */ }
-      } else if (e.response?.status === 404) {
-        msg = 'The compile service was not found on the server. Deploy the server routes (/api/resume-projects/compile) and a TeX Live install, then try again.'
+        try { const j = JSON.parse(await b.text()); b = j } catch { b = null }
+      }
+      if (e.response?.status) {
+        const mapped = compileErrorMessage(e.response.status, b, e.message)
+        msg = mapped.message
+        if (mapped.redirectToLogin) goLogin(`/career/resume/editor/${projectId}`)
+        if (b?.log || b?.details) detail = b.log || b.details
       } else if (!e.response && !e.detail) {
         msg = 'Could not reach the compile server. Check that the backend is running and VITE_API_URL is set.'
       }
@@ -451,7 +461,7 @@ export default function OverleafEditor() {
         </div>
         <label className="ove-auto"><input type="checkbox" checked={auto} onChange={(e) => setAuto(e.target.checked)} /> Auto-compile</label>
         <button className="ove-btn go" onClick={compile} disabled={compiling}>
-          {compiling ? <RefreshCw size={15} className="spin" /> : <Play size={15} />} {compiling ? 'Compiling…' : 'Recompile'}
+          {compiling ? <RefreshCw size={15} className="spin" /> : <Play size={15} />} {compileButtonLabel({ isLoggedIn, compiling })}
         </button>
       </header>
       {/* Share modal */}
@@ -577,8 +587,14 @@ export default function OverleafEditor() {
                 <div className="ove-pdf-empty">
                   <FileIcon size={30} />
                   <h3>Compile to preview your PDF</h3>
-                  <p>Press Recompile. The PDF appears here once the build succeeds.</p>
-                  <button className="ove-btn go" onClick={compile} disabled={compiling}><Play size={15} /> Recompile</button>
+                  {isLoggedIn
+                    ? <p>Press Recompile. The PDF appears here once the build succeeds.</p>
+                    : <p>You can edit and save locally. Log in to compile and preview the PDF.</p>
+                  }
+                  {isLoggedIn
+                    ? <button className="ove-btn go" onClick={compile} disabled={compiling}><Play size={15} /> {compileButtonLabel({ isLoggedIn: true, compiling: false })}</button>
+                    : <button className="ove-btn go" onClick={() => goLogin(`/career/resume/editor/${projectId}`)}><Play size={15} /> {compileButtonLabel({ isLoggedIn: false, compiling: false })}</button>
+                  }
                 </div>
               )}
             {showLog && (
