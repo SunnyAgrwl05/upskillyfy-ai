@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import CodeMirror from '@uiw/react-codemirror'
 import { StreamLanguage } from '@codemirror/language'
 import { stex } from '@codemirror/legacy-modes/mode/stex'
@@ -43,6 +43,7 @@ function readHistory(id) {
 export default function OverleafEditor() {
   const { projectId } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
   const { user } = useAuth()
   const isLoggedIn = Boolean(user)
   const goLogin = (path = '') => navigate(loginUrl(path), { replace: false })
@@ -59,6 +60,8 @@ export default function OverleafEditor() {
   const [showLog, setShowLog] = useState(false)
   const [auto, setAuto] = useState(false)
   const [layout, setLayout] = useState('split')
+  const [mobileView, setMobileView] = useState('code')
+  const [mobileFilesOpen, setMobileFilesOpen] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
   const [history, setHistory] = useState([])
   const [dlOpen, setDlOpen] = useState(false)
@@ -71,6 +74,7 @@ export default function OverleafEditor() {
   const viewRef = useRef(null)
   const projectRef = useRef(project)
   const cloudTimer = useRef(null)
+  const cloudQueue = useRef(Promise.resolve())
   const autoTimer = useRef(null)
   const uploadRef = useRef(null)
   const pdfRef = useRef('')
@@ -114,6 +118,29 @@ export default function OverleafEditor() {
 
   useEffect(() => () => { if (pdfRef.current) URL.revokeObjectURL(pdfRef.current) }, [])
 
+  useEffect(() => {
+    if (!isLoggedIn) return undefined
+    let activeRequest = true
+    resumeProjectAPI.get(projectId).then(({ data }) => {
+      if (!activeRequest || !data?.project) return
+      const restored = fromResumeProjectPayload(data.project, getCurrentUserId())
+      if (!restored) return
+      const current = projectRef.current
+      if (current && Date.parse(current.updatedAt || 0) >= Date.parse(restored.updatedAt || 0)) return
+      const saved = upsertProject(restored)
+      setProject(saved)
+      setActive(saved.mainFile || saved.files[0]?.name || null)
+      setTabs([saved.mainFile || saved.files[0]?.name].filter(Boolean))
+    }).catch(() => {})
+    resumeProjectAPI.pdf(projectId).then(({ data }) => {
+      if (!activeRequest) return
+      const url = URL.createObjectURL(data)
+      pdfRef.current = url
+      setPdfUrl(url)
+    }).catch(() => {})
+    return () => { activeRequest = false }
+  }, [isLoggedIn, projectId])
+
   const file = project?.files.find((f) => f.name === active)
   const tree = useMemo(() => buildTree(project?.files || []), [project?.files])
 
@@ -134,7 +161,14 @@ export default function OverleafEditor() {
     clearTimeout(cloudTimer.current)
     cloudTimer.current = setTimeout(async () => {
       try {
-        await resumeProjectAPI.create(p)
+        cloudQueue.current = cloudQueue.current.catch(() => {}).then(async () => {
+          try { return await resumeProjectAPI.create(p) }
+          catch (error) {
+            await new Promise(resolve => window.setTimeout(resolve, 700))
+            return resumeProjectAPI.create(p)
+          }
+        })
+        await cloudQueue.current
         const owner = getCurrentUserId()
         const current = readProjects().find((item) => item.id === p.id) || p
         upsertProject({ ...current, cloudSaved: true, cloudOwner: owner || current.cloudOwner })
@@ -167,11 +201,33 @@ export default function OverleafEditor() {
     setHistory(list)
   }
 
-  const restore = (entry) => {
+  const restore = async (entry) => {
     if (!window.confirm('Restore this version? Your current files will be replaced (save a version first if you want to keep them).')) return
+    if (isLoggedIn && Number.isInteger(entry.index)) {
+      try {
+        const { data } = await resumeProjectAPI.restore(project.id, entry.index)
+        const restored = fromResumeProjectPayload(data.project, getCurrentUserId())
+        if (restored) {
+          persist(restored, 'Version restored')
+          setActive(restored.mainFile)
+          setTabs([restored.mainFile])
+          setHistory(readHistory(project.id))
+          return
+        }
+      } catch { setStatus('Could not restore the saved version') ; return }
+    }
     persist({ ...project, files: entry.files.map((f) => ({ ...f })) }, 'Version restored')
     setActive(project.mainFile)
     setTabs([project.mainFile])
+  }
+
+  const loadHistory = async () => {
+    setShowHistory(true)
+    if (!isLoggedIn) { setHistory(readHistory(project.id)); return }
+    try {
+      const { data } = await resumeProjectAPI.history(project.id)
+      setHistory((data.versions || []).map(v => ({ ...v, at: v.savedAt, files: v.files.map(f => ({ name: f.path, content: f.content, isBinary: f.isBinary })) })))
+    } catch { setHistory(readHistory(project.id)) }
   }
 
   /* ---------- editing ---------- */
@@ -262,9 +318,14 @@ export default function OverleafEditor() {
     const add = []
     for (const f of list) {
       const isText = /\.(tex|bib|sty|cls|txt|md|bst|cfg)$/i.test(f.name)
+      const isBinaryAsset = /\.(png|jpe?g|pdf)$/i.test(f.name)
+      if ((!isText && !isBinaryAsset) || f.size > 5 * 1024 * 1024) {
+        setStatus(`Skipped ${f.name}: use supported LaTeX, PNG, JPEG or PDF files up to 5 MB.`)
+        continue
+      }
       const content = isText
         ? await f.text()
-        : await new Promise((res) => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(f) })
+        : await new Promise((res) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1] || ''); r.readAsDataURL(f) })
       let name = f.name
       let n = 1
       while (exists(name) || add.some((a) => a.name === name)) name = `${n++}-${f.name}`
@@ -367,10 +428,10 @@ export default function OverleafEditor() {
   if (loadingProject) return <div className="ove-loading" role="status">Restoring your saved project…</div>
   if (!project) return null
 
-  const isImage = file?.isBinary && /^data:image\//.test(file.content)
+  const isImage = file?.isBinary && /\.(?:png|jpe?g)$/i.test(file.name)
 
   return (
-    <div className="ove" onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); uploadFiles([...e.dataTransfer.files]) }}>
+    <div className={`ove ${mobileView === 'pdf' ? 'ove-mobile-pdf' : ''} ${mobileFilesOpen ? 'ove-mobile-files' : ''}`} onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); uploadFiles([...e.dataTransfer.files]) }}>
       <div className="ove-menu-bar">
         <div className="ove-mb-group">
           <button className="ove-mb-dd" onClick={() => setMenuOpen(menuOpen === 'file' ? null : 'file')}>File ▾</button>
@@ -443,11 +504,11 @@ export default function OverleafEditor() {
         <button className="ove-btn" onClick={() => { setShareLink(`${window.location.origin}/career/resume/editor/${project.id}`); setShareOpen(true) }}><Download size={15} /> Share</button>
       </div>
       <header className="ove-top">
-        <button className="ove-icon" onClick={() => navigate('/career/resume/projects')} aria-label="Back to projects"><ArrowLeft size={18} /></button>
+        <button className="ove-brand-back" onClick={() => navigate(location.state?.from || '/career/resume/projects')} aria-label="Back to previous resume page"><ArrowLeft size={18} /><span className="ove-brand-mark">U</span><b>Upskillyfy AI</b></button>
         <input className="ove-title" defaultValue={project.title} key={project.id} onBlur={titleBlur} onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()} aria-label="Project name" />
         <span className="ove-status" role="status">{status}</span>
         <div className="ove-spacer" />
-        <button className="ove-btn" onClick={() => { setShowHistory((v) => !v); setHistory(readHistory(project.id)) }}><History size={15} /> History</button>
+        <button className="ove-btn" onClick={() => showHistory ? setShowHistory(false) : loadHistory()}><History size={15} /> History</button>
         <button className="ove-btn" onClick={() => setLayout(LAYOUTS[(LAYOUTS.indexOf(layout) + 1) % LAYOUTS.length])} title="Cycle layout: split, editor only, PDF only"><Columns size={15} /> Layout: {layout}</button>
         <div className="ove-dd">
           <button className="ove-btn" onClick={() => setDlOpen((v) => !v)}><Download size={15} /> Download <ChevronDown size={13} /></button>
@@ -455,7 +516,7 @@ export default function OverleafEditor() {
             <div className="ove-menu" onMouseLeave={() => setDlOpen(false)}>
               <button onClick={() => { setDlOpen(false); const m = project.files.find((f) => f.name === project.mainFile); downloadBlob(project.mainFile, m?.content || '') }}>Main source (.tex)</button>
               <button onClick={() => { setDlOpen(false); downloadZip() }}>Project (.zip)</button>
-              <button disabled={!pdfUrl} onClick={() => { setDlOpen(false); const a = document.createElement('a'); a.href = pdfUrl; a.download = `${project.title || 'resume'}.pdf`; a.click() }}>PDF {pdfUrl ? '' : '(compile first)'}</button>
+              <button disabled={!pdfUrl} onClick={async () => { setDlOpen(false); if (isLoggedIn) { try { const { data } = await resumeProjectAPI.pdf(project.id, true); downloadBlob(`${project.title || 'resume'}.pdf`, data, 'application/pdf'); return } catch {} } const a = document.createElement('a'); a.href = pdfUrl; a.download = `${project.title || 'resume'}.pdf`; a.click() }}>PDF {pdfUrl ? '' : '(compile first)'}</button>
             </div>
           )}
         </div>
@@ -464,6 +525,11 @@ export default function OverleafEditor() {
           {compiling ? <RefreshCw size={15} className="spin" /> : <Play size={15} />} {compileButtonLabel({ isLoggedIn, compiling })}
         </button>
       </header>
+      <nav className="ove-mobile-tabs" aria-label="Editor panels">
+        <button aria-pressed={mobileFilesOpen} onClick={() => setMobileFilesOpen(v => !v)}>Files</button>
+        <button aria-pressed={mobileView === 'code'} onClick={() => { setMobileFilesOpen(false); setMobileView('code') }}>Code</button>
+        <button aria-pressed={mobileView === 'pdf'} onClick={() => { setMobileFilesOpen(false); setMobileView('pdf') }}>Preview</button>
+      </nav>
       {/* Share modal */}
       {shareOpen && (
         <div className="ove-share" onClick={() => setShareOpen(false)}>
@@ -556,7 +622,7 @@ export default function OverleafEditor() {
             )}
             {file?.isBinary && (
               <div className="ove-binary">
-                {isImage ? <img src={file.content} alt={file.name} /> : <p>{file.name} is a binary file. It is included when you compile but cannot be edited here.</p>}
+                {isImage ? <img src={`data:${/\.png$/i.test(file.name) ? 'image/png' : 'image/jpeg'};base64,${file.content}`} alt={file.name} /> : <p>{file.name} is a binary file. It is included when you compile but cannot be edited here.</p>}
               </div>
             )}
           </div>
@@ -620,7 +686,7 @@ export default function OverleafEditor() {
                 <button className="ove-btn small" onClick={() => restore(h)}>Restore</button>
               </div>
             ))}
-            <p className="muted pad">Versions are stored in this browser only.</p>
+            <p className="muted pad">{isLoggedIn ? 'Saved source versions are synced to your account.' : 'Versions are stored in this browser only.'}</p>
           </aside>
         )}
       </div>

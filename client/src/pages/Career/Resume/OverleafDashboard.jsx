@@ -139,7 +139,7 @@ export default function OverleafDashboard() {
   const allChecked = rows.length > 0 && rows.every((r) => selected.has(r.id))
   const toggleAll = () => setSelected(allChecked ? new Set() : new Set(rows.map((r) => r.id)))
 
-  const open = (p) => navigate(`/career/resume/editor/${p.id}`)
+  const open = (p) => navigate(`/career/resume/editor/${p.id}`, { state: { from: '/career/resume/projects' } })
 
   const createBlank = () => {
     const name = window.prompt('Project name', 'Untitled Project')

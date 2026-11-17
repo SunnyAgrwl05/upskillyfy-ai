@@ -147,6 +147,9 @@ export const resumeProjectAPI = {
   update: (id, project) => API.put(`/resume-projects/${encodeURIComponent(id)}`, serializeResumeProject({ ...project, id })),
   remove: (id) => API.delete(`/resume-projects/${encodeURIComponent(id)}`),
   compile: (project) => API.post('/resume-projects/compile', serializeResumeProject(project), { responseType: 'blob' }),
+  pdf: (id, download = false) => API.get(`/resume-projects/${encodeURIComponent(id)}/pdf${download ? '?download=1' : ''}`, { responseType: 'blob' }),
+  history: (id) => API.get(`/resume-projects/${encodeURIComponent(id)}/history`),
+  restore: (id, index) => API.post(`/resume-projects/${encodeURIComponent(id)}/history/${index}/restore`),
   sourceZip: (id) => API.get(`/resume-projects/${encodeURIComponent(id)}/source.zip`, { responseType: 'blob' }),
   importZip: (archive) => {
     const form = new FormData()
@@ -166,7 +169,9 @@ function serializeResumeProject(project = {}) {
     trashed: project.trashed === true,
     files: (Array.isArray(project.files) ? project.files : []).map((file) => ({
       path: file.path ?? file.name,
-      content: file.content,
+      content: file.isBinary === true && typeof file.content === 'string' && file.content.startsWith('data:')
+        ? file.content.slice(file.content.indexOf(',') + 1)
+        : file.content,
       isBinary: file.isBinary === true,
     })),
   }

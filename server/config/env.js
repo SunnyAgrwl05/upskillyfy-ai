@@ -37,6 +37,7 @@ const envSchema = z.object({
   EMAIL_SECURE: z.enum(['true', 'false']).default('false').transform((v) => v === 'true'),
   GOOGLE_CLIENT_ID: z.string().optional(),
   R2_ENDPOINT: z.string().url().optional(),
+  R2_ACCOUNT_ID: z.string().optional(),
   R2_ACCESS_KEY_ID: z.string().optional(),
   R2_SECRET_ACCESS_KEY: z.string().optional(),
   R2_BUCKET_NAME: z.string().optional(),

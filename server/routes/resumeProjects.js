@@ -11,6 +11,8 @@ import rateLimit from 'express-rate-limit'
 import { protect } from '../middleware/auth.js'
 import { asyncHandler } from '../middleware/error.js'
 import ResumeProject from '../models/ResumeProject.js'
+import { randomUUID } from 'node:crypto'
+import { getPrivateObject, putPrivateObject, r2Configured } from '../services/storage/r2.js'
 
 const router = express.Router()
 const VALID_FILE = /^(?!\/)(?!.*(?:^|\/)\.\.(?:\/|$))[\w .()/-]+\.(?:tex|bib|sty|cls|bst|cfg|txt|md|png|jpe?g|pdf)$/i
@@ -19,6 +21,7 @@ const MAX_FILE_CHARS = 7_000_000
 const MAX_TOTAL_CHARS = 7_000_000
 const MAX_PDF_BYTES = 20 * 1024 * 1024
 const COMPILER_TIMEOUT_MS = 30_000
+const MAX_HISTORY_CHARS = 4_000_000
 const zipUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024, files: 1 } })
 const compileLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
@@ -48,6 +51,15 @@ function cleanInput(body) {
     const binaryPath = /\.(?:png|jpe?g|pdf)$/i.test(file.path)
     if (binaryPath !== isBinary) throw Object.assign(new Error(`${file.path} has an invalid file encoding.`), { status: 422 })
     if (typeof file.content !== 'string' || file.content.length > MAX_FILE_CHARS || (isBinary && !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(file.content))) throw Object.assign(new Error(`${file.path} is too large or has invalid content.`), { status: 413 })
+    if (isBinary) {
+      const bytes = Buffer.from(file.content, 'base64')
+      const validSignature = /\.png$/i.test(file.path)
+        ? bytes.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))
+        : /\.jpe?g$/i.test(file.path)
+          ? bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff
+          : bytes.subarray(0, 5).equals(Buffer.from('%PDF-'))
+      if (!validSignature) throw Object.assign(new Error(`${file.path} does not match its declared file type.`), { status: 422 })
+    }
     total += file.content.length
     if (total > MAX_TOTAL_CHARS) throw Object.assign(new Error('Project files exceed the 7 MB limit.'), { status: 413 })
     paths.add(file.path)
@@ -76,7 +88,23 @@ function publicProject(project) {
     templateId: project.templateId, files: project.files, tags: project.tags || [],
     archived: project.archived === true, trashed: project.trashed === true,
     createdAt: project.createdAt, updatedAt: project.updatedAt,
+    compileStatus: project.compileStatus || 'never', lastCompiledAt: project.lastCompiledAt || null,
+    pdfVersion: project.pdfVersions?.at(-1)?.version || 0, hasPdf: Boolean(project.pdfVersions?.length),
+    pdfVersions: (project.pdfVersions || []).map(({ version, size, compiledAt }) => ({ version, size, compiledAt })),
   }
+}
+
+function recordSourceVersion(project, label) {
+  const files = project.files.map((file) => ({ path: file.path, content: file.content, isBinary: file.isBinary }))
+  const size = files.reduce((total, file) => total + file.content.length, 0)
+  if (size > MAX_HISTORY_CHARS) return
+  project.sourceVersions.unshift({ label, files, mainFile: project.mainFile, savedAt: new Date() })
+  let retained = 0
+  project.sourceVersions = project.sourceVersions.filter((version) => {
+    const versionSize = version.files.reduce((total, file) => total + file.content.length, 0)
+    retained += versionSize
+    return retained <= MAX_HISTORY_CHARS
+  }).slice(0, 20)
 }
 
 router.use(protect)
@@ -88,22 +116,62 @@ router.get('/', asyncHandler(async (req, res) => {
 
 router.post('/', asyncHandler(async (req, res) => {
   const input = cleanInput(req.body)
-  const project = await ResumeProject.findOneAndUpdate(
-    { owner: req.user._id, clientId: input.clientId },
-    { $set: input, $setOnInsert: { owner: req.user._id } },
-    { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true },
-  )
+  let project = await ResumeProject.findOne({ owner: req.user._id, clientId: input.clientId })
+  if (project) {
+    if (project.mainFile !== input.mainFile || JSON.stringify(project.files) !== JSON.stringify(input.files)) {
+      recordSourceVersion(project, 'Autosaved version')
+    }
+    Object.assign(project, input)
+    await project.save()
+  } else {
+    project = await ResumeProject.create({ ...input, owner: req.user._id })
+  }
   res.status(201).json({ project: publicProject(project) })
 }))
 
 router.get('/:projectId', asyncHandler(async (req, res) => {
-  const project = await ResumeProject.findOne({ clientId: req.params.projectId, owner: req.user._id }).lean()
+  const project = await ResumeProject.findOne({ clientId: req.params.projectId, owner: req.user._id, trashed: { $ne: true } }).lean()
   if (!project) return res.status(404).json({ message: 'Project not found.' })
   res.json({ project: publicProject(project) })
 }))
 
+router.get('/:projectId/history', asyncHandler(async (req, res) => {
+  const project = await ResumeProject.findOne({ clientId: req.params.projectId, owner: req.user._id, trashed: { $ne: true } }).select('sourceVersions').lean()
+  if (!project) return res.status(404).json({ message: 'Project not found.' })
+  res.json({ versions: (project.sourceVersions || []).map((version, index) => ({ ...version, index })) })
+}))
+
+router.post('/:projectId/history/:versionIndex/restore', asyncHandler(async (req, res) => {
+  const index = Number(req.params.versionIndex)
+  if (!Number.isInteger(index) || index < 0) return res.status(422).json({ message: 'Version is invalid.' })
+  const project = await ResumeProject.findOne({ clientId: req.params.projectId, owner: req.user._id })
+  if (!project) return res.status(404).json({ message: 'Project not found.' })
+  const version = project.sourceVersions[index]
+  if (!version) return res.status(404).json({ message: 'Version not found.' })
+  recordSourceVersion(project, 'Before restore')
+  project.files = version.files
+  project.mainFile = version.mainFile
+  await project.save()
+  res.json({ project: publicProject(project) })
+}))
+
+router.get('/:projectId/pdf', asyncHandler(async (req, res) => {
+  const project = await ResumeProject.findOne({ clientId: req.params.projectId, owner: req.user._id, trashed: { $ne: true } }).select('name pdfVersions').lean()
+  if (!project) return res.status(404).json({ message: 'Project not found.' })
+  const requestedVersion = req.query.version === undefined ? null : Number(req.query.version)
+  if (requestedVersion !== null && (!Number.isInteger(requestedVersion) || requestedVersion < 1)) return res.status(422).json({ message: 'PDF version is invalid.' })
+  const artifact = requestedVersion === null
+    ? project.pdfVersions?.at(-1)
+    : project.pdfVersions?.find((item) => item.version === requestedVersion)
+  if (!artifact) return res.status(404).json({ message: 'No compiled PDF is available.' })
+  const object = await getPrivateObject(artifact.key)
+  const safeName = project.name.replace(/[^\w-]+/g, '-').replace(/^-|-$/g, '') || 'resume'
+  res.set({ 'Content-Type': 'application/pdf', 'Content-Length': String(artifact.size), 'Content-Disposition': `${req.query.download === '1' ? 'attachment' : 'inline'}; filename="${safeName}.pdf"`, 'Cache-Control': 'private, no-store' })
+  object.Body.pipe(res)
+}))
+
 router.get('/:projectId/source.zip', asyncHandler(async (req, res, next) => {
-  const project = await ResumeProject.findOne({ clientId: req.params.projectId, owner: req.user._id }).lean()
+  const project = await ResumeProject.findOne({ clientId: req.params.projectId, owner: req.user._id, trashed: { $ne: true } }).lean()
   if (!project) return res.status(404).json({ message: 'Project not found.' })
   const safeName = project.name.replace(/[^\w-]+/g, '-').replace(/^-|-$/g, '') || 'latex-project'
   res.set({ 'Content-Type': 'application/zip', 'Content-Disposition': `attachment; filename="${safeName}.zip"`, 'Cache-Control': 'no-store' })
@@ -120,17 +188,18 @@ router.get('/:projectId/source.zip', asyncHandler(async (req, res, next) => {
 router.put('/:projectId', asyncHandler(async (req, res) => {
   const input = cleanInput(req.body)
   if (input.clientId !== req.params.projectId) return res.status(422).json({ message: 'Project id must match the URL.', code: 'PROJECT_ID_MISMATCH' })
-  const project = await ResumeProject.findOneAndUpdate(
-    { clientId: req.params.projectId, owner: req.user._id },
-    { $set: { ...input, clientId: req.params.projectId } },
-    { new: true, runValidators: true },
-  )
+  const project = await ResumeProject.findOne({ clientId: req.params.projectId, owner: req.user._id })
   if (!project) return res.status(404).json({ message: 'Project not found.' })
+  if (project.mainFile !== input.mainFile || JSON.stringify(project.files) !== JSON.stringify(input.files)) {
+    recordSourceVersion(project, 'Autosaved version')
+  }
+  Object.assign(project, input, { clientId: req.params.projectId })
+  await project.save()
   res.json({ project: publicProject(project) })
 }))
 
 router.delete('/:projectId', asyncHandler(async (req, res) => {
-  const project = await ResumeProject.findOneAndDelete({ clientId: req.params.projectId, owner: req.user._id })
+  const project = await ResumeProject.findOneAndUpdate({ clientId: req.params.projectId, owner: req.user._id }, { $set: { trashed: true } }, { new: true })
   if (!project) return res.status(404).json({ message: 'Project not found.' })
   res.status(204).end()
 }))
@@ -218,11 +287,31 @@ router.post('/compile', compileLimiter, asyncHandler(async (req, res) => {
         child.once('close', (code) => { clearTimeout(timer); resolve({ code, log: Buffer.concat(chunks).toString('utf8') }) })
       })
       log = result.log
-      if (result.code !== 0) return res.status(422).json({ message: 'LaTeX compilation failed.', code: 'COMPILE_FAILED', log })
+      if (result.code !== 0) {
+        await ResumeProject.updateOne({ clientId: input.clientId, owner: req.user._id }, { $set: { compileStatus: 'failed', compileLog: log.slice(0, 4000) } })
+        return res.status(422).json({ message: 'LaTeX compilation failed.', code: 'COMPILE_FAILED', log })
+      }
       const pdfPath = path.join(outputDir, `${path.basename(input.mainFile, path.extname(input.mainFile))}.pdf`)
       const pdf = await readFile(pdfPath)
       if (!pdf.subarray(0, 5).equals(Buffer.from('%PDF-'))) return res.status(422).json({ message: 'Compiler output is not a valid PDF.', code: 'INVALID_COMPILER_OUTPUT' })
       if (pdf.length > MAX_PDF_BYTES) return res.status(413).json({ message: 'Generated PDF exceeds the 20 MB limit.' })
+      if (!r2Configured) return res.status(503).json({ message: 'Persistent PDF storage is not configured.', code: 'STORAGE_UNAVAILABLE' })
+      const key = `resume-pdfs/${req.user._id}/${input.clientId}/${randomUUID()}.pdf`
+      await putPrivateObject({ key, body: pdf, contentType: 'application/pdf' })
+      let project = await ResumeProject.findOne({ clientId: input.clientId, owner: req.user._id })
+      if (!project) project = await ResumeProject.create({ ...input, owner: req.user._id })
+      else {
+        if (project.mainFile !== input.mainFile || JSON.stringify(project.files) !== JSON.stringify(input.files)) {
+          recordSourceVersion(project, 'Before compilation')
+        }
+        Object.assign(project, input)
+      }
+      const version = (project.pdfVersions.at(-1)?.version || 0) + 1
+      project.pdfVersions.push({ key, version, size: pdf.length, compiledAt: new Date() })
+      project.compileStatus = 'success'
+      project.lastCompiledAt = new Date()
+      project.compileLog = log.slice(0, 4000)
+      await project.save()
       res.set({ 'Content-Type': 'application/pdf', 'Content-Length': String(pdf.length), 'Cache-Control': 'no-store', 'X-Compiler-Log': Buffer.from(log.slice(0, 4000)).toString('base64') })
       return res.send(pdf)
     } catch (dockerErr) {

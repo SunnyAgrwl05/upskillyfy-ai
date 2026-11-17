@@ -73,6 +73,7 @@ export default function App() {
             path="/assessment/test/:testId"
             element={<AssessmentTest />}
           />
+          <Route path="/career/resume/editor/:projectId" element={<OverleafEditor />} />
 
           <Route element={<HackathonLayout />}>
             <Route path="/hackathons" element={<Hackathons />} />
@@ -171,7 +172,6 @@ export default function App() {
             <Route path="/career/resume/templates/:templateId" element={<ResumeTemplateDetail />} />
             <Route path="/career/resume/create" element={<ATSResumeBuilder />} />
             <Route path="/career/resume/projects" element={<OverleafDashboard />} />
-            <Route path="/career/resume/editor/:projectId" element={<OverleafEditor />} />
             <Route
               path="/career/interviews"
               element={<Contact />}
