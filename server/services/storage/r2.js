@@ -15,10 +15,11 @@ const ALLOWED_TYPES = new Map([
   ['application/vnd.openxmlformats-officedocument.wordprocessingml.document', new Set(['.docx'])],
 ])
 
-const configuredValues = [env.R2_ENDPOINT, env.R2_ACCESS_KEY_ID, env.R2_SECRET_ACCESS_KEY, env.R2_BUCKET_NAME]
+const endpoint = env.R2_ENDPOINT || (env.R2_ACCOUNT_ID ? `https://${env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com` : undefined)
+const configuredValues = [endpoint, env.R2_ACCESS_KEY_ID, env.R2_SECRET_ACCESS_KEY, env.R2_BUCKET_NAME]
 export const r2Configured = configuredValues.every(Boolean)
 const client = r2Configured ? new S3Client({
-  endpoint: env.R2_ENDPOINT,
+  endpoint,
   region: 'auto',
   forcePathStyle: true,
   credentials: { accessKeyId: env.R2_ACCESS_KEY_ID, secretAccessKey: env.R2_SECRET_ACCESS_KEY },
@@ -38,6 +39,16 @@ export function validateUpload({ fileName, contentType, size }) {
   return { valid: true }
 }
 
+export function validateFileSignature(contentType, bytes) {
+  const signature = Buffer.from(bytes || [])
+  if (contentType === 'application/pdf') return signature.subarray(0, 5).toString() === '%PDF-'
+  if (['application/zip', 'application/x-zip-compressed', 'application/vnd.openxmlformats-officedocument.presentationml.presentation', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'].includes(contentType)) {
+    return signature[0] === 0x50 && signature[1] === 0x4b && [0x03, 0x05, 0x07].includes(signature[2])
+  }
+  if (['application/vnd.ms-powerpoint', 'application/msword'].includes(contentType)) return signature.subarray(0, 8).equals(Buffer.from([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]))
+  return false
+}
+
 export async function createUploadUrl({ userId, fileName, contentType, size }) {
   if (!client) throw Object.assign(new Error('Private file storage is not configured.'), { code: 'STORAGE_UNAVAILABLE', status: 503 })
   const extension = path.extname(fileName).toLowerCase()
@@ -49,16 +60,33 @@ export async function createUploadUrl({ userId, fileName, contentType, size }) {
 
 export async function getStoredObjectMetadata(key) {
   if (!client) throw Object.assign(new Error('Private file storage is not configured.'), { code: 'STORAGE_UNAVAILABLE', status: 503 })
-  const result = await client.send(new HeadObjectCommand({ Bucket: env.R2_BUCKET_NAME, Key: key }))
-  return { size: result.ContentLength, contentType: result.ContentType }
+  const [result, sample] = await Promise.all([
+    client.send(new HeadObjectCommand({ Bucket: env.R2_BUCKET_NAME, Key: key })),
+    client.send(new GetObjectCommand({ Bucket: env.R2_BUCKET_NAME, Key: key, Range: 'bytes=0-7' })),
+  ])
+  const bytes = await sample.Body.transformToByteArray()
+  return { size: result.ContentLength, contentType: result.ContentType, signatureValid: validateFileSignature(result.ContentType, bytes) }
 }
 
-export async function createDownloadUrl(key) {
+export async function createDownloadUrl(key, options = {}) {
   if (!client) throw Object.assign(new Error('Private file storage is not configured.'), { code: 'STORAGE_UNAVAILABLE', status: 503 })
-  return getSignedUrl(client, new GetObjectCommand({ Bucket: env.R2_BUCKET_NAME, Key: key }), { expiresIn: 300 })
+  const disposition = options.fileName
+    ? `${options.inline ? 'inline' : 'attachment'}; filename="${String(options.fileName).replace(/["\\\r\n]/g, '')}"`
+    : undefined
+  return getSignedUrl(client, new GetObjectCommand({ Bucket: env.R2_BUCKET_NAME, Key: key, ...(disposition ? { ResponseContentDisposition: disposition } : {}) }), { expiresIn: 300 })
 }
 
 export async function deleteStoredObject(key) {
   if (!client) throw Object.assign(new Error('Private file storage is not configured.'), { code: 'STORAGE_UNAVAILABLE', status: 503 })
   await client.send(new DeleteObjectCommand({ Bucket: env.R2_BUCKET_NAME, Key: key }))
+}
+
+export async function putPrivateObject({ key, body, contentType }) {
+  if (!client) throw Object.assign(new Error('Private file storage is not configured.'), { code: 'STORAGE_UNAVAILABLE', status: 503 })
+  await client.send(new PutObjectCommand({ Bucket: env.R2_BUCKET_NAME, Key: key, Body: body, ContentType: contentType }))
+}
+
+export async function getPrivateObject(key) {
+  if (!client) throw Object.assign(new Error('Private file storage is not configured.'), { code: 'STORAGE_UNAVAILABLE', status: 503 })
+  return client.send(new GetObjectCommand({ Bucket: env.R2_BUCKET_NAME, Key: key }))
 }

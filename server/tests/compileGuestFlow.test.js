@@ -16,7 +16,7 @@ const isolatedTestDb = (() => {
     const parsed = new URL(testMongoUri)
     return ['127.0.0.1', 'localhost', '::1'].includes(parsed.hostname)
       && /resume_builder_test/i.test(parsed.pathname)
-      && !process.env.MONGODB_URI
+      && (!process.env.MONGODB_URI || process.env.MONGODB_URI === testMongoUri)
   } catch { return false }
 })()
 
@@ -47,7 +47,7 @@ const projectBody = {
 
 before(async () => {
   if (!isolatedTestDb) return
-  process.env.JWT_SECRET = 'resume-builder-test-only-secret'
+  process.env.JWT_SECRET = 'resume-builder-isolated-test-secret'
   await mongoose.connect(testMongoUri)
   console.log(`[smoke] connected to local database: ${mongoose.connection.db.databaseName} on ${mongoose.connection.host}`)
   await new Promise((resolve) => {

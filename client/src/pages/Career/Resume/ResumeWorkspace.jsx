@@ -87,7 +87,7 @@ async function importProjectFile(file, navigate) {
       const main = projectFiles.find(entry => entry.name === mainFile)
       if (!main || main.isBinary) throw new Error('The selected main document is invalid.')
       const project = createProject(file.name.replace(/\.zip$/i, ''), main.content, projectFiles, null, mainFile)
-      navigate(`/career/resume/editor/${project.id}`)
+      navigate(`/career/resume/editor/${project.id}`, { state: { from: '/career/resume' } })
       return
     }
     if (!isValidTexUpload(file)) { alert('Import a .tex file that is no larger than 2 MB.'); return }
@@ -95,7 +95,7 @@ async function importProjectFile(file, navigate) {
     if (!content.trim()) { alert('The selected .tex file is empty.'); return }
     const name = file.name.replace(/\.tex$/i, '')
     const project = createProject(name, content, [{ name: file.name, content }])
-    navigate(`/career/resume/editor/${project.id}`)
+    navigate(`/career/resume/editor/${project.id}`, { state: { from: '/career/resume' } })
   } catch (error) {
     alert(error.response?.data?.message || error.message || 'Could not import this project.')
   }
@@ -198,7 +198,7 @@ export function ResumeGallery() {
         {items.map(template => <article className="latex-card" key={template.id}>
           <Link to={`/career/resume/templates/${template.id}`} className="latex-card-preview"><Preview title={template.title} category={template.category} /></Link>
           <div className="latex-card-copy"><span>{template.category}</span><Link to={`/career/resume/templates/${template.id}`}><h3>{template.title}</h3></Link><p>{template.description}</p><small>{template.author} · {template.kind}</small></div>
-          <button className="latex-card-open" onClick={() => { const project = createFrom(template); navigate(`/career/resume/editor/${project.id}`) }}>Open as template <ChevronRight size={15} /></button>
+          <button className="latex-card-open" onClick={() => { const project = createFrom(template); navigate(`/career/resume/editor/${project.id}`, { state: { from: '/career/resume' } }) }}>Open as template <ChevronRight size={15} /></button>
         </article>)}
       </div> : <div className="latex-empty"><FileText /><h3>No matching documents</h3><p>Try another search or clear the selected category.</p></div>}
       <div className="latex-pagination"><span>{pagination.total} results</span>
