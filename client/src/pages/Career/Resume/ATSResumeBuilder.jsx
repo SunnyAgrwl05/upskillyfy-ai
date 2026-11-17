@@ -9,8 +9,12 @@ const emptyExperience = () => ({ role: '', company: '', dates: '', bullets: '' }
 const emptyEducation = () => ({ degree: '', institution: '', dates: '' })
 const draftKey = 'upskillyfy-ats-resume-draft-v1'
 const headingPattern = /^(summary|profile|objective|experience|employment|work history|education|skills|technical skills|projects|certifications|certificates|awards|achievements|leadership|extracurriculars|activities)\s*:?$/i
+// Centralized LaTeX text escaping. Applied to every user-authored plain-text
+// field BEFORE it is interpolated into the document, so raw input can never
+// break the compile or inject LaTeX commands. Unicode punctuation is mapped to
+// the LaTeX equivalents the compiler fonts actually contain.
 const escapeLatex = (value = '') =>
-  value.replace(/[\\{}$&#_%~^]/g, (char) => ({
+  String(value).replace(/[\\{}$&#_%~^—–‘’“”•·≤≥→←×÷±©®™°€£¥§¶†‡…¡¿]/g, (char) => ({
     '\\': '\\textbackslash{}',
     '{': '\\{',
     '}': '\\}',
@@ -21,8 +25,37 @@ const escapeLatex = (value = '') =>
     '%': '\\%',
     '~': '\\textasciitilde{}',
     '^': '\\textasciicircum{}',
+    '—': '---',
+    '–': '--',
+    '‘': '`',
+    '’': "'",
+    '“': '``',
+    '”': "''",
+    '•': '\\textbullet{}',
+    '·': '\\textperiodcentered{}',
+    '≤': '\\textleq{}',
+    '≥': '\\textgeq{}',
+    '→': '\\textrightarrow{}',
+    '←': '\\textleftarrow{}',
+    '×': '\\texttimes{}',
+    '÷': '\\textdiv{}',
+    '±': '\\textpm{}',
+    '©': '\\textcopyright{}',
+    '®': '\\textregistered{}',
+    '™': '\\texttrademark{}',
+    '°': '\\textdegree{}',
+    '€': '\\texteuro{}',
+    '£': '\\textsterling{}',
+    '¥': '\\textyen{}',
+    '§': '\\textsection{}',
+    '¶': '\\textparagraph{}',
+    '†': '\\textdagger{}',
+    '‡': '\\textdaggerdbl{}',
+    '…': '\\textellipsis{}',
+    '¡': '\\textexclamdown{}',
+    '¿': '\\textquestiondown{}',
   }[char]))
-const section = (title, body) => (body.trim() ? `\\section*{${title}}\n${body.trim()}\n` : '')
+const section = (title, body) => (body.trim() ? `\\section*{${escapeLatex(title)}}\n${body.trim()}\n` : '')
 
 function parseResumeText(text) {
   const lines = text.split(/\r?\n/).map((line) => line.replace(/[•▪◦]\s*/g, '').trim()).filter(Boolean)
@@ -64,9 +97,19 @@ const linesToLatexItems = (value) =>
     .map((line) => `  \\item ${escapeLatex(line)}`)
     .join('\n')
 
+// Render a single link: URLs become clickable \href targets, everything else
+// stays escaped plain text. Query strings (&, =, ?) survive because the URL is
+// passed through \url-style encoding, not text escaping.
+const renderLink = (raw) => {
+  const value = raw.trim()
+  if (!value) return ''
+  const url = /^(https?:\/\/|mailto:)[^\s,]+$/i.test(value) ? value : `https://${value}`
+  return `\\href{${url.replace(/[\\{}#]/g, '')}}{${escapeLatex(value)}}`
+}
+
 function toLatex(data, templateId = 'ats-friendly-resume') {
   const contact = [data.email, data.phone, data.location].filter(Boolean).map(escapeLatex).join(' \\textbar{} ')
-  const links = data.links.split(',').map((item) => escapeLatex(item.trim())).filter(Boolean).join(' \\textbar{} ')
+  const links = data.links.split(',').map(renderLink).filter(Boolean).join(' \\textbar{} ')
   const experience = data.experience
     .filter((item) => item.role || item.company)
     .map(
@@ -100,8 +143,9 @@ function toLatex(data, templateId = 'ats-friendly-resume') {
   ]
   if (academicFirst || fresherFirst) [resumeSections[1], resumeSections[2]] = [resumeSections[2], resumeSections[1]]
   return String.raw`\documentclass[${fontSize},a4paper]{article}
+\usepackage{fontspec}
+\setmainfont{STIXGeneral}
 \usepackage[margin=${margin}]{geometry}
-\usepackage[T1]{fontenc}
 \usepackage[hidelinks]{hyperref}
 \usepackage{enumitem}
 \pagestyle{empty}
